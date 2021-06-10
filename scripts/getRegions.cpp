@@ -38,6 +38,11 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, bool verbose, boo
 
     auto timeStart = std::chrono::high_resolution_clock::now();
 
+    if(signal_param != "reemitted" and signal_param != "scattered" and signal_param != "attenuated"){ // attenuated = scattered + reemitted
+        std::cout << "Invalid signal! Use: reemitted, scattered, attenuated";
+        return 1;
+    }
+
     //create histograms and graphs
 
     TH2F *hReEmittedPaths;
@@ -627,7 +632,7 @@ std::vector<double> GetFOMs(std::vector<double> points, std::vector<double> fixe
                     else if(signal == "scattered"){
                         countReEmitted1 = countReEmitted1 + scatteredHist->GetBinContent(x,y);
                     }
-                    else if(signal == "attenuation"){
+                    else if(signal == "attenuated"){
                         countReEmitted1 = countReEmitted1 + scatteredHist->GetBinContent(x,y) + reEmittedHist->GetBinContent(x,y);
                     }
                     countTotal1 = countTotal1 + allPathsHist->GetBinContent(x,y);
@@ -639,7 +644,7 @@ std::vector<double> GetFOMs(std::vector<double> points, std::vector<double> fixe
                     else if(signal == "scattered"){
                         countReEmitted2 = countReEmitted2 + scatteredHist->GetBinContent(x,y);
                     }
-                    else if(signal == "attenuation"){
+                    else if(signal == "attenuated"){
                         countReEmitted2 = countReEmitted2 + scatteredHist->GetBinContent(x,y) + reEmittedHist->GetBinContent(x,y);
                     }
                     countTotal2 = countTotal2 + allPathsHist->GetBinContent(x,y);
@@ -651,7 +656,7 @@ std::vector<double> GetFOMs(std::vector<double> points, std::vector<double> fixe
                     else if(signal == "scattered"){
                         countReEmitted3 = countReEmitted3 + scatteredHist->GetBinContent(x,y);
                     }
-                    else if(signal == "attenuation"){
+                    else if(signal == "attenuated"){
                         countReEmitted3 = countReEmitted3 + scatteredHist->GetBinContent(x,y) + reEmittedHist->GetBinContent(x,y);
                     }
                     countTotal3 = countTotal3 + allPathsHist->GetBinContent(x,y);                                
@@ -697,7 +702,7 @@ std::vector<double> GetFOMs(std::vector<double> points, std::vector<double> fixe
                     else if(signal == "scattered"){
                         countReEmitted1 = countReEmitted1 + scatteredHist->GetBinContent(x,y);
                     }
-                    else if(signal == "attenuation"){
+                    else if(signal == "attenuated"){
                         countReEmitted1 = countReEmitted1 + scatteredHist->GetBinContent(x,y) + reEmittedHist->GetBinContent(x,y);
                     }
                     countTotal1 = countTotal1 + allPathsHist->GetBinContent(x,y);
@@ -709,7 +714,7 @@ std::vector<double> GetFOMs(std::vector<double> points, std::vector<double> fixe
                     else if(signal == "scattered"){
                         countReEmitted2 = countReEmitted2 + scatteredHist->GetBinContent(x,y);
                     }
-                    else if(signal == "attenuation"){
+                    else if(signal == "attenuated"){
                         countReEmitted2 = countReEmitted2 + scatteredHist->GetBinContent(x,y) + reEmittedHist->GetBinContent(x,y);
                     }
                     countTotal2 = countTotal2 + allPathsHist->GetBinContent(x,y);
@@ -721,7 +726,7 @@ std::vector<double> GetFOMs(std::vector<double> points, std::vector<double> fixe
                     else if(signal == "scattered"){
                         countReEmitted3 = countReEmitted3 + scatteredHist->GetBinContent(x,y);
                     }
-                    else if(signal == "attenuation"){
+                    else if(signal == "attenuated"){
                         countReEmitted3 = countReEmitted3 + scatteredHist->GetBinContent(x,y) + reEmittedHist->GetBinContent(x,y);
                     }
                     countTotal3 = countTotal3 + allPathsHist->GetBinContent(x,y);                                
@@ -767,7 +772,7 @@ std::vector<double> GetFOMs(std::vector<double> points, std::vector<double> fixe
                     else if(signal == "scattered"){
                         countReEmitted1 = countReEmitted1 + scatteredHist->GetBinContent(x,y);
                     }
-                    else if(signal == "attenuation"){
+                    else if(signal == "attenuated"){
                         countReEmitted1 = countReEmitted1 + scatteredHist->GetBinContent(x,y) + reEmittedHist->GetBinContent(x,y);
                     }
                     countTotal1 = countTotal1 + allPathsHist->GetBinContent(x,y);
@@ -779,7 +784,7 @@ std::vector<double> GetFOMs(std::vector<double> points, std::vector<double> fixe
                     else if(signal == "scattered"){
                         countReEmitted2 = countReEmitted2 + scatteredHist->GetBinContent(x,y);
                     }
-                    else if(signal == "attenuation"){
+                    else if(signal == "attenuated"){
                         countReEmitted2 = countReEmitted2 + scatteredHist->GetBinContent(x,y) + reEmittedHist->GetBinContent(x,y);
                     }
                     countTotal2 = countTotal2 + allPathsHist->GetBinContent(x,y);
@@ -791,7 +796,7 @@ std::vector<double> GetFOMs(std::vector<double> points, std::vector<double> fixe
                     else if(signal == "scattered"){
                         countReEmitted3 = countReEmitted3 + scatteredHist->GetBinContent(x,y);
                     }
-                    else if(signal == "attenuation"){
+                    else if(signal == "attenuated"){
                         countReEmitted3 = countReEmitted3 + scatteredHist->GetBinContent(x,y) + reEmittedHist->GetBinContent(x,y);
                     }
                     countTotal3 = countTotal3 + allPathsHist->GetBinContent(x,y);                                
@@ -825,7 +830,7 @@ std::vector<double> GetFOMs(std::vector<double> points, std::vector<double> fixe
                     else if(signal == "scattered"){
                         countReEmitted1 = countReEmitted1 + scatteredHist->GetBinContent(x,y);
                     }
-                    else if(signal == "attenuation"){
+                    else if(signal == "attenuated"){
                         countReEmitted1 = countReEmitted1 + scatteredHist->GetBinContent(x,y) + reEmittedHist->GetBinContent(x,y);
                     }
                     countTotal1 = countTotal1 + allPathsHist->GetBinContent(x,y);
@@ -837,7 +842,7 @@ std::vector<double> GetFOMs(std::vector<double> points, std::vector<double> fixe
                     else if(signal == "scattered"){
                         countReEmitted2 = countReEmitted2 + scatteredHist->GetBinContent(x,y);
                     }
-                    else if(signal == "attenuation"){
+                    else if(signal == "attenuated"){
                         countReEmitted2 = countReEmitted2 + scatteredHist->GetBinContent(x,y) + reEmittedHist->GetBinContent(x,y);
                     }
                     countTotal2 = countTotal2 + allPathsHist->GetBinContent(x,y);
@@ -849,7 +854,7 @@ std::vector<double> GetFOMs(std::vector<double> points, std::vector<double> fixe
                     else if(signal == "scattered"){
                         countReEmitted3 = countReEmitted3 + scatteredHist->GetBinContent(x,y);
                     }
-                    else if(signal == "attenuation"){
+                    else if(signal == "attenuated"){
                         countReEmitted3 = countReEmitted3 + scatteredHist->GetBinContent(x,y) + reEmittedHist->GetBinContent(x,y);
                     }
                     countTotal3 = countTotal3 + allPathsHist->GetBinContent(x,y);                                
@@ -895,7 +900,7 @@ std::vector<double> GetFOMs(std::vector<double> points, std::vector<double> fixe
                     else if(signal == "scattered"){
                         countReEmitted1 = countReEmitted1 + scatteredHist->GetBinContent(x,y);
                     }
-                    else if(signal == "attenuation"){
+                    else if(signal == "attenuated"){
                         countReEmitted1 = countReEmitted1 + scatteredHist->GetBinContent(x,y) + reEmittedHist->GetBinContent(x,y);
                     }
                     countTotal1 = countTotal1 + allPathsHist->GetBinContent(x,y);
@@ -907,7 +912,7 @@ std::vector<double> GetFOMs(std::vector<double> points, std::vector<double> fixe
                     else if(signal == "scattered"){
                         countReEmitted2 = countReEmitted2 + scatteredHist->GetBinContent(x,y);
                     }
-                    else if(signal == "attenuation"){
+                    else if(signal == "attenuated"){
                         countReEmitted2 = countReEmitted2 + scatteredHist->GetBinContent(x,y) + reEmittedHist->GetBinContent(x,y);
                     }
                     countTotal2 = countTotal2 + allPathsHist->GetBinContent(x,y);
@@ -919,7 +924,7 @@ std::vector<double> GetFOMs(std::vector<double> points, std::vector<double> fixe
                     else if(signal == "scattered"){
                         countReEmitted3 = countReEmitted3 + scatteredHist->GetBinContent(x,y);
                     }
-                    else if(signal == "attenuation"){
+                    else if(signal == "attenuated"){
                         countReEmitted3 = countReEmitted3 + scatteredHist->GetBinContent(x,y) + reEmittedHist->GetBinContent(x,y);
                     }
                     countTotal3 = countTotal3 + allPathsHist->GetBinContent(x,y);                                
@@ -965,7 +970,7 @@ std::vector<double> GetFOMs(std::vector<double> points, std::vector<double> fixe
                     else if(signal == "scattered"){
                         countReEmitted1 = countReEmitted1 + scatteredHist->GetBinContent(x,y);
                     }
-                    else if(signal == "attenuation"){
+                    else if(signal == "attenuated"){
                         countReEmitted1 = countReEmitted1 + scatteredHist->GetBinContent(x,y) + reEmittedHist->GetBinContent(x,y);
                     }
                     countTotal1 = countTotal1 + allPathsHist->GetBinContent(x,y);
@@ -977,7 +982,7 @@ std::vector<double> GetFOMs(std::vector<double> points, std::vector<double> fixe
                     else if(signal == "scattered"){
                         countReEmitted2 = countReEmitted2 + scatteredHist->GetBinContent(x,y);
                     }
-                    else if(signal == "attenuation"){
+                    else if(signal == "attenuated"){
                         countReEmitted2 = countReEmitted2 + scatteredHist->GetBinContent(x,y) + reEmittedHist->GetBinContent(x,y);
                     }
                     countTotal2 = countTotal2 + allPathsHist->GetBinContent(x,y);
@@ -989,7 +994,7 @@ std::vector<double> GetFOMs(std::vector<double> points, std::vector<double> fixe
                     else if(signal == "scattered"){
                         countReEmitted3 = countReEmitted3 + scatteredHist->GetBinContent(x,y);
                     }
-                    else if(signal == "attenuation"){
+                    else if(signal == "attenuated"){
                         countReEmitted3 = countReEmitted3 + scatteredHist->GetBinContent(x,y) + reEmittedHist->GetBinContent(x,y);
                     }
                     countTotal3 = countTotal3 + allPathsHist->GetBinContent(x,y);                                
