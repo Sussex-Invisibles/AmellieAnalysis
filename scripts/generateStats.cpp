@@ -128,7 +128,10 @@ int generate_stats(std::string region_selected_file, std::string full_file, std:
     // open txt file and write values, FOMs can be made and plotted later!
 
     std::ofstream outputFile;
-    std::string saveroot = "stats_for_" + region_selected_file.substr(0, region_selected_file.length()-5) + ".txt";
+    // get file name from path+filename string
+    std::size_t region_botDirPos = region_selected_file.find_last_of("/");
+    std::string region_filename = region_selected_file.substr(region_botDirPos+1, region_selected_file.length());
+    std::string saveroot = "stats_for_" + region_filename.substr(0, region_filename.length()-5) + ".txt";
     outputFile.open(saveroot.c_str());
     outputFile << signal + "\n";
     outputFile << std::to_string(sumSignalHistRegion / sqrt(sumFullHistRegion)) + "\n";

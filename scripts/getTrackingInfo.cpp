@@ -1015,7 +1015,10 @@ int GetLightPaths(std::string file, std::string fibre){
     double locality = 10.0; //lpc sensitivity
     double energy = RAT::util::WavelengthToEnergy(403E-6); //FIXME: could be input argument as easy to forget
 
-    std::string saveroot = "Tracking_ResHitCosTheta_" + file;
+    // get file name from path+filename string
+    std::size_t botDirPos = file.find_last_of("/");
+    std::string filename = file.substr(botDirPos+1, file.length());
+    std::string saveroot = "Tracking_ResHitCosTheta_" + filename;
     TFile *rootfile = new TFile(saveroot.c_str(),"RECREATE");
 
     TH1D* hNhits = new TH1D("hNhits", "nhits", 101, 0, 100);

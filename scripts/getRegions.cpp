@@ -497,7 +497,10 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, bool verbose, boo
     if(verbose) std::cout << "There were " << numMainLoopIterations << " iterations of the main loop" << std::endl;
 
     std::vector<TH2F*> regionSelectedHists = GetRegionSelectedHists(fixedPoints, hReEmittedPaths, hAllPaths, hNoisePaths, hSingleScatterPaths, hOtherPaths, hNoEffectPaths, hNearReflectPaths, hRopesPaths, hPMTReflectionPaths, hExtWaterScatterPaths, hInnerAvReflectPaths, hMultipleEffectPaths, hAVPipesPaths, hAcrylicPaths, hOtherScatterPaths);
-    std::string saveroot = "region_selected_hists_" + signal_param + "_" + inputFile;
+    // get file name from path+filename string
+    std::size_t botDirPos = inputFile.find_last_of("/");
+    std::string filename = inputFile.substr(botDirPos+1, inputFile.length());
+    std::string saveroot = "region_selected_hists_" + signal_param + "_" + filename;
     TFile *rootfile = new TFile(saveroot.c_str(),"RECREATE");
     
     rootfile->cd();
