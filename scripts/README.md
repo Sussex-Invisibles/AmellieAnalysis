@@ -29,7 +29,7 @@ Requires 6 input arguments:
 3. An integer representing a verbose flag (1 for true, 0 for false).
 4. An integer representing a debug flag (1 for true, 0 for false).
 5. An integer representing an extra info flag (1 for true, 0 for false). This will generate a few more histograms describing the evolution of the optimisation.
-6. The required signal: use either ```reemitted```, ```scattered``` or ```attenuation```
+6. The required signal: use either ```reemitted```, ```scattered``` or ```attenuated```
 
 The script will output a ROOT file containing histograms for these regions.
 
