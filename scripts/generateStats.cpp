@@ -1,4 +1,4 @@
-//Compile & run: g++ -g -std=c++1y -o generateStats.exe generateStats.cpp `root-config --cflags --libs` -I$RATROOT/include/libpq -I$RATROOT/include -L$RATROOT/lib -lRATEvent_Linux
+//Compile: g++ -g -std=c++1y -o generateStats.exe generateStats.cpp `root-config --cflags --libs` -I$RATROOT/include/libpq -I$RATROOT/include -L$RATROOT/lib -lRATEvent_Linux
 #include <iostream>
 #include <fstream>
 #include <TFile.h>
@@ -47,6 +47,23 @@ int main(int argv, char** argc){
     }
 }
 
+
+/**
+ * @brief Create stats on the different regions (triangle and direct and reflected beam spots):
+ * sumSignalHistRegion / sqrt(sumFullHistRegion),
+ * sumFullHist,
+ * sumFullHistRegion,
+ * sumSignalHistRegion,
+ * sumFullHistDirect,
+ * sumSignalHistDirect,
+ * sumFullHistReflected,
+ * sumSignalHistReflected.
+ * 
+ * @param region_selected_file root file with region histograms.
+ * @param full_file original file with overall histograms.
+ * @param signal = reemitted, scattered or attenuated(=reemitted+scattered). Signal that was optimised for.
+ * @return int 
+ */
 int generate_stats(std::string region_selected_file, std::string full_file, std::string signal){
     // read in files
 
@@ -128,7 +145,10 @@ int generate_stats(std::string region_selected_file, std::string full_file, std:
     // open txt file and write values, FOMs can be made and plotted later!
 
     std::ofstream outputFile;
-    std::string saveroot = "stats_for_" + region_selected_file.substr(0, region_selected_file.length()-5) + ".txt";
+    // get file name from path+filename string
+    std::size_t region_botDirPos = region_selected_file.find_last_of("/");
+    std::string region_filename = region_selected_file.substr(region_botDirPos+1, region_selected_file.length());
+    std::string saveroot = "stats_for_" + region_filename.substr(0, region_filename.length()-5) + ".txt";
     outputFile.open(saveroot.c_str());
     outputFile << signal + "\n";
     outputFile << std::to_string(sumSignalHistRegion / sqrt(sumFullHistRegion)) + "\n";
@@ -144,6 +164,25 @@ int generate_stats(std::string region_selected_file, std::string full_file, std:
     return 0;
 }
 
+/**
+ * @brief Make root file with region histograms, just as getRegions.cpp does.
+ * Points: a - bottom-left, b - bottom-right, c - top right. (y-axis = residual
+ * time, x-axis = cos(angle from AV centre to fibre direction)).
+ * x-limits of direct/reflected beam spot limits are hardcoded in the function.
+ * 
+ * @param tracked_file Original root file with total histograms.
+ * @param x_a Triangle point.
+ * @param x_b Triangle point.
+ * @param x_c Triangle point.
+ * @param y_a Triangle point.
+ * @param y_b Triangle point.
+ * @param y_c Triangle point.
+ * @param min_time_direct_beam_spot Direct beam spot limit.
+ * @param max_time_direct_beam_spot Direct beam spot limit.
+ * @param min_time_reflected_beam_spot Reflected beam spot limit.
+ * @param max_time_reflected_beam_spot Reflected beam spot limit.
+ * @return int 
+ */
 int make_region_cut(std::string tracked_file, double x_a, double x_b, double x_c, double y_a, double y_b, double y_c, double min_time_direct_beam_spot, double max_time_direct_beam_spot, double min_time_reflected_beam_spot, double max_time_reflected_beam_spot){
 
     TFile *tracked_hists_file;

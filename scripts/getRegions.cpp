@@ -1,4 +1,4 @@
-//Compile & run: g++ -g -std=c++1y -o getRegions.exe getRegions.cpp `root-config --cflags --libs` -I$RATROOT/include/libpq -I$RATROOT/include -L$RATROOT/lib -lRATEvent_Linux
+//Compile: g++ -g -std=c++1y -o getRegions.exe getRegions.cpp `root-config --cflags --libs` -I$RATROOT/include/libpq -I$RATROOT/include -L$RATROOT/lib -lRATEvent_Linux
 /*
 Rewrite of the region selection code, after conversations with Lisa.
 Create plots of the phase space showing the relationship between different parameters [x_a, y_a, x_b_c, y_b, y_c]
@@ -34,6 +34,22 @@ int main(int argc, char** argv){
     return 0;
 }
 
+/**
+ * @brief Finds Triangular region with best (highest) FOM (attenuated / sqrt(total)) via an divide and conquer method
+ * Start with p=(min, mid, max) for each point (x and y coordinates), as well as initial fixed points that are the largest
+ * right-angle triangle to start with. Find FOM for triangle by replacing each point with each option in p (one at a time),
+ * while keeping the other fixed points temprarily fixed. Then replace the associated fixed point with whichever of min or
+ * max gave the best FOM. mid then replaces whichever one was used, and a new mid is calculated. Continue until changes is
+ * less than tolerance.
+ * 
+ * @param inputFile Root file with original histograms with all the data.
+ * @param nbins Number of bins (resolution) that we wish to use (max is capped at number of bins of original hists).
+ * @param verbose Print extra info.
+ * @param debug Print extra info.
+ * @param extraInfo Print extra info.
+ * @param signal_param signal = reemitted, scattered or attenuated. The signal we are trying to optimise for.
+ * @return int 
+ */
 int OptimiseDivideAndConquer(std::string inputFile, int nbins, bool verbose, bool debug, bool extraInfo, std::string signal_param){
 
     auto timeStart = std::chrono::high_resolution_clock::now();
@@ -502,7 +518,10 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, bool verbose, boo
     if(verbose) std::cout << "There were " << numMainLoopIterations << " iterations of the main loop" << std::endl;
 
     std::vector<TH2F*> regionSelectedHists = GetRegionSelectedHists(fixedPoints, hReEmittedPaths, hAllPaths, hNoisePaths, hSingleScatterPaths, hOtherPaths, hNoEffectPaths, hNearReflectPaths, hRopesPaths, hPMTReflectionPaths, hExtWaterScatterPaths, hInnerAvReflectPaths, hMultipleEffectPaths, hAVPipesPaths, hAcrylicPaths, hOtherScatterPaths);
-    std::string saveroot = "region_selected_hists_" + signal_param + "_" + inputFile;
+    // get file name from path+filename string
+    std::size_t botDirPos = inputFile.find_last_of("/");
+    std::string filename = inputFile.substr(botDirPos+1, inputFile.length());
+    std::string saveroot = "region_selected_hists_" + signal_param + "_" + filename;
     TFile *rootfile = new TFile(saveroot.c_str(),"RECREATE");
     
     rootfile->cd();
@@ -556,6 +575,15 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, bool verbose, boo
     return 0;
 }
 
+/**
+ * @brief Remove the point in points with the worst FOM, and recalculate the mid point from the two remaining.
+ * If the middle point is the worst, remove the second worst instead.
+ * 
+ * @param bestPoint Point with best FOM
+ * @param worstPoint Point with worst FOM
+ * @param originalPoints (z_i_min, z_i_mid, z_i_max), for z=x,y, and i in {a, b, c}
+ * @return std::vector<double> 
+ */
 std::vector<double> GetThreePoints(double bestPoint, double worstPoint, std::vector<double> originalPoints){
     std::vector<double> newPoints;
     if(worstPoint == originalPoints.at(0)){ //left point worst
@@ -579,6 +607,22 @@ std::vector<double> GetThreePoints(double bestPoint, double worstPoint, std::vec
     return newPoints;
 }
 
+/**
+ * @brief Replace the associated point in the trianle (normally given by fixedPoints) with each point (of 3) in points,
+ * draw a triangle with each such configuration, and count the number of different types on events that fall inside/outside
+ * of the triangle. The FOM for each is a ratio of numbers of events: signal inside / sqrt(total inside), where signal is
+ * defined below, and total means any event type.
+ * 
+ * @param points (z_i_min, z_i_mid, z_i_max), for z=x,y, and i in {a, b, c}
+ * @param fixedPoints  (x_a_min, x_b_max, x_c_max, y_a_min, y_b_max, y_c_min)
+ * @param numVar Denotes which point is being used/replaced (0=x_a, 1=x_b, 2=x_c, 3=y_a, 4=y_b, 5=y_c)
+ * @param allPathsHist Histogram for all light paths
+ * @param reEmittedHist Histogram for reemitted light paths
+ * @param scatteredHist Histogram for scattered light paths
+ * @param signal = scattered, reemitted or attenuated. (attenuated = scattered + reemitted). Note that in the code countReEmitted(1,2,3)
+ * refers to whichever one of these was selected.
+ * @return std::vector<double> 
+ */
 std::vector<double> GetFOMs(std::vector<double> points, std::vector<double> fixedPoints, int numVar, TH2F *allPathsHist, TH2F *reEmittedHist, TH2F *scatteredHist, std::string signal){
 
     //FIXME: Pass in vector of hists?
@@ -622,7 +666,7 @@ std::vector<double> GetFOMs(std::vector<double> points, std::vector<double> fixe
                     rightHandGrad = (fixedPoints.at(4) - fixedPoints.at(5)) / (fixedPoints.at(1) - fixedPoints.at(2));
                 }
                 else{
-                    rightHandGrad = 0;
+                    rightHandGrad = 0;  // 0 gradient case covered by >0 and <0 conditions further down (same with other rightHandGrads)
                 }
                 double rightHandIntercept = fixedPoints.at(4) - (rightHandGrad*fixedPoints.at(1));
                 if(yBinCenter > ((bottomGrad1*xBinCenter) + bottomIntercept1) and yBinCenter < ((upperGrad1*xBinCenter) + upperIntercept1) and xBinCenter >= point1 and ((yBinCenter <= ((rightHandGrad*xBinCenter) + rightHandIntercept) and rightHandGrad < 0) or (yBinCenter >= ((rightHandGrad*xBinCenter) + rightHandIntercept) and rightHandGrad > 0) or (rightHandGrad == 0))){
@@ -1015,6 +1059,14 @@ std::vector<double> GetFOMs(std::vector<double> points, std::vector<double> fixe
     return outputFOMs;
 }
 
+/**
+ * @brief Compares the FOM of each point (of 3) in points, and returns a vector with:
+ * (point with best (highest) FOM, point with worst (lowest) FOM, FOM of best point, FOM of worst point).
+ * 
+ * @param FOMs Figures of merit, See GetFOM() function.
+ * @param points (z_i_min, z_i_mid, z_i_max), for z=x,y, and i in {a, b, c}
+ * @return std::vector<double> 
+ */
 std::vector<double> GetBestFOM(std::vector<double> FOMs, std::vector<double> points){
     std::vector<double> output;
     if(FOMs.at(0) > FOMs.at(1) and FOMs.at(0) > FOMs.at(2)){ //left side best point
@@ -1069,6 +1121,30 @@ std::vector<double> GetBestFOM(std::vector<double> FOMs, std::vector<double> poi
     return output;
 }
 
+/**
+ * @brief Clone all the original histograms (all but the first params below) 3 times: One for the triangle region,
+ * called Region, and one for the direct (called Direct) and reflected (Reflected) beam spots each.
+ * The bins falling outside of these regions are then set to zero in each corresponding histogram.
+ * Returns vector of resultings histograms.
+ * 
+ * @param finalPoints final fixed points (x_a_min, x_b_max, x_c_max, y_a_min, y_b_max, y_c_min).
+ * @param hReEmittedPaths Original histogram.
+ * @param hAllPaths Original histogram.
+ * @param hNoisePaths Original histogram.
+ * @param hSingleScatterPaths Original histogram.
+ * @param hOtherPaths Original histogram.
+ * @param hNoEffectPaths Original histogram.
+ * @param hNearReflectPaths Original histogram.
+ * @param hRopesPaths Original histogram.
+ * @param hPMTReflectionPaths Original histogram.
+ * @param hExtWaterScatterPaths Original histogram.
+ * @param hInnerAvReflectPaths Original histogram.
+ * @param hMultipleEffectPaths Original histogram.
+ * @param hAVPipesPaths Original histogram.
+ * @param hAcrylicPaths Original histogram.
+ * @param hOtherScatterPaths Original histogram.
+ * @return std::vector<TH2F*> 
+ */
 std::vector<TH2F*> GetRegionSelectedHists(std::vector<double> finalPoints, TH2F *hReEmittedPaths, TH2F *hAllPaths, TH2F *hNoisePaths, TH2F *hSingleScatterPaths, TH2F *hOtherPaths, TH2F *hNoEffectPaths, TH2F *hNearReflectPaths, TH2F *hRopesPaths, TH2F *hPMTReflectionPaths, TH2F *hExtWaterScatterPaths, TH2F *hInnerAvReflectPaths, TH2F *hMultipleEffectPaths, TH2F *hAVPipesPaths, TH2F *hAcrylicPaths, TH2F *hOtherScatterPaths){
 
     //FIXME: pass in vector of hists?
@@ -1297,6 +1373,16 @@ std::vector<TH2F*> GetRegionSelectedHists(std::vector<double> finalPoints, TH2F 
     return outputHists;
 }
 
+
+/**
+ * @brief Checks if points have broken the triangle (for ex if x_a>x_b, which would flip the order around).
+ * If so replace with associated limit from fixedPoints.
+ * 
+ * @param points (z_i_min, z_i_mid, z_i_max), for z=x,y, and i in {a, b, c}.
+ * @param fixedPoints (x_a_min, x_b_max, x_c_max, y_a_min, y_b_max, y_c_min).
+ * @param numVar Denotes which point is being checked (0=x_a, 1=x_b, 2=x_c, 3=y_a, 4=y_b, 5=y_c).
+ * @return std::vector<double> 
+ */
 std::vector<double> CheckPoints(std::vector<double> points, std::vector<double> fixedPoints, int numVar){
     if(numVar == 0){
         if(points.at(0) > fixedPoints.at(1)) points.at(0) = fixedPoints.at(1);
