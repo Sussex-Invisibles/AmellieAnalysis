@@ -8,6 +8,7 @@ Create plots of the phase space showing the relationship between different param
 #include <TGraph.h>
 #include <TFile.h>
 #include <iostream>
+#include <fstream>
 #include <chrono>
 
 int CalculateRegions(std::string inputFile, int nbins);
@@ -513,14 +514,14 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, bool verbose, boo
     std::size_t botDirPos_txt = inputFile.find_last_of("/");
     std::string filename_txt = inputFile.substr(botDirPos_txt+1, inputFile.length()) + ".txt";
     std::string saveroot_txt = "region_selected_limits_" + signal_param + "_" + filename_txt;
-    outputFile.open(saveroot_txt.c_str());
-    outputFile << std::to_string(fixedPoints.at(0)) + "\n"; // x_a
-    outputFile << std::to_string(fixedPoints.at(1)) + "\n"; // x_b
-    outputFile << std::to_string(fixedPoints.at(2)) + "\n"; // x_c
-    outputFile << std::to_string(fixedPoints.at(3)) + "\n"; // y_a
-    outputFile << std::to_string(fixedPoints.at(4)) + "\n"; // y_b
-    outputFile << std::to_string(fixedPoints.at(5)) + "\n"; // y_c
-    outputFile.close();
+    outputFile_txt.open(saveroot_txt.c_str());
+    outputFile_txt << std::to_string(fixedPoints.at(0)) + "\n"; // x_a
+    outputFile_txt << std::to_string(fixedPoints.at(1)) + "\n"; // x_b
+    outputFile_txt << std::to_string(fixedPoints.at(2)) + "\n"; // x_c
+    outputFile_txt << std::to_string(fixedPoints.at(3)) + "\n"; // y_a
+    outputFile_txt << std::to_string(fixedPoints.at(4)) + "\n"; // y_b
+    outputFile_txt << std::to_string(fixedPoints.at(5)) + "\n"; // y_c
+    outputFile_txt.close();
 
     //now use final result to get region, write to file
 
