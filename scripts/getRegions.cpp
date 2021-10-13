@@ -35,7 +35,7 @@ int main(int argc, char** argv){
 }
 
 /**
- * @brief Finds Triangular region with best (highest) FOM (attenuated / sqrt(total)) via an divide and conquer method
+ * @brief Finds Triangular region with best (highest) FOM (attenuated / sqrt(total)) via a divide and conquer method
  * Start with p=(min, mid, max) for each point (x and y coordinates), as well as initial fixed points that are the largest
  * right-angle triangle to start with. Find FOM for triangle by replacing each point with each option in p (one at a time),
  * while keeping the other fixed points temprarily fixed. Then replace the associated fixed point with whichever of min or
@@ -505,6 +505,22 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, bool verbose, boo
         if(extraInfo) hPointy_c->SetPoint(numMainLoopIterations, numMainLoopIterations, fixedPoints.at(5));
         numMainLoopIterations++;
     }
+
+    // open txt file and Region limits (can then use on real data!)
+
+    std::ofstream outputFile_txt;
+    // get file name from path+filename string
+    std::size_t botDirPos_txt = inputFile.find_last_of("/");
+    std::string filename_txt = inputFile.substr(botDirPos_txt+1, inputFile.length()) + ".txt";
+    std::string saveroot_txt = "region_selected_limits_" + signal_param + "_" + filename_txt;
+    outputFile.open(saveroot_txt.c_str());
+    outputFile << std::to_string(fixedPoints.at(0)) + "\n"; // x_a
+    outputFile << std::to_string(fixedPoints.at(1)) + "\n"; // x_b
+    outputFile << std::to_string(fixedPoints.at(2)) + "\n"; // x_c
+    outputFile << std::to_string(fixedPoints.at(3)) + "\n"; // y_a
+    outputFile << std::to_string(fixedPoints.at(4)) + "\n"; // y_b
+    outputFile << std::to_string(fixedPoints.at(5)) + "\n"; // y_c
+    outputFile.close();
 
     //now use final result to get region, write to file
 
