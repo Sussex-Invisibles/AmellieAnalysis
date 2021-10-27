@@ -45,7 +45,7 @@ std::vector<RAT::DS::MCTrack::ESummaryFlag> flags = {RAT::DS::MCTrack::OpScintil
 
 int GetPhotonProcess(const RAT::DS::MCTrack &inputPhotonTrack, const RAT::DS::MC &inputMC, int event_num, bool debug);
 
-int GetLightPaths(std::string file, std::string fibre);
+int GetLightPaths(std::string file, std::string fibre, std::string data_type);
 
 void WriteProcess(const RAT::DS::MCTrack &inputPhotonTrack);
 
@@ -60,7 +60,8 @@ int GetPMTID(std::string input);
 int main(int argc, char** argv){
     std::string file = argv[1];
     std::string fibre = argv[2];
-    int returnCode = GetLightPaths(file, fibre);
+    std::string data_type = argv[3];  // MC or raw
+    int returnCode = GetLightPaths(file, fibre, data_type);
     return 0;
 }
 
@@ -1005,7 +1006,7 @@ void WriteProcess(const RAT::DS::MCTrack &inputPhotonTrack){
     std::cout << " " << std::endl;
 }
 
-int GetLightPaths(std::string file, std::string fibre){
+int GetLightPaths(std::string file, std::string fibre, std::string data_type){
 
     bool verbose = true;
     bool debug = false;
@@ -1021,32 +1022,6 @@ int GetLightPaths(std::string file, std::string fibre){
     std::string saveroot = "Tracking_ResHitCosTheta_" + filename;
     TFile *rootfile = new TFile(saveroot.c_str(),"RECREATE");
 
-    TH1D* hNhits = new TH1D("hNhits", "nhits", 101, 0, 100);
-
-    TH2F *hPMTResTimeCosTheta = new TH2F("hPmtResTimeVsCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
-    TH2F *hNoiseResTimeCosTheta = new TH2F("hNoiseResTimeVsCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
-    TH2F *hSingleScatterResTimeCosTheta = new TH2F("hSingleScatterResTimeVsCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
-    TH2F *hReemissionResTimeCosTheta = new TH2F("hReemissionResTimeVsCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
-    TH2F *hOtherEffectResTimeCosTheta = new TH2F("hOtherEffectResTimeVsCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
-    TH2F *hNoEffectResTimeCosTheta = new TH2F("hNoEffectResTimeVsCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
-    TH2F *hNearReflectResTimeCosTheta = new TH2F("hNearReflectResTimeVsCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
-    TH2F *hRopesResTimeCosTheta = new TH2F("hRopesResTimeVsCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
-    TH2F *hPMTReflectionResTimeCosTheta = new TH2F("hPMTReflectionResTimeVsCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
-    TH2F *hPMTReflectionAVReflectionResTimeCosTheta = new TH2F("hPMTReflectionAVReflectionResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
-    TH2F *hExtWaterScatterResTimeCosTheta = new TH2F("hExtWaterScatterResTimeVsCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
-    TH2F *hInnerAvReflectionResTimeCosTheta = new TH2F("hInnerAvReflectionResTimeVsCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
-    TH2F *hMultipleEffectResTimeCosTheta = new TH2F("hMultipleEffectResTimeVsCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
-    TH2F *hAVPipesResTimeCosTheta = new TH2F("hAVPipesResTimeVsCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
-    TH2F *hAcrylicScatterResTimeCosTheta = new TH2F("hAcrylicScatterResTimeVsCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
-    TH2F *hOtherScatterResTimeCosTheta = new TH2F("OtherScatterResTimeVsCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
-
-    TH1D *h1DNoEffectResTime = new TH1D("h1DNoEffectResTime", "MC Residual Front End Time", 1000, -50., 250.);
-    TH1D *h1DNoEffectTime = new TH1D("h1DNoEffectTime", "MC Front End Time", 1000, -50., 250.);
-    TH1D *h1DNoEffectMCTransitTime = new TH1D("h1DNoEffectMCTransitTime", "MC Transit Time", 1000, -50., 250.);
-    TH1D *h1DNoEffectElectronicsTime = new TH1D("h1DNoEffectElectronicsTime", "Front End Time - Transit Time", 1000, -25., 200.);
-
-    TH1D *h1DResTimeAll = new TH1D("h1DResTimeAll", "Residual Hit Time", 1000, -50., 250.);
-
     TH2F *h2DLPCTIR = new TH2F("h2DLPCTIR", "title", 1000, -1., 1., 20, 0, 2);
     TH2F *h2DLPCStraightLinePath = new TH2F("h2DLPCStraightLinePath", "title", 1000, -1., 1., 20, 0, 2);
     TH2F *h2DLPCTransitTime = new TH2F("h2DLPCTransitTime", "title", 1000, -1., 1., 900, 0, 90);
@@ -1056,43 +1031,6 @@ int GetLightPaths(std::string file, std::string fibre){
     TH1D *h1DWAWPaths = new TH1D("h1DWAWPaths", "Water AV water path", 1000, -1., 1.);
     TH1D *h1DWaterPaths = new TH1D("h1DWaterPaths", "Water AV water path", 1000, -1., 1.);
     TH1D *h1DBelowMaxReflectionAngle = new TH1D("h1DBelowMaxReflectionAngle", "Below max angle", 1000, -1., 1.);
-
-    TH2D *h1DDiscontinuityPMTs = new TH2D("h1DDiscontinuityPMTs", "title",9729, 0, 9728, 1000, -50., 250.);
-
-    TH2F *hMultipleDoubleAbsResTimeCosTheta = new TH2F("hMultipleDoubleAbsResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
-    TH2F *hMultipleDoubleScatResTimeCosTheta = new TH2F("hMultipleDoubleScatResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
-    TH2F *hMultipleAbsScatScatterResTimeCosTheta = new TH2F("hMultipleAbsScatScatterResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
-    TH2F *hMultiplePMTReflectAbsAbsResTimeCosTheta = new TH2F("hMultiplePMTReflectAbsAbsResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
-    TH2F *hMultiplePMTReflectScatResTimeCosTheta = new TH2F("hMultiplePMTReflectScatResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
-    TH2F *hMultipleDoublePMTReflectResTimeCosTheta = new TH2F("hMultipleDoublePMTReflectResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
-    TH2F *hMultipleDoubleInnerAVReflectResTimeCosTheta = new TH2F("hMultipleDoubleInnerAVReflectResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
-    TH2F *hMultipleInnerAVReflectAbsResTimeCosTheta = new TH2F("hMultipleInnerAVReflectAbsResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
-    TH2F *hMultipleInnerAVReflectScatResTimeCosTheta = new TH2F("hMultipleInnerAVReflectScatResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
-    TH2F *hMultipleDoubleExternalScatResTimeCosTheta = new TH2F("hMultipleDoubleExternalScatResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
-    TH2F *hMultipleExtenalScatAbsResTimeCosTheta = new TH2F("hMultipleExtenalScatAbsResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
-    TH2F *hMultipleExternalScatInternalScatResTimeCosTheta = new TH2F("hMultipleExternalScatInternalScatResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
-    TH2F *hMultipleExternalScatInnerAvReflectResTimeCosTheta = new TH2F("hMultipleExternalScatInnerAvReflectResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
-    TH2F *hMultipleExternalScatPMTReflectResTimeCosTheta = new TH2F("hMultipleExternalScatPMTReflectResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
-    TH2F *hMultipleExternalScatNearReflectResTimeCosTheta = new TH2F("hMultipleExternalScatNearReflectResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
-    TH2F *hMultipleNearReflectPMTReflectResTimeCosTheta = new TH2F("hMultipleNearReflectPMTReflectResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
-    TH2F *hMultiplePMTReflectRopesResTimeCosTheta = new TH2F("hMultiplePMTReflectRopesResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
-    TH2F *hMultipleExternalScatRopesResTimeCosTheta = new TH2F("hMultipleExternalScatRopesResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
-    TH2F *hMultipleDoubleRopesResTimeCosTheta = new TH2F("hMultipleDoubleRopesResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
-    TH2F *hMultipleScatterPipesResTimeCosTheta = new TH2F("hMultipleScatterPipesResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
-    TH2F *hMultipleDoublePipesResTimeCosTheta = new TH2F("hMultipleDoublePipesResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
-    TH2F *hMultipleInnerAVReflectAcrylicScatResTimeCosTheta = new TH2F("hMultipleInnerAVReflectAcrylicScatResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
-    TH2F *hMultipleInnerAVReflectPMTReflectResTimeCosTheta = new TH2F("hMultipleInnerAVReflectPMTReflectResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
-    TH2F *hMultipleOuterAVReflectExternalScatResTimeCosTheta = new TH2F("hMultipleOuterAVReflectExternalScatResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
-    TH2F *hMultiplePMTReflectPipesResTimeCosTheta = new TH2F("hMultiplePMTReflectPipesResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
-    TH2F *hMultipleRopesAcrylicScatResTimeCosTheta = new TH2F("hMultipleRopesAcrylicScatResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
-    TH2F *hMultiplePMTReflectAcrylicScatResTimeCosTheta = new TH2F("hMultiplePMTReflectAcrylicScatResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
-    TH2F *hMultipleScatterAcrylicScatResTimeCosTheta = new TH2F("hMultipleScatterAcrylicScatResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
-    TH2F *hMultipleOtherScatRopesResTimeCosTheta = new TH2F("hMultipleOtherScatRopesResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
-    TH2F *hMultipleScatterAcrylicBounceResTimeCosTheta = new TH2F("hMultipleScatterAcrylicBounceResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
-    TH2F *hMultipleExternalScatterAcrylicBounceResTimeCosTheta = new TH2F("hMultipleExternalScatterAcrylicBounceResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
-    TH2F *hMultiplePMTReflectAcrylicBounceResTimeCosTheta = new TH2F("hMultiplePMTReflectAcrylicBounceResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
-    TH2F *hMultipleOtherTimeCosTheta = new TH2F("hMultipleOtherTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
-    TH2F *hMultipleMoreThan2EffectResTimeCosTheta = new TH2F("hMultipleMoreThan2EffectResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
 
     if(verbose) std::cout << "Initialising RAT" << std::endl;
 
@@ -1173,309 +1111,457 @@ int GetLightPaths(std::string file, std::string fibre){
         }
     }
 
-    std::vector<Double_t> mctimes;
-    std::vector<Double_t> evtimes;
-    std::vector<int> mcids;
-    std::vector<int> evids;
-    Double_t gttime;
-    bool print_status = false;
+    if (data_type == "MC") {
+        // Create histograms
+        TH1D* hNhits = new TH1D("hNhits", "nhits", 101, 0, 100);
 
-    size_t nEV = 0;
-    size_t entryCount = dsreader.GetEntryCount(); //number of entries, want to loop over each one
-    if(verbose) std::cout << "No of entries in run: " << entryCount << " events" << std::endl;
-    for (size_t iEntry = 0; iEntry < entryCount; ++iEntry){
-        if (iEntry %100 == 0 and verbose) std::cout << "Entry no " << iEntry << std::endl;
-        const RAT::DS::Entry &rDS = dsreader.GetEntry(iEntry);
-        const RAT::DS::MC &rMC = rDS.GetMC();
-        for(size_t i_ev = 0; i_ev< rDS.GetMCEVCount(); ++i_ev){
-            const RAT::DS::MCEV &rMCEV = rDS.GetMCEV(i_ev);
-            const RAT::DS::MCHits &rMCHits = rMCEV.GetMCHits();
-            const RAT::DS::EV &rEV = rDS.GetEV(i_ev);
-            const RAT::DS::CalPMTs &calPMTs = rEV.GetCalPMTs(); 
-            size_t n_hits_MCHits = rMCHits.GetCount();
-            size_t calPMT_count = calPMTs.GetCount();
-            hNhits->Fill(n_hits_MCHits);
+        TH2F *hPMTResTimeCosTheta = new TH2F("hPmtResTimeVsCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
+        TH2F *hNoiseResTimeCosTheta = new TH2F("hNoiseResTimeVsCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
+        TH2F *hSingleScatterResTimeCosTheta = new TH2F("hSingleScatterResTimeVsCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
+        TH2F *hReemissionResTimeCosTheta = new TH2F("hReemissionResTimeVsCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
+        TH2F *hOtherEffectResTimeCosTheta = new TH2F("hOtherEffectResTimeVsCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
+        TH2F *hNoEffectResTimeCosTheta = new TH2F("hNoEffectResTimeVsCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
+        TH2F *hNearReflectResTimeCosTheta = new TH2F("hNearReflectResTimeVsCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
+        TH2F *hRopesResTimeCosTheta = new TH2F("hRopesResTimeVsCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
+        TH2F *hPMTReflectionResTimeCosTheta = new TH2F("hPMTReflectionResTimeVsCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
+        TH2F *hPMTReflectionAVReflectionResTimeCosTheta = new TH2F("hPMTReflectionAVReflectionResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
+        TH2F *hExtWaterScatterResTimeCosTheta = new TH2F("hExtWaterScatterResTimeVsCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
+        TH2F *hInnerAvReflectionResTimeCosTheta = new TH2F("hInnerAvReflectionResTimeVsCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
+        TH2F *hMultipleEffectResTimeCosTheta = new TH2F("hMultipleEffectResTimeVsCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
+        TH2F *hAVPipesResTimeCosTheta = new TH2F("hAVPipesResTimeVsCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
+        TH2F *hAcrylicScatterResTimeCosTheta = new TH2F("hAcrylicScatterResTimeVsCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
+        TH2F *hOtherScatterResTimeCosTheta = new TH2F("OtherScatterResTimeVsCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
 
-            //get ev PMT ids
+        TH1D *h1DResTimeAll = new TH1D("h1DResTimeAll", "Residual Hit Time", 1000, -50., 250.);
+        TH1D *h1DNoEffectResTime = new TH1D("h1DNoEffectResTime", "MC Residual Front End Time", 1000, -50., 250.);
+        TH1D *h1DNoEffectTime = new TH1D("h1DNoEffectTime", "MC Front End Time", 1000, -50., 250.);
+        TH1D *h1DNoEffectMCTransitTime = new TH1D("h1DNoEffectMCTransitTime", "MC Transit Time", 1000, -50., 250.);
+        TH1D *h1DNoEffectElectronicsTime = new TH1D("h1DNoEffectElectronicsTime", "Front End Time - Transit Time", 1000, -25., 200.);
 
-            std::vector<int> evPMTIDs;
-            std::vector<double> evPMTTimes;
+        TH2D *h1DDiscontinuityPMTs = new TH2D("h1DDiscontinuityPMTs", "title",9729, 0, 9728, 1000, -50., 250.);
 
-            for(size_t i_evpmt = 0; i_evpmt < calPMT_count; ++i_evpmt){
-                evPMTIDs.push_back(calPMTs.GetPMT(i_evpmt).GetID());
-                evPMTTimes.push_back(calPMTs.GetPMT(i_evpmt).GetTime() - transitTime[i_evpmt] - 390 + rMCEV.GetGTTime());
-                h1DResTimeAll->Fill(calPMTs.GetPMT(i_evpmt).GetTime() - transitTime[i_evpmt] - bucketTime[i_evpmt] - 390 + rMCEV.GetGTTime());
-            }
+        TH2F *hMultipleDoubleAbsResTimeCosTheta = new TH2F("hMultipleDoubleAbsResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
+        TH2F *hMultipleDoubleScatResTimeCosTheta = new TH2F("hMultipleDoubleScatResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
+        TH2F *hMultipleAbsScatScatterResTimeCosTheta = new TH2F("hMultipleAbsScatScatterResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
+        TH2F *hMultiplePMTReflectAbsAbsResTimeCosTheta = new TH2F("hMultiplePMTReflectAbsAbsResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
+        TH2F *hMultiplePMTReflectScatResTimeCosTheta = new TH2F("hMultiplePMTReflectScatResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
+        TH2F *hMultipleDoublePMTReflectResTimeCosTheta = new TH2F("hMultipleDoublePMTReflectResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
+        TH2F *hMultipleDoubleInnerAVReflectResTimeCosTheta = new TH2F("hMultipleDoubleInnerAVReflectResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
+        TH2F *hMultipleInnerAVReflectAbsResTimeCosTheta = new TH2F("hMultipleInnerAVReflectAbsResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
+        TH2F *hMultipleInnerAVReflectScatResTimeCosTheta = new TH2F("hMultipleInnerAVReflectScatResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
+        TH2F *hMultipleDoubleExternalScatResTimeCosTheta = new TH2F("hMultipleDoubleExternalScatResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
+        TH2F *hMultipleExtenalScatAbsResTimeCosTheta = new TH2F("hMultipleExtenalScatAbsResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
+        TH2F *hMultipleExternalScatInternalScatResTimeCosTheta = new TH2F("hMultipleExternalScatInternalScatResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
+        TH2F *hMultipleExternalScatInnerAvReflectResTimeCosTheta = new TH2F("hMultipleExternalScatInnerAvReflectResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
+        TH2F *hMultipleExternalScatPMTReflectResTimeCosTheta = new TH2F("hMultipleExternalScatPMTReflectResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
+        TH2F *hMultipleExternalScatNearReflectResTimeCosTheta = new TH2F("hMultipleExternalScatNearReflectResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
+        TH2F *hMultipleNearReflectPMTReflectResTimeCosTheta = new TH2F("hMultipleNearReflectPMTReflectResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
+        TH2F *hMultiplePMTReflectRopesResTimeCosTheta = new TH2F("hMultiplePMTReflectRopesResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
+        TH2F *hMultipleExternalScatRopesResTimeCosTheta = new TH2F("hMultipleExternalScatRopesResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
+        TH2F *hMultipleDoubleRopesResTimeCosTheta = new TH2F("hMultipleDoubleRopesResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
+        TH2F *hMultipleScatterPipesResTimeCosTheta = new TH2F("hMultipleScatterPipesResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
+        TH2F *hMultipleDoublePipesResTimeCosTheta = new TH2F("hMultipleDoublePipesResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
+        TH2F *hMultipleInnerAVReflectAcrylicScatResTimeCosTheta = new TH2F("hMultipleInnerAVReflectAcrylicScatResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
+        TH2F *hMultipleInnerAVReflectPMTReflectResTimeCosTheta = new TH2F("hMultipleInnerAVReflectPMTReflectResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
+        TH2F *hMultipleOuterAVReflectExternalScatResTimeCosTheta = new TH2F("hMultipleOuterAVReflectExternalScatResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
+        TH2F *hMultiplePMTReflectPipesResTimeCosTheta = new TH2F("hMultiplePMTReflectPipesResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
+        TH2F *hMultipleRopesAcrylicScatResTimeCosTheta = new TH2F("hMultipleRopesAcrylicScatResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
+        TH2F *hMultiplePMTReflectAcrylicScatResTimeCosTheta = new TH2F("hMultiplePMTReflectAcrylicScatResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
+        TH2F *hMultipleScatterAcrylicScatResTimeCosTheta = new TH2F("hMultipleScatterAcrylicScatResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
+        TH2F *hMultipleOtherScatRopesResTimeCosTheta = new TH2F("hMultipleOtherScatRopesResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
+        TH2F *hMultipleScatterAcrylicBounceResTimeCosTheta = new TH2F("hMultipleScatterAcrylicBounceResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
+        TH2F *hMultipleExternalScatterAcrylicBounceResTimeCosTheta = new TH2F("hMultipleExternalScatterAcrylicBounceResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
+        TH2F *hMultiplePMTReflectAcrylicBounceResTimeCosTheta = new TH2F("hMultiplePMTReflectAcrylicBounceResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
+        TH2F *hMultipleOtherTimeCosTheta = new TH2F("hMultipleOtherTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
+        TH2F *hMultipleMoreThan2EffectResTimeCosTheta = new TH2F("hMultipleMoreThan2EffectResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
 
-            //now do main tracking
-            std::vector<int> MCPMTIDs; 
 
-            for(size_t i_mcpmt = 0; i_mcpmt < rMC.GetMCPMTCount(); ++i_mcpmt){
-                const RAT::DS::MCPMT &rMCPMT = rMC.GetMCPMT(i_mcpmt);
-                if(rMCPMT.GetMCPECount() == 0) continue; //should be a photo electron produced at pmt
+        std::vector<Double_t> mctimes;
+        std::vector<Double_t> evtimes;
+        std::vector<int> mcids;
+        std::vector<int> evids;
+        Double_t gttime;
+        bool print_status = false;
 
-                UInt_t pmtID = rMCPMT.GetID();
+        size_t nEV = 0;
+        size_t entryCount = dsreader.GetEntryCount(); //number of entries, want to loop over each one
+        if(verbose) std::cout << "No of entries in run: " << entryCount << " events" << std::endl;
+        for (size_t iEntry = 0; iEntry < entryCount; ++iEntry){
+            if (iEntry %100 == 0 and verbose) std::cout << "Entry no " << iEntry << std::endl;
+            const RAT::DS::Entry &rDS = dsreader.GetEntry(iEntry);
+            const RAT::DS::MC &rMC = rDS.GetMC();
+            for(size_t i_ev = 0; i_ev< rDS.GetMCEVCount(); ++i_ev){
+                const RAT::DS::MCEV &rMCEV = rDS.GetMCEV(i_ev);
+                const RAT::DS::MCHits &rMCHits = rMCEV.GetMCHits();
+                const RAT::DS::EV &rEV = rDS.GetEV(i_ev);
+                const RAT::DS::CalPMTs &calPMTs = rEV.GetCalPMTs(); 
+                size_t n_hits_MCHits = rMCHits.GetCount();
+                size_t calPMT_count = calPMTs.GetCount();
+                hNhits->Fill(n_hits_MCHits);
 
-                if(std::find(evPMTIDs.begin(), evPMTIDs.end(), pmtID) == evPMTIDs.end()) continue; //PMT not in EV branch
+                //get ev PMT ids
 
-                MCPMTIDs.push_back(pmtID);
+                std::vector<int> evPMTIDs;
+                std::vector<double> evPMTTimes;
 
-                for(int z=0;z<rMCPMT.GetMCPECount();z++){ //FIXME: multiple PEs? 
+                for(size_t i_evpmt = 0; i_evpmt < calPMT_count; ++i_evpmt){
+                    evPMTIDs.push_back(calPMTs.GetPMT(i_evpmt).GetID());
+                    evPMTTimes.push_back(calPMTs.GetPMT(i_evpmt).GetTime() - transitTime[i_evpmt] - 390 + rMCEV.GetGTTime());
+                    h1DResTimeAll->Fill(calPMTs.GetPMT(i_evpmt).GetTime() - transitTime[i_evpmt] - bucketTime[i_evpmt] - 390 + rMCEV.GetGTTime());
+                }
 
-                    Double_t t = rMCPMT.GetMCPE(z).GetFrontEndTime();
-                    Double_t t_res = t - transitTime[pmtID] - bucketTime[pmtID];
+                //now do main tracking
+                std::vector<int> MCPMTIDs; 
 
-                    hPMTResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
+                for(size_t i_mcpmt = 0; i_mcpmt < rMC.GetMCPMTCount(); ++i_mcpmt){
+                    const RAT::DS::MCPMT &rMCPMT = rMC.GetMCPMT(i_mcpmt);
+                    if(rMCPMT.GetMCPECount() == 0) continue; //should be a photo electron produced at pmt
 
-                    //now, find photon process and fill relevant histogram
-                    //first check is for pmts with no photons, these are noise
-                    if(rMCPMT.GetMCPhotonCount() == 0){
-                        hNoiseResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
-                    }
+                    UInt_t pmtID = rMCPMT.GetID();
 
-                    else{
-                        //get the photon track associated with the PE
-                        const RAT::DS::MCPE &rPE = rMCPMT.GetMCPE(z);
-                        if(rPE.GetNoise() != 1 and rPE.GetAfterPulse() != 1){ //not noise or afterpulse
-                            UInt_t trackID = rPE.GetPhotonTrackID();
-                            const RAT::DS::MCTrack &rPhotonTrack = rMC.GetMCTrack(trackID);
-                            int photonProcess = GetPhotonProcess(rPhotonTrack, rMC, iEntry, debug);
+                    if(std::find(evPMTIDs.begin(), evPMTIDs.end(), pmtID) == evPMTIDs.end()) continue; //PMT not in EV branch
 
-                            h1DNoEffectElectronicsTime->Fill(t - (rPhotonTrack.GetMCTrackStep(rPhotonTrack.GetMCTrackStepCount()-1).GetGlobalTime() - rPhotonTrack.GetMCTrackStep(0).GetGlobalTime())); //time from PE to front end readout
+                    MCPMTIDs.push_back(pmtID);
 
-                            if(photonProcess == 0){
-                                hSingleScatterResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
-                            }
-                            else if(photonProcess == 1){
-                                hReemissionResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
-                            }
-                            else if(photonProcess == 2){
-                                hNoEffectResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
-                                h1DNoEffectResTime->Fill(t_res);
-                                h1DNoEffectTime->Fill(t);
-                                h1DNoEffectMCTransitTime->Fill(rPhotonTrack.GetMCTrackStep(rPhotonTrack.GetMCTrackStepCount()-1).GetGlobalTime() - rPhotonTrack.GetMCTrackStep(0).GetGlobalTime());
-                            }
-                            else if(photonProcess == 3){
-                                hMultipleEffectResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
-                                int multipleStatus = GetMultipleEffect(rPhotonTrack, rMC);
-                                if(multipleStatus == 0){
-                                    hMultipleMoreThan2EffectResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
-                                }
-                                if(multipleStatus == 1){
-                                    hMultipleDoubleAbsResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
-                                }
-                                if(multipleStatus == 2){
-                                    hMultipleDoubleScatResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
-                                }
-                                if(multipleStatus == 3){
-                                    hMultipleAbsScatScatterResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
-                                }
-                                if(multipleStatus == 4){
-                                    hMultiplePMTReflectAbsAbsResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
-                                }
-                                if(multipleStatus == 5){
-                                    hMultiplePMTReflectScatResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
-                                }
-                                if(multipleStatus == 6){
-                                    hMultipleDoublePMTReflectResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
-                                }
-                                if(multipleStatus == 7){
-                                    hMultipleDoubleInnerAVReflectResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
-                                }
-                                if(multipleStatus == 8){
-                                    hMultipleInnerAVReflectAbsResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
-                                }
-                                if(multipleStatus == 9){
-                                    hMultipleInnerAVReflectScatResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
-                                }
-                                if(multipleStatus == 10){
-                                    hMultipleDoubleExternalScatResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
-                                }
-                                if(multipleStatus == 11){
-                                    hMultipleExtenalScatAbsResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
-                                }
-                                if(multipleStatus == 12){
-                                    hMultipleExternalScatInternalScatResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
-                                }
-                                if(multipleStatus == 13){
-                                    hMultipleExternalScatInnerAvReflectResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
-                                }
-                                if(multipleStatus == 14){
-                                    hMultipleExternalScatPMTReflectResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
-                                }
-                                if(multipleStatus == 15){
-                                    hMultipleExternalScatNearReflectResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
-                                }
-                                if(multipleStatus == 16){
-                                    hMultipleNearReflectPMTReflectResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
-                                }
-                                if(multipleStatus == 17){
-                                    hMultiplePMTReflectRopesResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
-                                }
-                                if(multipleStatus == 18){
-                                    hMultipleExternalScatRopesResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
-                                }
-                                if(multipleStatus == 19){
-                                    hMultipleDoubleRopesResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
-                                }
-                                if(multipleStatus == 20){
-                                    hMultipleScatterPipesResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
-                                }
-                                if(multipleStatus == 21){
-                                    hMultipleDoublePipesResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
-                                }
-                                if(multipleStatus == 22){
-                                    hMultipleInnerAVReflectAcrylicScatResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
-                                }
-                                if(multipleStatus == 23){
-                                    hMultipleInnerAVReflectPMTReflectResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
-                                }
-                                if(multipleStatus == 24){
-                                    hMultipleOuterAVReflectExternalScatResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
-                                }
-                                if(multipleStatus == 25){
-                                    hMultiplePMTReflectPipesResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
-                                }
-                                if(multipleStatus == 26){
-                                    hMultipleRopesAcrylicScatResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
-                                }
-                                if(multipleStatus == 27){
-                                    hMultiplePMTReflectAcrylicScatResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
-                                }
-                                if(multipleStatus == 28){
-                                    hMultipleScatterAcrylicScatResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
-                                }
-                                if(multipleStatus == 29){
-                                    hMultipleOtherScatRopesResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
-                                }
-                                if(multipleStatus == 30){
-                                    hMultipleScatterAcrylicBounceResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
-                                }
-                                if(multipleStatus == 31){
-                                    hMultipleExternalScatterAcrylicBounceResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
-                                }
-                                if(multipleStatus == 32){
-                                    hMultiplePMTReflectAcrylicBounceResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
-                                }
-                                if(multipleStatus == 33){
-                                    hMultipleOtherTimeCosTheta->Fill(cosTheta[pmtID], t_res);
-                                }
-                            }
-                            else if(photonProcess == 4){
-                                hOtherEffectResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
-                            }
-                            else if(photonProcess == 5){
-                                hNearReflectResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
-                            }
-                            else if (photonProcess == 6){
-                                hRopesResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
-                            }
-                            else if(photonProcess == 7){
-                                hPMTReflectionResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
-                            }
-                            else if(photonProcess == 8){
-                                hExtWaterScatterResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
-                            }
-                            else if(photonProcess == 9){
-                                hInnerAvReflectionResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
-                            }
-                            else if(photonProcess == 10){
-                                hAVPipesResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
-                            }
-                            else if(photonProcess == 11){
-                                hAcrylicScatterResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
-                            }
-                            else if(photonProcess == 12){
-                                hOtherScatterResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
-                            }
-                            else if(photonProcess == 13){
-                                hPMTReflectionAVReflectionResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
-                            }
-                        }
-                        else{
+                    for(int z=0;z<rMCPMT.GetMCPECount();z++){ //FIXME: multiple PEs? 
+
+                        Double_t t = rMCPMT.GetMCPE(z).GetFrontEndTime();
+                        Double_t t_res = t - transitTime[pmtID] - bucketTime[pmtID];
+
+                        hPMTResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
+
+                        //now, find photon process and fill relevant histogram
+                        //first check is for pmts with no photons, these are noise
+                        if(rMCPMT.GetMCPhotonCount() == 0){
                             hNoiseResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
+                        }
+
+                        else{
+                            //get the photon track associated with the PE
+                            const RAT::DS::MCPE &rPE = rMCPMT.GetMCPE(z);
+                            if(rPE.GetNoise() != 1 and rPE.GetAfterPulse() != 1){ //not noise or afterpulse
+                                UInt_t trackID = rPE.GetPhotonTrackID();
+                                const RAT::DS::MCTrack &rPhotonTrack = rMC.GetMCTrack(trackID);
+                                int photonProcess = GetPhotonProcess(rPhotonTrack, rMC, iEntry, debug);
+
+                                h1DNoEffectElectronicsTime->Fill(t - (rPhotonTrack.GetMCTrackStep(rPhotonTrack.GetMCTrackStepCount()-1).GetGlobalTime() - rPhotonTrack.GetMCTrackStep(0).GetGlobalTime())); //time from PE to front end readout
+
+                                if(photonProcess == 0){
+                                    hSingleScatterResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
+                                }
+                                else if(photonProcess == 1){
+                                    hReemissionResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
+                                }
+                                else if(photonProcess == 2){
+                                    hNoEffectResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
+                                    h1DNoEffectResTime->Fill(t_res);
+                                    h1DNoEffectTime->Fill(t);
+                                    h1DNoEffectMCTransitTime->Fill(rPhotonTrack.GetMCTrackStep(rPhotonTrack.GetMCTrackStepCount()-1).GetGlobalTime() - rPhotonTrack.GetMCTrackStep(0).GetGlobalTime());
+                                }
+                                else if(photonProcess == 3){
+                                    hMultipleEffectResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
+                                    int multipleStatus = GetMultipleEffect(rPhotonTrack, rMC);
+                                    if(multipleStatus == 0){
+                                        hMultipleMoreThan2EffectResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
+                                    }
+                                    if(multipleStatus == 1){
+                                        hMultipleDoubleAbsResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
+                                    }
+                                    if(multipleStatus == 2){
+                                        hMultipleDoubleScatResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
+                                    }
+                                    if(multipleStatus == 3){
+                                        hMultipleAbsScatScatterResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
+                                    }
+                                    if(multipleStatus == 4){
+                                        hMultiplePMTReflectAbsAbsResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
+                                    }
+                                    if(multipleStatus == 5){
+                                        hMultiplePMTReflectScatResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
+                                    }
+                                    if(multipleStatus == 6){
+                                        hMultipleDoublePMTReflectResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
+                                    }
+                                    if(multipleStatus == 7){
+                                        hMultipleDoubleInnerAVReflectResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
+                                    }
+                                    if(multipleStatus == 8){
+                                        hMultipleInnerAVReflectAbsResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
+                                    }
+                                    if(multipleStatus == 9){
+                                        hMultipleInnerAVReflectScatResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
+                                    }
+                                    if(multipleStatus == 10){
+                                        hMultipleDoubleExternalScatResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
+                                    }
+                                    if(multipleStatus == 11){
+                                        hMultipleExtenalScatAbsResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
+                                    }
+                                    if(multipleStatus == 12){
+                                        hMultipleExternalScatInternalScatResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
+                                    }
+                                    if(multipleStatus == 13){
+                                        hMultipleExternalScatInnerAvReflectResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
+                                    }
+                                    if(multipleStatus == 14){
+                                        hMultipleExternalScatPMTReflectResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
+                                    }
+                                    if(multipleStatus == 15){
+                                        hMultipleExternalScatNearReflectResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
+                                    }
+                                    if(multipleStatus == 16){
+                                        hMultipleNearReflectPMTReflectResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
+                                    }
+                                    if(multipleStatus == 17){
+                                        hMultiplePMTReflectRopesResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
+                                    }
+                                    if(multipleStatus == 18){
+                                        hMultipleExternalScatRopesResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
+                                    }
+                                    if(multipleStatus == 19){
+                                        hMultipleDoubleRopesResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
+                                    }
+                                    if(multipleStatus == 20){
+                                        hMultipleScatterPipesResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
+                                    }
+                                    if(multipleStatus == 21){
+                                        hMultipleDoublePipesResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
+                                    }
+                                    if(multipleStatus == 22){
+                                        hMultipleInnerAVReflectAcrylicScatResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
+                                    }
+                                    if(multipleStatus == 23){
+                                        hMultipleInnerAVReflectPMTReflectResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
+                                    }
+                                    if(multipleStatus == 24){
+                                        hMultipleOuterAVReflectExternalScatResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
+                                    }
+                                    if(multipleStatus == 25){
+                                        hMultiplePMTReflectPipesResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
+                                    }
+                                    if(multipleStatus == 26){
+                                        hMultipleRopesAcrylicScatResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
+                                    }
+                                    if(multipleStatus == 27){
+                                        hMultiplePMTReflectAcrylicScatResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
+                                    }
+                                    if(multipleStatus == 28){
+                                        hMultipleScatterAcrylicScatResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
+                                    }
+                                    if(multipleStatus == 29){
+                                        hMultipleOtherScatRopesResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
+                                    }
+                                    if(multipleStatus == 30){
+                                        hMultipleScatterAcrylicBounceResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
+                                    }
+                                    if(multipleStatus == 31){
+                                        hMultipleExternalScatterAcrylicBounceResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
+                                    }
+                                    if(multipleStatus == 32){
+                                        hMultiplePMTReflectAcrylicBounceResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
+                                    }
+                                    if(multipleStatus == 33){
+                                        hMultipleOtherTimeCosTheta->Fill(cosTheta[pmtID], t_res);
+                                    }
+                                }
+                                else if(photonProcess == 4){
+                                    hOtherEffectResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
+                                }
+                                else if(photonProcess == 5){
+                                    hNearReflectResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
+                                }
+                                else if (photonProcess == 6){
+                                    hRopesResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
+                                }
+                                else if(photonProcess == 7){
+                                    hPMTReflectionResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
+                                }
+                                else if(photonProcess == 8){
+                                    hExtWaterScatterResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
+                                }
+                                else if(photonProcess == 9){
+                                    hInnerAvReflectionResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
+                                }
+                                else if(photonProcess == 10){
+                                    hAVPipesResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
+                                }
+                                else if(photonProcess == 11){
+                                    hAcrylicScatterResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
+                                }
+                                else if(photonProcess == 12){
+                                    hOtherScatterResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
+                                }
+                                else if(photonProcess == 13){
+                                    hPMTReflectionAVReflectionResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
+                                }
+                            }
+                            else{
+                                hNoiseResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
+                            }
                         }
                     }
                 }
-            }
 
-            //compare and add others to noise
-            for(int a=0;a<evPMTIDs.size();a++){
-                if(std::find(MCPMTIDs.begin(), MCPMTIDs.end(), evPMTIDs.at(a)) == MCPMTIDs.end()){
-                    hNoiseResTimeCosTheta->Fill(cosTheta[evPMTIDs.at(a)], evPMTTimes.at(a));
+                //compare and add others to noise
+                for(int a=0;a<evPMTIDs.size();a++){
+                    if(std::find(MCPMTIDs.begin(), MCPMTIDs.end(), evPMTIDs.at(a)) == MCPMTIDs.end()){
+                        hNoiseResTimeCosTheta->Fill(cosTheta[evPMTIDs.at(a)], evPMTTimes.at(a));
+                    }
                 }
             }
         }
+
+        //now write everything
+        rootfile->cd();
+        hNhits->Write();
+        hPMTResTimeCosTheta->Write();
+        hNoiseResTimeCosTheta->Write();
+        hSingleScatterResTimeCosTheta->Write();
+        hReemissionResTimeCosTheta->Write();
+        hOtherEffectResTimeCosTheta->Write();
+        hNoEffectResTimeCosTheta->Write();
+        hMultipleEffectResTimeCosTheta->Write();
+        hNearReflectResTimeCosTheta->Write();
+        hRopesResTimeCosTheta->Write();
+        hPMTReflectionResTimeCosTheta->Write();
+        hPMTReflectionAVReflectionResTimeCosTheta->Write();
+        hExtWaterScatterResTimeCosTheta->Write();
+        hInnerAvReflectionResTimeCosTheta->Write();
+        hAVPipesResTimeCosTheta->Write();
+        hAcrylicScatterResTimeCosTheta->Write();
+        hOtherScatterResTimeCosTheta->Write();
+        h1DNoEffectResTime->Write();
+        h1DNoEffectTime->Write();
+        h1DNoEffectMCTransitTime->Write();
+        h1DNoEffectElectronicsTime->Write();
+        h1DResTimeAll->Write();
+        h2DLPCTIR->Write();
+        h2DLPCStraightLinePath->Write();
+        h2DLPCTransitTime->Write();
+        h1DWASAWPaths->Write();
+        h1DWreflPaths->Write();
+        h1DWAWPaths->Write();
+        h1DWaterPaths->Write();
+        h1DBelowMaxReflectionAngle->Write();
+        h1DDiscontinuityPMTs->Write();
+        hMultipleMoreThan2EffectResTimeCosTheta->Write();
+        hMultipleDoubleAbsResTimeCosTheta->Write();
+        hMultipleDoubleScatResTimeCosTheta->Write();
+        hMultipleAbsScatScatterResTimeCosTheta->Write();
+        hMultiplePMTReflectAbsAbsResTimeCosTheta->Write();
+        hMultiplePMTReflectScatResTimeCosTheta->Write();
+        hMultipleDoublePMTReflectResTimeCosTheta->Write();
+        hMultipleDoubleInnerAVReflectResTimeCosTheta->Write();
+        hMultipleInnerAVReflectAbsResTimeCosTheta->Write();
+        hMultipleInnerAVReflectScatResTimeCosTheta->Write();
+        hMultipleDoubleExternalScatResTimeCosTheta->Write();  
+        hMultipleExtenalScatAbsResTimeCosTheta->Write();  
+        hMultipleExternalScatInternalScatResTimeCosTheta->Write();
+        hMultipleExternalScatInnerAvReflectResTimeCosTheta->Write();  
+        hMultipleExternalScatPMTReflectResTimeCosTheta->Write();
+        hMultipleExternalScatNearReflectResTimeCosTheta->Write();
+        hMultipleNearReflectPMTReflectResTimeCosTheta->Write();
+        hMultiplePMTReflectRopesResTimeCosTheta->Write();
+        hMultipleExternalScatRopesResTimeCosTheta->Write();
+        hMultipleDoubleRopesResTimeCosTheta->Write();
+        hMultipleScatterPipesResTimeCosTheta->Write();
+        hMultipleDoublePipesResTimeCosTheta->Write();
+        hMultipleInnerAVReflectAcrylicScatResTimeCosTheta->Write();
+        hMultipleInnerAVReflectPMTReflectResTimeCosTheta->Write();
+        hMultipleOuterAVReflectExternalScatResTimeCosTheta->Write();
+        hMultiplePMTReflectPipesResTimeCosTheta->Write();
+        hMultipleRopesAcrylicScatResTimeCosTheta->Write();
+        hMultiplePMTReflectAcrylicScatResTimeCosTheta->Write();
+        hMultipleScatterAcrylicScatResTimeCosTheta->Write();
+        hMultipleOtherScatRopesResTimeCosTheta->Write();
+        hMultipleScatterAcrylicBounceResTimeCosTheta->Write();
+        hMultipleExternalScatterAcrylicBounceResTimeCosTheta->Write();
+        hMultiplePMTReflectAcrylicBounceResTimeCosTheta->Write();
+        hMultipleOtherTimeCosTheta->Write();
+        rootfile->Write();
+
+    } else if (data_type == "raw") {
+        // Create histograms
+        TH1D *h1DResTimeAll = new TH1D("h1DResTimeAll", "Residual Hit Time", 1000, -50., 250.);
+        TH2F *hPMTResTimeCosTheta = new TH2F("hPmtResTimeVsCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
+
+        std::vector<Double_t> evtimes;
+        //std::vector<int> mcids;
+        std::vector<int> evids;
+        //Double_t gttime;
+        bool print_status = false;
+
+        size_t nEV = 0;
+        size_t entryCount = dsreader.GetEntryCount(); //number of entries, want to loop over each one
+        if(verbose) std::cout << "No of entries in run: " << entryCount << " events" << std::endl;
+        for (size_t iEntry = 0; iEntry < entryCount; ++iEntry){
+            if (iEntry %100 == 0 and verbose) std::cout << "Entry no " << iEntry << std::endl;
+            const RAT::DS::Entry &rDS = dsreader.GetEntry(iEntry);
+            for(size_t i_ev = 0; i_ev< rDS.GetEVCount(); ++i_ev){
+                const RAT::DS::EV &rEV = rDS.GetEV(i_ev);
+                const RAT::DS::CalPMTs &calPMTs = rEV.GetCalPMTs(); 
+                size_t calPMT_count = calPMTs.GetCount();
+
+                //get ev PMT ids
+                std::vector<int> evPMTIDs;
+                std::vector<double> evPMTTimes;
+
+                // (*) see further below. Creat hitogram and dump the hit times of all the PMTs in, then fit to gaussian and extract mean.
+                // -> Use as event prompt time. Copied code from rat/examples/root/PlotHitResidualTimes.cc
+                const RAT::DS::EV& rEV = rDS.GetEV( iEV );
+                double eventTime;
+
+                try {
+                    const RAT::DS::FitVertex& rVertex = rEV.GetFitResult("gaus").GetVertex(0);
+                    if(!(rVertex.ValidPosition() && rVertex.ValidTime()))
+                        std::cout << "Fit invalid." << std::endl;
+                        continue;
+
+                    eventTime = rVertex.GetTime();
+                }
+                catch (const RAT::DS::FitCollection::NoResultError&) {
+                    std::cout << "No fit result by the name of gaus." << std::endl;
+                    continue;
+                }
+                catch (const RAT::DS::FitResult::NoVertexError&) {
+                    std::cout << "No fit vertex." << std::endl;
+                    continue;
+                }
+                catch (const RAT::DS::FitVertex::NoValueError&) {
+                    std::cout << "Position or time missing." << std::endl;
+                    continue;
+                }
+                // DataNotFound --> implies no fit results are present, don't catch.
+
+                // calculate time residuals
+                for (size_t i_evpmt = 0; i_evpmt < calPMT_count; ++i_evpmt) {
+                    evPMTIDs.push_back(calPMTs.GetPMT(i_evpmt).GetID());
+
+                    // Instead of GTTime of MC event, need to approximate it with the prompt time, in other words the hit time of the light
+                    // that travels straight through the detector unaffected (the direct beam spot in this case). This is typically the earliest main
+                    // peak in the hit times. Can therefore fit a gaussian to this and get the mean.
+                    // I assume I should do this outside the current loop. (*)
+                    evPMTTimes.push_back(calPMTs.GetPMT(i_evpmt).GetTime() - transitTime[i_evpmt] - eventTime);
+                    h1DResTimeAll->Fill(evPMTTimes[i_evpmt] - bucketTime[i_evpmt]);
+
+                    // cos(theta) hist
+                    hPMTResTimeCosTheta->Fill(cosTheta[pmtID], evPMTTimes[i_evpmt] - bucketTime[i_evpmt]);
+                }
+            }
+        }
+
+        //now write everything
+        rootfile->cd();
+        hPMTResTimeCosTheta->Write();
+        h1DResTimeAll->Write();
+        rootfile->Write();
+        rootfile->Close();
+
+    } else {
+        std::cout << "Wrong data type. Should be MC or raw" << std::endl;
+        throw
     }
 
-    //now write and close everything
-
-    rootfile->cd();
-    hNhits->Write();
-    hPMTResTimeCosTheta->Write();
-    hNoiseResTimeCosTheta->Write();
-    hSingleScatterResTimeCosTheta->Write();
-    hReemissionResTimeCosTheta->Write();
-    hOtherEffectResTimeCosTheta->Write();
-    hNoEffectResTimeCosTheta->Write();
-    hMultipleEffectResTimeCosTheta->Write();
-    hNearReflectResTimeCosTheta->Write();
-    hRopesResTimeCosTheta->Write();
-    hPMTReflectionResTimeCosTheta->Write();
-    hPMTReflectionAVReflectionResTimeCosTheta->Write();
-    hExtWaterScatterResTimeCosTheta->Write();
-    hInnerAvReflectionResTimeCosTheta->Write();
-    hAVPipesResTimeCosTheta->Write();
-    hAcrylicScatterResTimeCosTheta->Write();
-    hOtherScatterResTimeCosTheta->Write();
-    h1DNoEffectResTime->Write();
-    h1DNoEffectTime->Write();
-    h1DNoEffectMCTransitTime->Write();
-    h1DNoEffectElectronicsTime->Write();
-    h1DResTimeAll->Write();
-    h2DLPCTIR->Write();
-    h2DLPCStraightLinePath->Write();
-    h2DLPCTransitTime->Write();
-    h1DWASAWPaths->Write();
-    h1DWreflPaths->Write();
-    h1DWAWPaths->Write();
-    h1DWaterPaths->Write();
-    h1DBelowMaxReflectionAngle->Write();
-    h1DDiscontinuityPMTs->Write();
-    hMultipleMoreThan2EffectResTimeCosTheta->Write();
-    hMultipleDoubleAbsResTimeCosTheta->Write();
-    hMultipleDoubleScatResTimeCosTheta->Write();
-    hMultipleAbsScatScatterResTimeCosTheta->Write();
-    hMultiplePMTReflectAbsAbsResTimeCosTheta->Write();
-    hMultiplePMTReflectScatResTimeCosTheta->Write();
-    hMultipleDoublePMTReflectResTimeCosTheta->Write();
-    hMultipleDoubleInnerAVReflectResTimeCosTheta->Write();
-    hMultipleInnerAVReflectAbsResTimeCosTheta->Write();
-    hMultipleInnerAVReflectScatResTimeCosTheta->Write();
-    hMultipleDoubleExternalScatResTimeCosTheta->Write();  
-    hMultipleExtenalScatAbsResTimeCosTheta->Write();  
-    hMultipleExternalScatInternalScatResTimeCosTheta->Write();
-    hMultipleExternalScatInnerAvReflectResTimeCosTheta->Write();  
-    hMultipleExternalScatPMTReflectResTimeCosTheta->Write();
-    hMultipleExternalScatNearReflectResTimeCosTheta->Write();
-    hMultipleNearReflectPMTReflectResTimeCosTheta->Write();
-    hMultiplePMTReflectRopesResTimeCosTheta->Write();
-    hMultipleExternalScatRopesResTimeCosTheta->Write();
-    hMultipleDoubleRopesResTimeCosTheta->Write();
-    hMultipleScatterPipesResTimeCosTheta->Write();
-    hMultipleDoublePipesResTimeCosTheta->Write();
-    hMultipleInnerAVReflectAcrylicScatResTimeCosTheta->Write();
-    hMultipleInnerAVReflectPMTReflectResTimeCosTheta->Write();
-    hMultipleOuterAVReflectExternalScatResTimeCosTheta->Write();
-    hMultiplePMTReflectPipesResTimeCosTheta->Write();
-    hMultipleRopesAcrylicScatResTimeCosTheta->Write();
-    hMultiplePMTReflectAcrylicScatResTimeCosTheta->Write();
-    hMultipleScatterAcrylicScatResTimeCosTheta->Write();
-    hMultipleOtherScatRopesResTimeCosTheta->Write();
-    hMultipleScatterAcrylicBounceResTimeCosTheta->Write();
-    hMultipleExternalScatterAcrylicBounceResTimeCosTheta->Write();
-    hMultiplePMTReflectAcrylicBounceResTimeCosTheta->Write();
-    hMultipleOtherTimeCosTheta->Write();
-    rootfile->Write();
+    // Close everything
     rootfile->Close();
 }

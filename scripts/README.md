@@ -14,9 +14,10 @@ Contributors: Charlie
 
 This script generates a ROOT file containing histograms for the photon tracking information.
 
-Requires two input arguments:
+Requires three input arguments:
 1. An AMELLIE simulation ROOT file, where the simulation saved all tracking information
 2. The fibre which was simulated
+3. The string "MC" or "raw" to describe the type of root file being used.
 
 
 #### getRegions.cpp
@@ -42,6 +43,7 @@ If wanting to generate stats, the script requires 4 input arguments:
 2. The ROOT file containing the region histograms (such as produced by ```getRegions.cpp``` or the other function in this script.) 
 3. The ROOT file containing the tracked histograms, as produced by ```getTrackingInfo.cpp```.
 4. The required signal: use either ```reemitted```, ```scattered``` or ```attenuated```
+5. The string "MC" or "raw" to describe the type of root file being used.
 
 If wanting to apply a region selection, the script requires 12 input arguments:
 1. The string ```apply_region```
@@ -56,3 +58,4 @@ If wanting to apply a region selection, the script requires 12 input arguments:
 10. The maximum residual time for the direct beam spot box cut
 11. The minimum residual time for the reflected beam spot box cut
 12. The maximum residual time for the reflected beam spot box cut
+13. The string "MC" or "raw" to describe the type of root file being used.
