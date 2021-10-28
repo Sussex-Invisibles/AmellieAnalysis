@@ -1482,6 +1482,8 @@ int GetLightPaths(std::string file, std::string fibre, std::string data_type){
 
     } else if (data_type == "raw") {
         // Create histograms
+        TH1D* hNhits = new TH1D("hNhits", "nhits", 101, 0, 100);
+
         TH1D *h1DResTimeAll = new TH1D("h1DResTimeAll", "Residual Hit Time", 1000, -50., 250.);
         TH2F *hPMTResTimeCosTheta = new TH2F("hPmtResTimeVsCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
 
@@ -1552,6 +1554,7 @@ int GetLightPaths(std::string file, std::string fibre, std::string data_type){
 
         //now write everything
         rootfile->cd();
+        hNhits->Write();
         hPMTResTimeCosTheta->Write();
         h1DResTimeAll->Write();
         rootfile->Write();
