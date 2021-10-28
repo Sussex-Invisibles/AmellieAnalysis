@@ -1502,13 +1502,14 @@ int GetLightPaths(std::string file, std::string fibre, std::string data_type){
                 const RAT::DS::CalPMTs &calPMTs = rEV.GetCalPMTs(); 
                 size_t calPMT_count = calPMTs.GetCount();
 
+                UInt_t pmtID = calPMTs.GetPMT(i_evpmt).GetID();
+
                 //get ev PMT ids
                 std::vector<int> evPMTIDs;
                 std::vector<double> evPMTTimes;
 
                 // (*) see further below. Creat hitogram and dump the hit times of all the PMTs in, then fit to gaussian and extract mean.
                 // -> Use as event prompt time. Copied code from rat/examples/root/PlotHitResidualTimes.cc
-                const RAT::DS::EV& rEV = rDS.GetEV( iEV );
                 double eventTime;
 
                 try {
@@ -1535,7 +1536,7 @@ int GetLightPaths(std::string file, std::string fibre, std::string data_type){
 
                 // calculate time residuals
                 for (size_t i_evpmt = 0; i_evpmt < calPMT_count; ++i_evpmt) {
-                    evPMTIDs.push_back(calPMTs.GetPMT(i_evpmt).GetID());
+                    evPMTIDs.push_back(pmtID);
 
                     // Instead of GTTime of MC event, need to approximate it with the prompt time, in other words the hit time of the light
                     // that travels straight through the detector unaffected (the direct beam spot in this case). This is typically the earliest main
@@ -1559,7 +1560,7 @@ int GetLightPaths(std::string file, std::string fibre, std::string data_type){
 
     } else {
         std::cout << "Wrong data type. Should be MC or raw" << std::endl;
-        throw
+        throw;
     }
 
     // Close everything

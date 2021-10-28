@@ -19,7 +19,6 @@ Requires three input arguments:
 2. The fibre which was simulated
 3. The string "MC" or "raw" to describe the type of root file being used.
 
-
 #### getRegions.cpp
 
 This script takes the ROOT file generated in ```getTrackingInfo.cpp``` and selects the best triangular region for a given signal. 

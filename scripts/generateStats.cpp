@@ -24,7 +24,7 @@ int main(int argv, char** argc){
         std::string region_selected_file = argc[2];
         std::string full_file = argc[3];
         std::string signal = argc[4];
-        std::string data_type = argv[5];  // MC or raw
+        std::string data_type = argc[5];  // MC or raw
         int status = generate_stats(region_selected_file, full_file, signal, data_type);
         return status;
     }
@@ -41,7 +41,7 @@ int main(int argv, char** argc){
         double max_direct = std::stod(argc[10]);
         double min_reflected = std::stod(argc[11]);
         double max_reflected = std::stod(argc[12]);
-        std::string data_type = argv[13];  // MC or raw
+        std::string data_type = argc[13];  // MC or raw
         int status = make_region_cut(tracked_file, x_a, x_b, x_c, y_a, y_b, y_c, min_direct, max_direct, min_reflected, max_reflected, data_type);
         return status;
     }
@@ -205,7 +205,7 @@ int generate_stats(std::string region_selected_file, std::string full_file, std:
 
     } else {
         std::cout << "Wrong data type. Should be MC or raw" << std::endl;
-        throw
+        throw;
     }
 
     return 0;
@@ -616,13 +616,13 @@ int make_region_cut(std::string tracked_file, double x_a, double x_b, double x_c
         TH2F *hRegionCutPmtResTimeVsCosTheta = (TH2F*)hAllPaths->Clone();
         hRegionCutPmtResTimeVsCosTheta->SetName("hRegionSelectedAllPaths");
 
-        int nBinsX = hReEmittedPaths->GetXaxis()->GetNbins();
-        int nBinsY = hReEmittedPaths->GetYaxis()->GetNbins();
+        int nBinsX = hAllPaths->GetXaxis()->GetNbins();
+        int nBinsY = hAllPaths->GetYaxis()->GetNbins();
 
         for (int x=0; x<nBinsX+1; x++) {
-            double xBinCenter = hReEmittedPaths->GetXaxis()->GetBinCenter(x);
+            double xBinCenter = hAllPaths->GetXaxis()->GetBinCenter(x);
             for (int y=0; y<nBinsY+1; y++) {
-                double yBinCenter = hReEmittedPaths->GetYaxis()->GetBinCenter(y);
+                double yBinCenter = hAllPaths->GetYaxis()->GetBinCenter(y);
                 double upperGradient = (y_b - y_a) / (x_b - x_a);
                 double upperConstant = y_a - (upperGradient*x_a);
                 double lowerGradient = (y_c - y_a) / (x_c - x_a);
@@ -646,10 +646,10 @@ int make_region_cut(std::string tracked_file, double x_a, double x_b, double x_c
         double min_angle_direct_beam_spot = -0.9;
 
         for(int x=0; x<nBinsX+1; x++){
-            double xBinCenter = hReEmittedPaths->GetXaxis()->GetBinCenter(x);
+            double xBinCenter = hAllPaths->GetXaxis()->GetBinCenter(x);
             if(xBinCenter <= min_angle_direct_beam_spot){
                 for(int y=0; y<nBinsY+1; y++){
-                    double yBinCenter = hReEmittedPaths->GetYaxis()->GetBinCenter(y);
+                    double yBinCenter = hAllPaths->GetYaxis()->GetBinCenter(y);
                     if(yBinCenter >= min_time_direct_beam_spot and yBinCenter <= max_time_direct_beam_spot){
                         hDirectCutPmtResTimeVsCosTheta->SetBinContent(x,y,hAllPaths->GetBinContent(x,y));
                     } else {
@@ -671,10 +671,10 @@ int make_region_cut(std::string tracked_file, double x_a, double x_b, double x_c
         double min_angle_reflected_beam_spot = 0.95;
 
         for (int x=0; x<nBinsX+1; x++) {
-            double xBinCenter = hReEmittedPaths->GetXaxis()->GetBinCenter(x);
+            double xBinCenter = hAllPaths->GetXaxis()->GetBinCenter(x);
             if(xBinCenter >= min_angle_reflected_beam_spot){
                 for(int y=0; y<nBinsY+1; y++){
-                    double yBinCenter = hReEmittedPaths->GetYaxis()->GetBinCenter(y);
+                    double yBinCenter = hAllPaths->GetYaxis()->GetBinCenter(y);
                     if(yBinCenter >= min_time_reflected_beam_spot and yBinCenter <= max_time_reflected_beam_spot){
                         hReflectedCutPmtResTimeVsCosTheta->SetBinContent(x,y,hAllPaths->GetBinContent(x,y));
                     } else {
