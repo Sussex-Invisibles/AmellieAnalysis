@@ -1501,11 +1501,10 @@ int GetLightPaths(std::string file, std::string fibre, std::string data_type){
                 const RAT::DS::EV &rEV = rDS.GetEV(i_ev);
                 const RAT::DS::CalPMTs &calPMTs = rEV.GetCalPMTs(); 
                 size_t calPMT_count = calPMTs.GetCount();
-
-                UInt_t pmtID = calPMTs.GetPMT(i_evpmt).GetID();
+                hNhits->Fill(calPMT_count);
 
                 //get ev PMT ids
-                std::vector<int> evPMTIDs;
+                //std::vector<int> evPMTIDs;
                 std::vector<double> evPMTTimes;
 
                 // (*) see further below. Creat hitogram and dump the hit times of all the PMTs in, then fit to gaussian and extract mean.
@@ -1536,7 +1535,7 @@ int GetLightPaths(std::string file, std::string fibre, std::string data_type){
 
                 // calculate time residuals
                 for (size_t i_evpmt = 0; i_evpmt < calPMT_count; ++i_evpmt) {
-                    evPMTIDs.push_back(pmtID);
+                    //evPMTIDs.push_back(calPMTs.GetPMT(i_evpmt).GetID());
 
                     // Instead of GTTime of MC event, need to approximate it with the prompt time, in other words the hit time of the light
                     // that travels straight through the detector unaffected (the direct beam spot in this case). This is typically the earliest main
@@ -1546,7 +1545,7 @@ int GetLightPaths(std::string file, std::string fibre, std::string data_type){
                     h1DResTimeAll->Fill(evPMTTimes[i_evpmt] - bucketTime[i_evpmt]);
 
                     // cos(theta) hist
-                    hPMTResTimeCosTheta->Fill(cosTheta[pmtID], evPMTTimes[i_evpmt] - bucketTime[i_evpmt]);
+                    hPMTResTimeCosTheta->Fill(cosTheta[calPMTs.GetPMT(i_evpmt).GetID()], evPMTTimes[i_evpmt] - bucketTime[i_evpmt]);
                 }
             }
         }

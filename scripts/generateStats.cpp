@@ -701,7 +701,7 @@ int make_region_cut(std::string tracked_file, double x_a, double x_b, double x_c
 
     } else {
         std::cout << "Wrong data type. Should be MC or raw" << std::endl;
-        throw
+        throw;
     }
 
     return 0;
