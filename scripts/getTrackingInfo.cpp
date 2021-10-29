@@ -1505,49 +1505,18 @@ int GetLightPaths(std::string file, std::string fibre, std::string data_type){
                 size_t calPMT_count = calPMTs.GetCount();
                 hNhits->Fill(calPMT_count);
 
-                //get ev PMT ids
-                //std::vector<int> evPMTIDs;
-                std::vector<double> evPMTTimes;
-
-                // (*) see further below. Creat hitogram and dump the hit times of all the PMTs in, then fit to gaussian and extract mean.
-                // -> Use as event prompt time. Copied code from rat/examples/root/PlotHitResidualTimes.cc
-                double eventTime;
-
-                try {
-                    const RAT::DS::FitVertex& rVertex = rEV.GetFitResult("gaus").GetVertex(0);
-                    if(!(rVertex.ValidPosition() && rVertex.ValidTime()))
-                        std::cout << "Fit invalid." << std::endl;
-                        continue;
-
-                    eventTime = rVertex.GetTime();
-                }
-                catch (const RAT::DS::FitCollection::NoResultError&) {
-                    std::cout << "No fit result by the name of gaus." << std::endl;
-                    continue;
-                }
-                catch (const RAT::DS::FitResult::NoVertexError&) {
-                    std::cout << "No fit vertex." << std::endl;
-                    continue;
-                }
-                catch (const RAT::DS::FitVertex::NoValueError&) {
-                    std::cout << "Position or time missing." << std::endl;
-                    continue;
-                }
-                // DataNotFound --> implies no fit results are present, don't catch.
-
+                Double_t evPMTTimes;
+                UInt_t pmtID;
+                const RAT::DS::PMTCal& pmtCal;
                 // calculate time residuals
                 for (size_t i_evpmt = 0; i_evpmt < calPMT_count; ++i_evpmt) {
-                    //evPMTIDs.push_back(calPMTs.GetPMT(i_evpmt).GetID());
-
-                    // Instead of GTTime of MC event, need to approximate it with the prompt time, in other words the hit time of the light
-                    // that travels straight through the detector unaffected (the direct beam spot in this case). This is typically the earliest main
-                    // peak in the hit times. Can therefore fit a gaussian to this and get the mean.
-                    // I assume I should do this outside the current loop. (*)
-                    evPMTTimes.push_back(calPMTs.GetPMT(i_evpmt).GetTime() - transitTime[i_evpmt] - eventTime);
-                    h1DResTimeAll->Fill(evPMTTimes[i_evpmt] - bucketTime[i_evpmt]);
+                    pmtCal = calPMTs.GetPMT(i_evpmt);
+                    pmtID = pmtCal.GetID();
+                    evPMTTimes = pmtCal.GetTime() - transitTime[pmtID] - bucketTime[pmtID];
+                    h1DResTimeAll->Fill(evPMTTimes);
 
                     // cos(theta) hist
-                    hPMTResTimeCosTheta->Fill(cosTheta[calPMTs.GetPMT(i_evpmt).GetID()], evPMTTimes[i_evpmt] - bucketTime[i_evpmt]);
+                    hPMTResTimeCosTheta->Fill(cosTheta[calPMTs.GetPMT(i_evpmt).GetID()], evPMTTimes);
                 }
             }
         }
