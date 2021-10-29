@@ -1507,10 +1507,9 @@ int GetLightPaths(std::string file, std::string fibre, std::string data_type){
 
                 Double_t evPMTTimes;
                 UInt_t pmtID;
-                const RAT::DS::PMTCal& pmtCal;
                 // calculate time residuals
                 for (size_t i_evpmt = 0; i_evpmt < calPMT_count; ++i_evpmt) {
-                    pmtCal = calPMTs.GetPMT(i_evpmt);
+                    const RAT::DS::PMTCal& pmtCal = calPMTs.GetPMT(i_evpmt);
                     pmtID = pmtCal.GetID();
                     evPMTTimes = pmtCal.GetTime() - transitTime[pmtID] - bucketTime[pmtID];
                     h1DResTimeAll->Fill(evPMTTimes);
