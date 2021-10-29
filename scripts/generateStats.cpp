@@ -558,8 +558,10 @@ int make_region_cut(std::string tracked_file, double x_a, double x_b, double x_c
         }
 
         //write to file
-
-        std::string saveroot = "region_selected_hists_x_a" + std::to_string(x_a)  + "_x_b_" + std::to_string(x_b) + "_x_c_" + std::to_string(x_c) + "_y_a_" + std::to_string(y_a) + "_y_b_" + std::to_string(y_b) + "_y_c_" + std::to_string(y_c) + "_" + tracked_file;
+        // get file name from path+filename string
+        std::size_t tracked_botDirPos = tracked_file.find_last_of("/");
+        std::string tracked_filename = tracked_file.substr(tracked_botDirPos+1, tracked_file.length());
+        std::string saveroot = "region_selected_hists_x_a" + std::to_string(x_a)  + "_x_b_" + std::to_string(x_b) + "_x_c_" + std::to_string(x_c) + "_y_a_" + std::to_string(y_a) + "_y_b_" + std::to_string(y_b) + "_y_c_" + std::to_string(y_c) + "_" + tracked_filename;
         TFile *rootfile = new TFile(saveroot.c_str(),"RECREATE");
         rootfile->cd();
         hRegionCutReemissionResTimeVsCosTheta->Write();
@@ -689,8 +691,10 @@ int make_region_cut(std::string tracked_file, double x_a, double x_b, double x_c
         }
 
         //write to file
-
-        std::string saveroot = "region_selected_hists_x_a" + std::to_string(x_a)  + "_x_b_" + std::to_string(x_b) + "_x_c_" + std::to_string(x_c) + "_y_a_" + std::to_string(y_a) + "_y_b_" + std::to_string(y_b) + "_y_c_" + std::to_string(y_c) + "_" + tracked_file;
+        // get file name from path+filename string
+        std::size_t tracked_botDirPos = tracked_file.find_last_of("/");
+        std::string tracked_filename = tracked_file.substr(tracked_botDirPos+1, tracked_file.length());
+        std::string saveroot = "region_selected_hists_x_a" + std::to_string(x_a)  + "_x_b_" + std::to_string(x_b) + "_x_c_" + std::to_string(x_c) + "_y_a_" + std::to_string(y_a) + "_y_b_" + std::to_string(y_b) + "_y_c_" + std::to_string(y_c) + "_" + tracked_filename;
         TFile *rootfile = new TFile(saveroot.c_str(),"RECREATE");
         rootfile->cd();
         hRegionCutPmtResTimeVsCosTheta->Write();
