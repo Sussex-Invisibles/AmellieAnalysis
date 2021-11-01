@@ -1484,7 +1484,6 @@ int GetLightPaths(std::string file, std::string fibre, std::string data_type){
         // Create histograms
         TH1D* hNhits = new TH1D("hNhits", "nhits", 101, 0, 100);
 
-        TH1D *h1DResTimeAll_raw = new TH1D("h1DResTimeAll_raw", "Residual Hit Time, not reajusted", 1000, -50., 250.);
         TH1D *h1DResTimeAll = new TH1D("h1DResTimeAll", "Residual Hit Time", 1000, -50., 250.);
         TH2F *hPMTResTimeCosTheta = new TH2F("hPmtResTimeVsCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
 
@@ -1508,7 +1507,9 @@ int GetLightPaths(std::string file, std::string fibre, std::string data_type){
 
                 std::vector<Double_t> evPMTTimes;
                 std::vector<UInt_t> pmtID;
-                // calculate time residuals (not ajusted for peak hit time yet)
+                // calculate time residuals (not ajusted for peak hit time yet), to fit gaussian
+                g = new TF1("m1","gaus",-50.,250.);
+                TH1D *h1DResTimeAll_raw = new TH1D("g", "Residual Hit Time, not reajusted", 1000, -50., 250.);
                 for (size_t i_evpmt = 0; i_evpmt < calPMT_count; ++i_evpmt) {
                     const RAT::DS::PMTCal& pmtCal = calPMTs.GetPMT(i_evpmt);
                     pmtID.push_back(pmtCal.GetID());
@@ -1517,11 +1518,11 @@ int GetLightPaths(std::string file, std::string fibre, std::string data_type){
                 }
 
                // Fit hist to gaussian
-                h1DResTimeAll_raw->Fit(h1DResTimeAll_raw,"gaus");
+                h1DResTimeAll_raw->Fit(g,"gaus");
 
                 // Get the parameter from the fit
                 Double_t peak_time;
-                h1DResTimeAll_raw->GetParameters(&peak_time);
+                g->GetParameters(&peak_time);
 
                 // calculate time residuals (ajusted)
                 for (size_t i_evpmt = 0; i_evpmt < calPMT_count; ++i_evpmt) {
