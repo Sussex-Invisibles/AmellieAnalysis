@@ -1513,15 +1513,15 @@ int GetLightPaths(std::string file, std::string fibre, std::string data_type){
                     const RAT::DS::PMTCal& pmtCal = calPMTs.GetPMT(i_evpmt);
                     pmtID.push_back(pmtCal.GetID());
                     evPMTTimes.push_back(pmtCal.GetTime() - transitTime[pmtID[i_evpmt]] - bucketTime[pmtID[i_evpmt]]);
-                    h1DResTimeAll_raw->Fill(evPMTTimes);
+                    h1DResTimeAll_raw->Fill(evPMTTimes[i_evpmt]);
                 }
 
                // Fit hist to gaussian
-                h1DResTimeAll_raw->Fit(g,"gaus");
+                h1DResTimeAll_raw->Fit(h1DResTimeAll_raw,"gaus");
 
                 // Get the parameter from the fit
                 Double_t peak_time;
-                g->GetParameters(&peak_time);
+                h1DResTimeAll_raw->GetParameters(&peak_time);
 
                 // calculate time residuals (ajusted)
                 for (size_t i_evpmt = 0; i_evpmt < calPMT_count; ++i_evpmt) {
