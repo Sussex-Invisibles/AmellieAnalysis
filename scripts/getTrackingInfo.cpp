@@ -12,6 +12,7 @@
 #include <RAT/PhysicsUtil.hh>
 #include <TH2F.h>
 #include <TH1F.h>
+#include <TF1.h>
 #include <TMath.h>
 #include <TFile.h>
 #include <RAT/TrackNav.hh>
