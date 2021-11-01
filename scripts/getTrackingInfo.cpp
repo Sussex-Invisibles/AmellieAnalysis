@@ -1484,6 +1484,7 @@ int GetLightPaths(std::string file, std::string fibre, std::string data_type){
         // Create histograms
         TH1D* hNhits = new TH1D("hNhits", "nhits", 101, 0, 100);
 
+        TH1D *h1DResTimeAll_raw = new TH1D("h1DResTimeAll_raw", "Residual Hit Time, not reajusted", 1000, -50., 250.);
         TH1D *h1DResTimeAll = new TH1D("h1DResTimeAll", "Residual Hit Time", 1000, -50., 250.);
         TH2F *hPMTResTimeCosTheta = new TH2F("hPmtResTimeVsCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
 
@@ -1505,17 +1506,28 @@ int GetLightPaths(std::string file, std::string fibre, std::string data_type){
                 size_t calPMT_count = calPMTs.GetCount();
                 hNhits->Fill(calPMT_count);
 
-                Double_t evPMTTimes;
-                UInt_t pmtID;
-                // calculate time residuals
+                std::vector<Double_t> evPMTTimes;
+                std::vector<UInt_t> pmtID;
+                // calculate time residuals (not ajusted for peak hit time yet)
                 for (size_t i_evpmt = 0; i_evpmt < calPMT_count; ++i_evpmt) {
                     const RAT::DS::PMTCal& pmtCal = calPMTs.GetPMT(i_evpmt);
-                    pmtID = pmtCal.GetID();
-                    evPMTTimes = pmtCal.GetTime() - transitTime[pmtID] - bucketTime[pmtID];
-                    h1DResTimeAll->Fill(evPMTTimes);
+                    pmtID.push_back(pmtCal.GetID());
+                    evPMTTimes.push_back(pmtCal.GetTime() - transitTime[pmtID[i_evpmt]] - bucketTime[pmtID[i_evpmt]]);
+                    h1DResTimeAll_raw->Fill(evPMTTimes);
+                }
 
+               // Fit hist to gaussian
+                h1DResTimeAll_raw->Fit(g,"gaus");
+
+                // Get the parameter from the fit
+                Double_t peak_time;
+                g->GetParameters(&peak_time);
+
+                // calculate time residuals (ajusted)
+                for (size_t i_evpmt = 0; i_evpmt < calPMT_count; ++i_evpmt) {
+                    h1DResTimeAll->Fill(evPMTTimes[i_evpmt] - peak_time);
                     // cos(theta) hist
-                    hPMTResTimeCosTheta->Fill(cosTheta[calPMTs.GetPMT(i_evpmt).GetID()], evPMTTimes);
+                    hPMTResTimeCosTheta->Fill(cosTheta[pmtID[i_evpmt]], evPMTTimes[i_evpmt] - peak_time);
                 }
             }
         }
