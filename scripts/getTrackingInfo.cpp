@@ -1523,7 +1523,7 @@ int GetLightPaths(std::string file, std::string fibre, std::string data_type){
         //Double_t chi2 = fit->GetChisquare();
 
         // Value of the first parameter:
-        Double_t peak_time = fit->GetParameter(0);
+        Double_t peak_time = fit->GetParameter(1);
         //Double_t e1 = fit->GetParError(0);
 
         // calculate time residuals (ajusted)
