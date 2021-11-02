@@ -170,21 +170,25 @@ int generate_stats(std::string region_selected_file, std::string full_file, std:
         TH2F *fullHist;  // <---------------
         TH2F *regionHistAll;  // <---------------
         TH2F *directHistAll;  // <---------------
+        TH2F *reflectedHistAll;
 
         full_hists_file->GetObject("hPmtResTimeVsCosTheta",fullHist);  // <---------------
         region_hists_file->GetObject("hRegionSelectedAllPaths",regionHistAll);  // <--------------------
         region_hists_file->GetObject("hDirectCutAllPaths",directHistAll);  // <---------------------
+        region_hists_file->GetObject("hReflectedCutAllPaths",reflectedHistAll);
 
         //first stat is signal / signal + background in region
 
         double sumFullHist = 0;
         double sumFullHistRegion = 0;
         double sumFullHistDirect = 0;
+        double sumFullHistReflected = 0;
 
         for(int i=0;i<fullHist->GetXaxis()->GetNbins();i++){  // <-------------
             for(int j=0;j<fullHist->GetYaxis()->GetNbins();j++){  // <-------------
                 sumFullHist = sumFullHist + fullHist->GetBinContent(i,j);  // <-------------
                 sumFullHistDirect = sumFullHistDirect + directHistAll->GetBinContent(i,j);  // <--------------
+                sumFullHistReflected = sumFullHistReflected + reflectedHistAll->GetBinContent(i,j);
                 sumFullHistRegion = sumFullHistRegion + regionHistAll->GetBinContent(i,j);  // <--------------
             }
         }
@@ -201,6 +205,7 @@ int generate_stats(std::string region_selected_file, std::string full_file, std:
         outputFile << std::to_string(sumFullHist) + "\n";  // <-------------
         outputFile << std::to_string(sumFullHistRegion) + "\n";  // <-------------
         outputFile << std::to_string(sumFullHistDirect) + "\n";  // <-------------
+        outputFile << std::to_string(sumFullHistReflected) + "\n";
         outputFile.close();
 
     } else {
