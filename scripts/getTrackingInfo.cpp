@@ -1513,7 +1513,6 @@ int GetLightPaths(std::string file, std::string fibre, std::string data_type){
                 }
 
                 
-                }
             }
         }
 
@@ -1536,6 +1535,7 @@ int GetLightPaths(std::string file, std::string fibre, std::string data_type){
             h1DResTimeAll->Fill(evPMTTimes[i_evpmt] - peak_time);
             // cos(theta) hist
             hPMTResTimeCosTheta->Fill(cosTheta[pmtID[i_evpmt]], evPMTTimes[i_evpmt] - peak_time);
+        }
 
         //now write everything
         rootfile->cd();
