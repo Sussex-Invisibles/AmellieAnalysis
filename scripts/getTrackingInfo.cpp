@@ -1492,6 +1492,7 @@ int GetLightPaths(std::string file, std::string fibre, std::string data_type){
         size_t entryCount = dsreader.GetEntryCount(); //number of entries, want to loop over each one
         std::vector<Double_t> evPMTTimes;
         std::vector<UInt_t> pmtID;
+        Int_t index = 0;
         if(verbose) std::cout << "No of entries in run: " << entryCount << " events" << std::endl;
         for (size_t iEntry = 0; iEntry < entryCount; ++iEntry){
             if (iEntry %100 == 0 and verbose) std::cout << "Entry no " << iEntry << std::endl;
@@ -1506,9 +1507,10 @@ int GetLightPaths(std::string file, std::string fibre, std::string data_type){
                 // calculate time residuals (not ajusted for peak hit time yet), to fit gaussian
                 for (size_t i_evpmt = 0; i_evpmt < calPMT_count; ++i_evpmt) {
                     const RAT::DS::PMTCal& pmtCal = calPMTs.GetPMT(i_evpmt);
+                    ++index;
                     pmtID.push_back(pmtCal.GetID());
-                    evPMTTimes.push_back(pmtCal.GetTime() - transitTime[pmtID[i_evpmt]] - bucketTime[pmtID[i_evpmt]]);
-                    h1DResTimeAll_raw->Fill(evPMTTimes[i_evpmt]);
+                    evPMTTimes.push_back(pmtCal.GetTime() - transitTime[pmtID[index]] - bucketTime[pmtID[index]]);
+                    h1DResTimeAll_raw->Fill(evPMTTimes[index]);
                 }
 
                 
