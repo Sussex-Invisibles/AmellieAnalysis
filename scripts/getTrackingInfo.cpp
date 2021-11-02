@@ -1507,10 +1507,10 @@ int GetLightPaths(std::string file, std::string fibre, std::string data_type){
                 // calculate time residuals (not ajusted for peak hit time yet), to fit gaussian
                 for (size_t i_evpmt = 0; i_evpmt < calPMT_count; ++i_evpmt) {
                     const RAT::DS::PMTCal& pmtCal = calPMTs.GetPMT(i_evpmt);
-                    ++index;
                     pmtID.push_back(pmtCal.GetID());
                     evPMTTimes.push_back(pmtCal.GetTime() - transitTime[pmtID[index]] - bucketTime[pmtID[index]]);
                     h1DResTimeAll_raw->Fill(evPMTTimes[index]);
+                    ++index;
                 }
 
                 
