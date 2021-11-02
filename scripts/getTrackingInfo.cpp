@@ -1492,7 +1492,7 @@ int GetLightPaths(std::string file, std::string fibre, std::string data_type){
         size_t entryCount = dsreader.GetEntryCount(); //number of entries, want to loop over each one
         std::vector<Double_t> evPMTTimes;
         std::vector<UInt_t> pmtID;
-        Int_t index = 0;
+        int index = 0;
         if(verbose) std::cout << "No of entries in run: " << entryCount << " events" << std::endl;
         for (size_t iEntry = 0; iEntry < entryCount; ++iEntry){
             if (iEntry %100 == 0 and verbose) std::cout << "Entry no " << iEntry << std::endl;
