@@ -1488,55 +1488,54 @@ int GetLightPaths(std::string file, std::string fibre, std::string data_type){
         TH1D *h1DResTimeAll = new TH1D("h1DResTimeAll", "Residual Hit Time", 1000, -50., 250.);
         TH2F *hPMTResTimeCosTheta = new TH2F("hPmtResTimeVsCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
 
-        std::vector<Double_t> evtimes;
-        //std::vector<int> mcids;
-        std::vector<int> evids;
-        //Double_t gttime;
-        bool print_status = false;
-
-        size_t nEV = 0;
         size_t entryCount = dsreader.GetEntryCount(); //number of entries, want to loop over each one
+        std::vector<Double_t> evPMTTimes;
+        std::vector<UInt_t> pmtID;
         if(verbose) std::cout << "No of entries in run: " << entryCount << " events" << std::endl;
         for (size_t iEntry = 0; iEntry < entryCount; ++iEntry){
             if (iEntry %100 == 0 and verbose) std::cout << "Entry no " << iEntry << std::endl;
             const RAT::DS::Entry &rDS = dsreader.GetEntry(iEntry);
             for(size_t i_ev = 0; i_ev< rDS.GetEVCount(); ++i_ev){
+                if (i_ev %100 == 0 and verbose) std::cout << "Event no " << i_ev << std::endl;
                 const RAT::DS::EV &rEV = rDS.GetEV(i_ev);
                 const RAT::DS::CalPMTs &calPMTs = rEV.GetCalPMTs(); 
                 size_t calPMT_count = calPMTs.GetCount();
                 hNhits->Fill(calPMT_count);
-
-                std::vector<Double_t> evPMTTimes;
-                std::vector<UInt_t> pmtID;
+                
                 // calculate time residuals (not ajusted for peak hit time yet), to fit gaussian
                 TH1D *h1DResTimeAll_raw = new TH1D("g", "Residual Hit Time, not reajusted", 1000, -50., 250.);
                 for (size_t i_evpmt = 0; i_evpmt < calPMT_count; ++i_evpmt) {
+                    std::cout << "PMT_event no " << i_evpmt << std::endl;
                     const RAT::DS::PMTCal& pmtCal = calPMTs.GetPMT(i_evpmt);
                     pmtID.push_back(pmtCal.GetID());
                     evPMTTimes.push_back(pmtCal.GetTime() - transitTime[pmtID[i_evpmt]] - bucketTime[pmtID[i_evpmt]]);
                     h1DResTimeAll_raw->Fill(evPMTTimes[i_evpmt]);
                 }
 
-                // Fit hist to gaussian
-                h1DResTimeAll_raw->Fit("gaus");
-
-                TF1 *fit = h1DResTimeAll_raw->GetFunction("gauss");
-                //Double_t chi2 = fit->GetChisquare();
-
-                // Value of the first parameter:
-                Double_t peak_time = fit->GetParameter(0);
-
-                // Error of the first parameter:
-                //Double_t e1 = fit->GetParError(0);
-
-                // calculate time residuals (ajusted)
-                for (size_t i_evpmt = 0; i_evpmt < calPMT_count; ++i_evpmt) {
-                    h1DResTimeAll->Fill(evPMTTimes[i_evpmt] - peak_time);
-                    // cos(theta) hist
-                    hPMTResTimeCosTheta->Fill(cosTheta[pmtID[i_evpmt]], evPMTTimes[i_evpmt] - peak_time);
+                
                 }
             }
         }
+
+        // Fit hist to gaussian
+        std::cout << "fit 1" << std::endl;
+        h1DResTimeAll_raw->Fit("gaus");
+
+        std::cout << "fit 2" << std::endl;
+        TF1 *fit = h1DResTimeAll_raw->GetFunction("gaus");
+        //Double_t chi2 = fit->GetChisquare();
+
+        // Value of the first parameter:
+        std::cout << "fit 3" << std::endl;
+        Double_t peak_time = fit->GetParameter(0);
+        //Double_t e1 = fit->GetParError(0);
+
+        // calculate time residuals (ajusted)
+        std::cout << "peak_time = " << peak_time << std::endl;
+        for (size_t i_evpmt = 0; i_evpmt < pmtID.size(); ++i_evpmt) {
+            h1DResTimeAll->Fill(evPMTTimes[i_evpmt] - peak_time);
+            // cos(theta) hist
+            hPMTResTimeCosTheta->Fill(cosTheta[pmtID[i_evpmt]], evPMTTimes[i_evpmt] - peak_time);
 
         //now write everything
         rootfile->cd();
