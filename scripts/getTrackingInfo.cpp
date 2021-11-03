@@ -1500,7 +1500,7 @@ int GetLightPaths(std::string file, std::string fibre, std::string data_type){
             for(size_t i_ev = 0; i_ev< rDS.GetEVCount(); ++i_ev){
                 if (i_ev %100 == 0 and verbose) std::cout << "Event no " << i_ev << std::endl;
                 const RAT::DS::EV &rEV = rDS.GetEV(i_ev);
-                Int_t triggerWord = rEV.GetTubiiTrig();
+                Int_t triggerWord = rEV.GetTrigType();
                 if(!(triggerWord & (1 << 15))) continue; // EXTA cut
                 std::cout << "passed" << std::endl;
 
