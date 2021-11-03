@@ -1502,6 +1502,7 @@ int GetLightPaths(std::string file, std::string fibre, std::string data_type){
                 const RAT::DS::EV &rEV = rDS.GetEV(i_ev);
                 Int_t triggerWord = rEV.GetTubiiTrig();
                 if(!(triggerWord & (1 << 15))) continue; // EXTA cut
+                std::cout << "passed" << std::endl;
 
                 const RAT::DS::CalPMTs &calPMTs = rEV.GetCalPMTs(); 
                 size_t calPMT_count = calPMTs.GetCount();
