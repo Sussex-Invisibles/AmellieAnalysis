@@ -1521,17 +1521,21 @@ int GetLightPaths(std::string file, std::string fibre, std::string data_type){
             }
         }
 
-        // Fit hist to gaussian
-        h1DResTimeAll_raw->Fit("gaus");
-        TF1 *fit = h1DResTimeAll_raw->GetFunction("gaus");
-        //Double_t chi2 = fit->GetChisquare();
+        // // Fit hist to gaussian
+        // h1DResTimeAll_raw->Fit("gaus");
+        // TF1 *fit = h1DResTimeAll_raw->GetFunction("gaus");
+        // //Double_t chi2 = fit->GetChisquare();
 
-        // Value of the first parameter:
-        Double_t peak_time = fit->GetParameter(1);
-        //Double_t e1 = fit->GetParError(0);
+        // // Value of the first parameter:
+        // Double_t peak_time = fit->GetParameter(1);
+        // //Double_t e1 = fit->GetParError(0);
+
+        // Find bin with highest count -> peak
+        Int_t binmax = h1DResTimeAll_raw->GetMaximumBin();
+        Double_t peak_time = h1DResTimeAll_raw->GetXaxis()->GetBinCenter(binmax);
 
         // calculate time residuals (ajusted)
-        std::cout << "peak_time = " << peak_time << std::endl;
+        //std::cout << "peak_time = " << peak_time << std::endl;
         for (size_t i_evpmt = 0; i_evpmt < pmtID.size(); ++i_evpmt) {
             h1DResTimeAll->Fill(evPMTTimes[i_evpmt] - peak_time);
             // cos(theta) hist
