@@ -5,6 +5,7 @@
 #include <TH1.h>
 #include <TH2.h>
 #include <TVectorD.h>
+#include "AMELLIE_utils.hpp"
 
 /*
 Either: 
