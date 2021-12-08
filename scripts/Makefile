@@ -1,13 +1,8 @@
 all: generateStats.exe
 
-generateStats.exe: AMELLIE_utils.o generateStats.o
-	g++ -g AMELLIE_utils.o generateStats.o -o generateStats.exe
-
-generateStats.o: generateStats.cpp AMELLIE_utils.hpp
-	g++ -g -W -Wall -std=c++11 -c generateStats.cpp
+generateStats.exe: generateStats.cpp AMELLIE_utils.hpp
+	g++ -g -W -Wall -std=c++1y generateStats.cpp AMELLIE_utils.hpp -o generateStats.exe `root-config --cflags --libs` -I${RATROOT}/include/libpq -I${RATROOT}/include -L${RATROOT}/lib -lRATEvent_Linux
 	
-AMELLIE_utils.o: AMELLIE_utils.cpp AMELLIE_utils.hpp
-	g++ -g -W -Wall -std=c++11 -c AMELLIE_utils.cpp
 
 clean :
 	rm *.o generateStats.exe
