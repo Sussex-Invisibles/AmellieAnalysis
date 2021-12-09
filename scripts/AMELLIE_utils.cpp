@@ -11,27 +11,20 @@
  * @param y_b 
  * @param y_c 
  */
-triangle::triangle(double Xa, double Xb, double Xc, double Ya, double Yb, double Yc) {
-    x_a = Xa; x_b = Xb; x_c = Xc; y_a = Ya; y_b = Yb; y_c = Yc;
+triangle::triangle(double x_a, double x_b, double x_c, double y_a, double y_b, double y_c) {
+    points[0] = x_a; points[1] = x_b; points[2] = x_c;
+    points[3] = y_a; points[4] = y_b; points[5] = y_c;
 }
 
 // member functions
 
 // Get/Set triangle vertex coordinates
-double& triangle::X_a() {return x_a;}
-double& triangle::X_b() {return x_b;}
-double& triangle::X_c() {return x_c;}
-double& triangle::Y_a() {return y_a;}
-double& triangle::Y_b() {return y_b;}
-double& triangle::Y_c() {return y_c;}
-
-// // Set triangle vertex coordinates
-// double triangle::X_a(double d) {x_a = d;}
-// double triangle::X_b(double d) {x_b = d;}
-// double triangle::X_c(double d) {x_c = d;}
-// double triangle::Y_a(double d) {y_a = d;}
-// double triangle::Y_b(double d) {y_b = d;}
-// double triangle::Y_c(double d) {y_c = d;}
+double& triangle::X_a() {return points[0];}
+double& triangle::X_b() {return points[1];}
+double& triangle::X_c() {return points[2];}
+double& triangle::Y_a() {return points[3];}
+double& triangle::Y_b() {return points[4];}
+double& triangle::Y_c() {return points[5];}
 
 /**
  * @brief Checks if point is inside triangle by using the sum of triangles method:
@@ -46,11 +39,13 @@ double& triangle::Y_c() {return y_c;}
  */
 bool triangle::check_point_inside_triangle(const double point_x, const double point_y, const bool lim_count) {
     // Calculate (twice, since the factor 0.5 is irrelevent here) the triangle's area
-    double A = abs(x_a * (y_b - y_c) + x_b * (y_c - y_a) + x_c * (y_a - y_b));
+    // A = abs(x_a * (y_b - y_c) + x_b * (y_c - y_a) + x_c * (y_a - y_b));
+    double A = abs(points[0] * (points[4] - points[5]) + points[1] * (points[5] - points[3])
+                    + points[2] * (points[3] - points[4]));
 
     if (A == 0.0) {
         std::cout << "Triangle area is zero." << std::endl;
-        if (point_x == x_a and point_y == y_a) {
+        if (point_x == points[0] and point_y == points[3]) {
             return lim_count;  // still might be on the point of the triangle
         } else {
             return false;
@@ -58,13 +53,16 @@ bool triangle::check_point_inside_triangle(const double point_x, const double po
     }
 
     // Calculate (twice) the area of each triangle formed by the point, and check if it is zero successively
-    double A_a = abs(point_x * (y_b - y_c) + x_b * (y_c - point_y) + x_c * (point_y - y_b));
+    double A_a = abs(point_x * (points[4] - points[5]) + points[1] * (points[5] - point_y)
+                    + points[2] * (point_y - points[4]));
     if (A_a == 0.0) {return lim_count;} // if area is zero, point is on edge of triangle.
 
-    double A_b = abs(x_a * (point_y - y_c) + point_x * (y_c - y_a) + x_c * (y_a - point_y));
+    double A_b = abs(points[0] * (point_y - points[5]) + point_x * (points[5] - points[3])
+                    + points[2] * (points[3] - point_y));
     if (A_b == 0.0) {return lim_count;} // if area is zero, point is on edge of triangle.
 
-    double A_c = abs(x_a * (y_b - point_y) + x_b * (point_y - y_a) + point_x * (y_a - y_b));
+    double A_c = abs(points[0] * (points[4] - point_y) + points[1] * (point_y - points[3])
+                    + point_x * (points[3] - points[4]));
     if (A_c == 0.0) {return lim_count;} // if area is zero, point is on edge of triangle.
 
     // Check sum of areas of point triangles adds up to original triangle aread (tolerance of 0.1%).
@@ -75,4 +73,11 @@ bool triangle::check_point_inside_triangle(const double point_x, const double po
     } else {
         return false;
     }
+}
+
+
+/* ~~~~~~~~~ operator overload ~~~~~~~~~ */
+double& triangle::operator [] (int i) {
+    assert((i < 6 && i >= 0) && "Index out of range");
+    return points[i];
 }

@@ -4,15 +4,15 @@
 
 // include
 #include <iostream>
+#include <assert.h>
 
 class triangle {
     private:
-        double x_a; double x_b; double x_c;
-        double y_a; double y_b; double y_c;
+        double points[6]; //x_a, x_b, x_c, y_a, y_b, y_c
 
     public:
-        // constructor
-        triangle(double Xa, double Xb, double Xc, double Ya, double Yb, double Yc);
+        // constructors
+        triangle(double x_a, double x_b, double x_c, double y_a, double y_b, double y_c);
 
         // member functions
         double& X_a();
@@ -30,6 +30,11 @@ class triangle {
         // double Y_c(double d);
 
         bool check_point_inside_triangle(const double point_x, const double point_y, const bool lim_count=true);
+
+    /* ~~~~~~~~~ operator overload ~~~~~~~~~ */
+
+        // access elements easier
+        double& operator [] (int i);
 };
 
 //end header guard
