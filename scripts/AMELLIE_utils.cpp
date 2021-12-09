@@ -1,23 +1,50 @@
 #include "AMELLIE_utils.hpp"
 
+
 /**
- * @brief Checks if point is inside triangle given by points a, b and c, by using the sum of triangles method:
- * if the sum of the area of the three triangles formed by the point and two vertices of the triangle add up to
- * the area of the original triangle, the point is inside. It is outside if the sum is larger. 
+ * @brief Construct a new triangle::triangle object
  * 
- * @param point_x 
- * @param point_y 
  * @param x_a 
  * @param x_b 
  * @param x_c 
  * @param y_a 
  * @param y_b 
  * @param y_c 
+ */
+triangle::triangle(double Xa, double Xb, double Xc, double Ya, double Yb, double Yc) {
+    x_a = Xa; x_b = Xb; x_c = Xc; y_a = Ya; y_b = Yb; y_c = Yc;
+}
+
+// member functions
+
+// Get/Set triangle vertex coordinates
+double& triangle::X_a() {return x_a;}
+double& triangle::X_b() {return x_b;}
+double& triangle::X_c() {return x_c;}
+double& triangle::Y_a() {return y_a;}
+double& triangle::Y_b() {return y_b;}
+double& triangle::Y_c() {return y_c;}
+
+// // Set triangle vertex coordinates
+// double triangle::X_a(double d) {x_a = d;}
+// double triangle::X_b(double d) {x_b = d;}
+// double triangle::X_c(double d) {x_c = d;}
+// double triangle::Y_a(double d) {y_a = d;}
+// double triangle::Y_b(double d) {y_b = d;}
+// double triangle::Y_c(double d) {y_c = d;}
+
+/**
+ * @brief Checks if point is inside triangle by using the sum of triangles method:
+ * if the sum of the area of the three triangles formed by the point and two vertices of the triangle add up to
+ * the area of the original triangle, the point is inside. It is outside if the sum is larger. 
+ * 
+ * @param point_x 
+ * @param point_y 
  * @param lim_count true (default) = point on triangle edge counts as inside, false = point on edge counts as outside.
  * @return true 
  * @return false 
  */
-bool check_point_inside_triangle(double point_x, double point_y, double x_a, double x_b, double x_c, double y_a, double y_b, double y_c, bool lim_count=true) {
+bool triangle::check_point_inside_triangle(const double point_x, const double point_y, const bool lim_count) {
     // Calculate (twice, since the factor 0.5 is irrelevent here) the triangle's area
     double A = abs(x_a * (y_b - y_c) + x_b * (y_c - y_a) + x_c * (y_a - y_b));
 

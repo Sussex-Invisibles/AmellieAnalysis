@@ -14,9 +14,8 @@ Either:
 */
 
 int generate_stats(std::string region_selected_file, std::string full_file, std::string signal, std::string data_type);
-int make_region_cut(std::string tracked_file, double x_a, double x_b, double x_c, double y_a, double y_b, double y_c,
-                    double min_time_direct_beam_spot, double max_time_direct_beam_spot, double min_time_reflected_beam_spot,
-                    double max_time_reflected_beam_spot, std::string data_type);
+int make_region_cut(std::string tracked_file, triangle Tri, double min_time_direct_beam_spot, double max_time_direct_beam_spot,
+                    double min_time_reflected_beam_spot, double max_time_reflected_beam_spot, std::string data_type);
 
 int main(int argv, char** argc){
     std::string choice = argc[1];
@@ -32,18 +31,14 @@ int main(int argv, char** argc){
     else if(choice == "apply_region"){
         std::cout << "Applying region cuts" << std::endl;
         std::string tracked_file = argc[2];
-        double x_a = std::stod(argc[3]);
-        double x_b = std::stod(argc[4]);
-        double x_c = std::stod(argc[5]);
-        double y_a = std::stod(argc[6]);
-        double y_b = std::stod(argc[7]);
-        double y_c = std::stod(argc[8]);
+        triangle Tri = triangle(std::stod(argc[3]), std::stod(argc[4]), std::stod(argc[5]), std::stod(argc[6]),
+                                std::stod(argc[7]), std::stod(argc[8]));
         double min_direct = std::stod(argc[9]);
         double max_direct = std::stod(argc[10]);
         double min_reflected = std::stod(argc[11]);
         double max_reflected = std::stod(argc[12]);
         std::string data_type = argc[13];  // MC or raw
-        int status = make_region_cut(tracked_file, x_a, x_b, x_c, y_a, y_b, y_c, min_direct, max_direct, min_reflected, max_reflected, data_type);
+        int status = make_region_cut(tracked_file, Tri, min_direct, max_direct, min_reflected, max_reflected, data_type);
         return status;
     }
     else{
@@ -224,19 +219,14 @@ int generate_stats(std::string region_selected_file, std::string full_file, std:
  * x-limits of direct/reflected beam spot limits are hardcoded in the function.
  * 
  * @param tracked_file Original root file with total histograms.
- * @param x_a Triangle point.
- * @param x_b Triangle point.
- * @param x_c Triangle point.
- * @param y_a Triangle point.
- * @param y_b Triangle point.
- * @param y_c Triangle point.
+ * @param Tri triangle object with coordinates of each vertex saved.
  * @param min_time_direct_beam_spot Direct beam spot limit.
  * @param max_time_direct_beam_spot Direct beam spot limit.
  * @param min_time_reflected_beam_spot Reflected beam spot limit.
  * @param max_time_reflected_beam_spot Reflected beam spot limit.
  * @return int 
  */
-int make_region_cut(std::string tracked_file, double x_a, double x_b, double x_c, double y_a, double y_b, double y_c,
+int make_region_cut(std::string tracked_file, triangle Tri,
                     double min_time_direct_beam_spot, double max_time_direct_beam_spot, double min_time_reflected_beam_spot,
                     double max_time_reflected_beam_spot, std::string data_type){
 
@@ -323,14 +313,8 @@ int make_region_cut(std::string tracked_file, double x_a, double x_b, double x_c
             double xBinCenter = hReEmittedPaths->GetXaxis()->GetBinCenter(x);
             for(int y=0; y<nBinsY+1; y++){
                 double yBinCenter = hReEmittedPaths->GetYaxis()->GetBinCenter(y);
-                double upperGradient = (y_b - y_a) / (x_b - x_a);
-                double upperConstant = y_a - (upperGradient*x_a);
-                double lowerGradient = (y_c - y_a) / (x_c - x_a);
-                double lowerConstant = y_a - (lowerGradient*x_a);
-                double rightGradient = 0;
-                if(x_c != x_b) rightGradient = (y_c - y_b) / (x_c - x_b);
-                double rightConstant = y_b - (rightGradient*x_b);
-                if((yBinCenter <= upperGradient*xBinCenter + upperConstant) and (yBinCenter >= lowerGradient*xBinCenter + lowerConstant) and ((rightGradient < 0 and yBinCenter <= rightGradient*xBinCenter + rightConstant) or ((rightGradient > 0 and yBinCenter >= rightGradient*xBinCenter + rightConstant)) or (rightGradient == 0 and xBinCenter <= x_b))){
+                // Check if bin is within triangle region
+                if (Tri.check_point_inside_triangle(xBinCenter, yBinCenter)) {
                     hRegionCutReemissionResTimeVsCosTheta->SetBinContent(x,y,hReEmittedPaths->GetBinContent(x,y));
                     hRegionCutPmtResTimeVsCosTheta->SetBinContent(x,y,hAllPaths->GetBinContent(x,y));  // <----------------------
                     hRegionCutNoisePaths->SetBinContent(x,y,hNoisePaths->GetBinContent(x,y));
@@ -346,8 +330,7 @@ int make_region_cut(std::string tracked_file, double x_a, double x_b, double x_c
                     hRegionCutAVPipesPaths->SetBinContent(x,y,hAVPipesPaths->GetBinContent(x,y));
                     hRegionCutAcrylicPaths->SetBinContent(x,y,hAcrylicPaths->GetBinContent(x,y));
                     hRegionCutOtherScatterPaths->SetBinContent(x,y,hOtherScatterPaths->GetBinContent(x,y));
-                }
-                else{
+                } else {
                     hRegionCutReemissionResTimeVsCosTheta->SetBinContent(x,y,0);
                     hRegionCutPmtResTimeVsCosTheta->SetBinContent(x,y,0);
                     hRegionCutNoisePaths->SetBinContent(x,y,0);
@@ -567,7 +550,9 @@ int make_region_cut(std::string tracked_file, double x_a, double x_b, double x_c
         // get file name from path+filename string
         std::size_t tracked_botDirPos = tracked_file.find_last_of("/");
         std::string tracked_filename = tracked_file.substr(tracked_botDirPos+1, tracked_file.length());
-        std::string saveroot = "region_selected_hists_x_a" + std::to_string(x_a)  + "_x_b_" + std::to_string(x_b) + "_x_c_" + std::to_string(x_c) + "_y_a_" + std::to_string(y_a) + "_y_b_" + std::to_string(y_b) + "_y_c_" + std::to_string(y_c) + "_" + tracked_filename;
+        std::string saveroot = "region_selected_hists_x_a" + std::to_string(Tri.X_a())  + "_x_b_" + std::to_string(Tri.X_b()) + "_x_c_"
+                                + std::to_string(Tri.X_c()) + "_y_a_" + std::to_string(Tri.Y_a()) + "_y_b_" + std::to_string(Tri.Y_b())
+                                + "_y_c_" + std::to_string(Tri.Y_c()) + "_" + tracked_filename;
         TFile *rootfile = new TFile(saveroot.c_str(),"RECREATE");
         rootfile->cd();
         hRegionCutReemissionResTimeVsCosTheta->Write();
@@ -631,14 +616,8 @@ int make_region_cut(std::string tracked_file, double x_a, double x_b, double x_c
             double xBinCenter = hAllPaths->GetXaxis()->GetBinCenter(x);
             for (int y=0; y<nBinsY+1; y++) {
                 double yBinCenter = hAllPaths->GetYaxis()->GetBinCenter(y);
-                double upperGradient = (y_b - y_a) / (x_b - x_a);
-                double upperConstant = y_a - (upperGradient*x_a);
-                double lowerGradient = (y_c - y_a) / (x_c - x_a);
-                double lowerConstant = y_a - (lowerGradient*x_a);
-                double rightGradient = 0;
-                if (x_c != x_b) rightGradient = (y_c - y_b) / (x_c - x_b);
-                double rightConstant = y_b - (rightGradient*x_b);
-                if ((yBinCenter <= upperGradient*xBinCenter + upperConstant) and (yBinCenter >= lowerGradient*xBinCenter + lowerConstant) and ((rightGradient < 0 and yBinCenter <= rightGradient*xBinCenter + rightConstant) or ((rightGradient > 0 and yBinCenter >= rightGradient*xBinCenter + rightConstant)) or (rightGradient == 0 and xBinCenter <= x_b))) {
+                // Check if bin is within triangle region
+                if (Tri.check_point_inside_triangle(xBinCenter, yBinCenter)) {
                     hRegionCutPmtResTimeVsCosTheta->SetBinContent(x,y,hAllPaths->GetBinContent(x,y));
                 } else {
                     hRegionCutPmtResTimeVsCosTheta->SetBinContent(x,y,0);
@@ -700,7 +679,9 @@ int make_region_cut(std::string tracked_file, double x_a, double x_b, double x_c
         // get file name from path+filename string
         std::size_t tracked_botDirPos = tracked_file.find_last_of("/");
         std::string tracked_filename = tracked_file.substr(tracked_botDirPos+1, tracked_file.length());
-        std::string saveroot = "region_selected_hists_x_a_" + std::to_string(x_a)  + "_x_b_" + std::to_string(x_b) + "_x_c_" + std::to_string(x_c) + "_y_a_" + std::to_string(y_a) + "_y_b_" + std::to_string(y_b) + "_y_c_" + std::to_string(y_c) + "_" + tracked_filename;
+        std::string saveroot = "region_selected_hists_x_a_" + std::to_string(Tri.X_a())  + "_x_b_" + std::to_string(Tri.X_b())
+                                + "_x_c_" + std::to_string(Tri.X_c()) + "_y_a_" + std::to_string(Tri.Y_a()) + "_y_b_" + std::to_string(Tri.Y_b())
+                                + "_y_c_" + std::to_string(Tri.Y_c()) + "_" + tracked_filename;
         TFile *rootfile = new TFile(saveroot.c_str(),"RECREATE");
         rootfile->cd();
         hRegionCutPmtResTimeVsCosTheta->Write();
