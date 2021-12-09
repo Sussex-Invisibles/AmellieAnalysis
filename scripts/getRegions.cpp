@@ -10,6 +10,7 @@ Create plots of the phase space showing the relationship between different param
 #include <iostream>
 #include <fstream>
 #include <chrono>
+#include "AMELLIE_utils.hpp"
 
 int CalculateRegions(std::string inputFile, int nbins);
 int OptimiseDivideAndConquer(std::string inputFile, int nbins, bool verbose, bool debug, bool extraInfo, std::string signal_param);
@@ -661,6 +662,11 @@ std::vector<double> GetFOMs(std::vector<double> points, std::vector<double> fixe
     const = y1 - m*x1
     */
 
+   // Define fixed point triangle, where one point will be exchanged with the point that is
+   // being varied (choose based on numVar, later)
+   triangle Tri = triangle(fixedPoints.at(0), fixedPoints.at(1), fixedPoints.at(2), fixedPoints.at(3),
+                            fixedPoints.at(4), fixedPoints.at(5));
+
     for(int x=1; x<reEmittedHist->GetNbinsX()+1; x++){ //loop over histogram bins
         double xBinCenter = reEmittedHist->GetXaxis()->GetBinCenter(x);
         for(int y=1; y<reEmittedHist->GetNbinsY()+1; y++){
@@ -1271,12 +1277,12 @@ std::vector<TH2F*> GetRegionSelectedHists(std::vector<double> finalPoints, TH2F 
     double reflected_cos_alpha = 0.95; //FIXME: don't hardcode this
 
     // Print to Regions lims file
-    outputFile_txt << std::to_string(direct_max_time)) + "\n";
-    outputFile_txt << std::to_string(direct_min_time)) + "\n";
-    outputFile_txt << std::to_string(direct_cos_alpha)) + "\n";
-    outputFile_txt << std::to_string(reflected_max_time)) + "\n";
-    outputFile_txt << std::to_string(reflected_min_time)) + "\n";
-    outputFile_txt << std::to_string(reflected_cos_alpha)) + "\n";
+    outputFile_txt << std::to_string(direct_max_time) << "\n";
+    outputFile_txt << std::to_string(direct_min_time) << "\n";
+    outputFile_txt << std::to_string(direct_cos_alpha) << "\n";
+    outputFile_txt << std::to_string(reflected_max_time) << "\n";
+    outputFile_txt << std::to_string(reflected_min_time) << "\n";
+    outputFile_txt << std::to_string(reflected_cos_alpha) << "\n";
 
     std::cout << "Min direct time: " << direct_min_time << std::endl;
     std::cout << "Max direct time: " << direct_max_time << std::endl;
