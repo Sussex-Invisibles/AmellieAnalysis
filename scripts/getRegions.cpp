@@ -680,7 +680,15 @@ std::vector<TH2F*> GetRegionSelectedHists(std::vector<double> finalPoints, std::
 
     double direct_max_time = Hists.at(5)->ProjectionY()->GetXaxis()->GetBinCenter(Hists.at(5)->ProjectionY()->GetMaximumBin()) + 10;  //hNoEffectPaths
     double direct_min_time = Hists.at(5)->ProjectionY()->GetXaxis()->GetBinCenter(Hists.at(5)->ProjectionY()->GetMaximumBin()) - 10;  //hNoEffectPaths
-    double direct_cos_alpha = -0.9; //FIXME: don't hardcode this
+    //FIXME: don't hardcode this:
+    double direct_cos_alpha;
+    if (fibre == "FA089") {  // 10deg off-axis
+        direct_cos_alpha = -0.85; 
+    } else if (fibre == "FA173" or fibre == "FA150" or fibre == "FA093") {  // 20deg off-axis
+        direct_cos_alpha = -0.6;
+    } else {  // on-axis
+        direct_cos_alpha = -0.9;
+    }
 
     double reflected_max_time = Hists.at(5)->ProjectionY()->GetXaxis()->GetBinCenter(Hists.at(5)->ProjectionY()->GetMaximumBin()) + 10;  //hNoEffectPaths
     double reflected_min_time = Hists.at(5)->ProjectionY()->GetXaxis()->GetBinCenter(Hists.at(5)->ProjectionY()->GetMaximumBin()) - 10;  //hNoEffectPaths
