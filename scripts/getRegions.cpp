@@ -20,7 +20,7 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, std::string fibre
 std::vector<double> GetThreePoints(double bestPoint, double worstPoint, std::vector<double> originalPoints);
 std::vector<double> GetFOMs(std::vector<double> points, std::vector<double> fixedPoints, int numVar, TH2F *allPathsHist, TH2F *reEmittedHist, TH2F *scatteredHist, std::string signal);
 std::vector<double> GetBestFOM(std::vector<double> FOMs, std::vector<double> points);
-std::vector<TH2F*> GetRegionSelectedHists(std::vector<double> finalPoints, TH2F *hReEmittedPaths, TH2F *hAllPaths, TH2F *hNoisePaths, TH2F *hSingleScatterPaths, TH2F *hOtherPaths, TH2F *hNoEffectPaths, TH2F *hNearReflectPaths, TH2F *hRopesPaths, TH2F *hPMTReflectionPaths, TH2F *hExtWaterScatterPaths, TH2F *hInnerAvReflectPaths, TH2F *hMultipleEffectPaths, TH2F *hAVPipesPaths, TH2F *hAcrylicPaths, TH2F *hOtherScatterPaths, std::string saveroot_txt);
+std::vector<TH2F*> GetRegionSelectedHists(std::vector<double> finalPoints, std::vector<TH2F*> Hists, std::string saveroot_txt);
 std::vector<double> CheckPoints(std::vector<double> points, std::vector<double> fixedPoints, int numVar);
 
 int main(int argc, char** argv){
@@ -281,26 +281,22 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, std::string fibre
     std::string filename_txt = inputFile.substr(botDirPos_txt+1, inputFile.length()) + ".txt";
     std::string saveroot_txt = "region_selected_limits_" + signal_param + "_" + filename_txt;
     outputFile_txt.open(saveroot_txt.c_str());
-    outputFile_txt << std::to_string(fixedPoints.at(0)) + "\n"; // x_a
-    outputFile_txt << std::to_string(fixedPoints.at(1)) + "\n"; // x_b
-    outputFile_txt << std::to_string(fixedPoints.at(2)) + "\n"; // x_c
-    outputFile_txt << std::to_string(fixedPoints.at(3)) + "\n"; // y_a
-    outputFile_txt << std::to_string(fixedPoints.at(4)) + "\n"; // y_b
-    outputFile_txt << std::to_string(fixedPoints.at(5)) + "\n"; // y_c
+    for (int i = 0; i < 6; ++i) {
+        outputFile_txt << std::to_string(fixedPoints.at(i)) + "\n"; //x_a, x_b, x_c, y_a, y_b, y_c
+    }
     outputFile_txt.close();
 
     // now use final result to get region, write to file
 
-    if(verbose) std::cout << "Region found" << std::endl;
-    if(verbose) std::cout << "    x_a: " << fixedPoints.at(0) << std::endl;
-    if(verbose) std::cout << "    x_b: " << fixedPoints.at(1) << std::endl;
-    if(verbose) std::cout << "    x_c: " << fixedPoints.at(2) << std::endl;
-    if(verbose) std::cout << "    y_a: " << fixedPoints.at(3) << std::endl;
-    if(verbose) std::cout << "    y_b: " << fixedPoints.at(4) << std::endl;
-    if(verbose) std::cout << "    y_c: " << fixedPoints.at(5) << std::endl;
-    if(verbose) std::cout << "There were " << numMainLoopIterations << " iterations of the main loop" << std::endl;
+    if(verbose) {
+        std::cout << "Region found" << std::endl;
+        for (int i = 0; i < 6; ++i) {
+            std::cout << "    " << point_names[i] << ": " << fixedPoints.at(i) << std::endl;
+        }
+        std::cout << "There were " << numMainLoopIterations << " iterations of the main loop" << std::endl;
+    }
 
-    std::vector<TH2F*> regionSelectedHists = GetRegionSelectedHists(fixedPoints, hReEmittedPaths, hAllPaths, hNoisePaths, hSingleScatterPaths, hOtherPaths, hNoEffectPaths, hNearReflectPaths, hRopesPaths, hPMTReflectionPaths, hExtWaterScatterPaths, hInnerAvReflectPaths, hMultipleEffectPaths, hAVPipesPaths, hAcrylicPaths, hOtherScatterPaths, saveroot_txt);
+    std::vector<TH2F*> regionSelectedHists = GetRegionSelectedHists(fixedPoints, Hists, saveroot_txt);
 
     // get file name from path+filename string
     std::size_t botDirPos = inputFile.find_last_of("/");
@@ -598,112 +594,96 @@ std::vector<double> GetBestFOM(std::vector<double> FOMs, std::vector<double> poi
  * @param hOtherScatterPaths Original histogram.
  * @return std::vector<TH2F*> 
  */
-std::vector<TH2F*> GetRegionSelectedHists(std::vector<double> finalPoints, TH2F *hReEmittedPaths, TH2F *hAllPaths, TH2F *hNoisePaths, TH2F *hSingleScatterPaths, TH2F *hOtherPaths, TH2F *hNoEffectPaths, TH2F *hNearReflectPaths, TH2F *hRopesPaths, TH2F *hPMTReflectionPaths, TH2F *hExtWaterScatterPaths, TH2F *hInnerAvReflectPaths, TH2F *hMultipleEffectPaths, TH2F *hAVPipesPaths, TH2F *hAcrylicPaths, TH2F *hOtherScatterPaths, std::string saveroot_txt){
+std::vector<TH2F*> GetRegionSelectedHists(std::vector<double> finalPoints, std::vector<TH2F*> Hists, std::string saveroot_txt){
 
-    //FIXME: pass in vector of hists?
+    //Clone histograms and graphs
+    TH2F *hRegionSelectedReEmittedPaths; TH2F *hRegionSelectedAllPaths;
+    TH2F *hRegionSelectedNoisePaths; TH2F *hRegionSelectedSingleScatterPaths;
+    TH2F *hRegionSelectedOtherPaths; TH2F *hRegionSelectedNoEffectPaths;
+    TH2F *hRegionSelectedNearReflectPaths; TH2F *hRegionSelectedRopesPaths;
+    TH2F *hRegionSelectedPMTReflectionPaths; TH2F *hRegionSelectedExtWaterScatterPaths;
+    TH2F *hRegionSelectedInnerAvReflectPaths; TH2F *hRegionSelectedMultipleEffectPaths;
+    TH2F *hRegionSelectedAVPipesPaths; TH2F *hRegionSelectedAcrylicPaths;
+    TH2F *hRegionSelectedOtherScatterPaths;
+    std::vector<TH2F*> RegionHists;
+    RegionHists.push_back(hRegionSelectedReEmittedPaths); RegionHists.push_back(hRegionSelectedAllPaths);
+    RegionHists.push_back(hRegionSelectedNoisePaths); RegionHists.push_back(hRegionSelectedSingleScatterPaths);
+    RegionHists.push_back(hRegionSelectedOtherPaths); RegionHists.push_back(hRegionSelectedNoEffectPaths);
+    RegionHists.push_back(hRegionSelectedNearReflectPaths); RegionHists.push_back(hRegionSelectedRopesPaths);
+    RegionHists.push_back(hRegionSelectedPMTReflectionPaths); RegionHists.push_back(hRegionSelectedExtWaterScatterPaths);
+    RegionHists.push_back(hRegionSelectedInnerAvReflectPaths); RegionHists.push_back(hRegionSelectedMultipleEffectPaths);
+    RegionHists.push_back(hRegionSelectedAVPipesPaths); RegionHists.push_back(hRegionSelectedAcrylicPaths);
+    RegionHists.push_back(hRegionSelectedOtherScatterPaths);
+    std::string RegionHist_names[15] = {"hRegionSelectedReEmittedPaths", "hRegionSelectedAllPaths", "hRegionCutNoisePaths",
+                                        "hRegionCutSingleScatterPaths", "hRegionCutOtherPaths", "hRegionCutNoEffectPaths"
+                                        "hRegionCutNearReflectPaths", "hRegionCutRopesPaths", "hRegionCutPMTReflectionPaths"
+                                        "hRegionCutExtWaterScatterPaths", "hRegionCutInnerAvReflectPaths", "hRegionCutMultipleEffectPaths"
+                                        "hRegionCutAVPipesPaths", "hRegionCutAcrylicPaths", "hRegionCutOtherScatterPaths"};
 
-    TH2F *hRegionSelectedReEmittedPaths = (TH2F*)hReEmittedPaths->Clone();
-    TH2F *hRegionSelectedAllPaths = (TH2F*)hAllPaths->Clone();
-    TH2F *hRegionSelectedNoisePaths = (TH2F*)hNoisePaths->Clone();
-    TH2F *hRegionSelectedSingleScatterPaths = (TH2F*)hSingleScatterPaths->Clone();
-    TH2F *hRegionSelectedOtherPaths = (TH2F*)hOtherPaths->Clone();
-    TH2F *hRegionSelectedNoEffectPaths = (TH2F*)hNoEffectPaths->Clone();
-    TH2F *hRegionSelectedNearReflectPaths = (TH2F*)hNearReflectPaths->Clone();
-    TH2F *hRegionSelectedRopesPaths = (TH2F*)hRopesPaths->Clone();
-    TH2F *hRegionSelectedPMTReflectionPaths = (TH2F*)hPMTReflectionPaths->Clone();
-    TH2F *hRegionSelectedExtWaterScatterPaths = (TH2F*)hExtWaterScatterPaths->Clone();
-    TH2F *hRegionSelectedInnerAvReflectPaths = (TH2F*)hInnerAvReflectPaths->Clone();
-    TH2F *hRegionSelectedMultipleEffectPaths = (TH2F*)hMultipleEffectPaths->Clone();
-    TH2F *hRegionSelectedAVPipesPaths = (TH2F*)hAVPipesPaths->Clone();
-    TH2F *hRegionSelectedAcrylicPaths = (TH2F*)hAcrylicPaths->Clone();
-    TH2F *hRegionSelectedOtherScatterPaths = (TH2F*)hOtherScatterPaths->Clone();
+    TH2F *hDirectCutReEmittedPaths; TH2F *hDirectCutAllPaths;
+    TH2F *hDirectCutNoisePaths; TH2F *hDirectCutSingleScatterPaths;
+    TH2F *hDirectCutOtherPaths; TH2F *hDirectCutNoEffectPaths;
+    TH2F *hDirectCutNearReflectPaths; TH2F *hDirectCutRopesPaths;
+    TH2F *hDirectCutPMTReflectionPaths; TH2F *hDirectCutExtWaterScatterPaths;
+    TH2F *hDirectCutInnerAvReflectPaths; TH2F *hDirectCutMultipleEffectPaths;
+    TH2F *hDirectCutAVPipesPaths; TH2F *hDirectCutAcrylicPaths;
+    TH2F *hDirectCutOtherScatterPaths;
+    std::vector<TH2F*> DirectHists;
+    DirectHists.push_back(hDirectCutReEmittedPaths); DirectHists.push_back(hDirectCutAllPaths);
+    DirectHists.push_back(hDirectCutNoisePaths); DirectHists.push_back(hDirectCutSingleScatterPaths);
+    DirectHists.push_back(hDirectCutOtherPaths); DirectHists.push_back(hDirectCutNoEffectPaths);
+    DirectHists.push_back(hDirectCutNearReflectPaths); DirectHists.push_back(hDirectCutRopesPaths);
+    DirectHists.push_back(hDirectCutPMTReflectionPaths); DirectHists.push_back(hDirectCutExtWaterScatterPaths);
+    DirectHists.push_back(hDirectCutInnerAvReflectPaths); DirectHists.push_back(hDirectCutMultipleEffectPaths);
+    DirectHists.push_back(hDirectCutAVPipesPaths); DirectHists.push_back(hDirectCutAcrylicPaths);
+    DirectHists.push_back(hDirectCutOtherScatterPaths);
+    std::string DirectHist_names[15] = {"hDirectCutReEmittedPaths", "hDirectCutAllPaths", "hDirectCutNoisePaths", 
+                                        "hDirectCutSingleScatterPaths", "hDirectCutOtherPaths", "hDirectCutNoEffectPaths", 
+                                        "hDirectCutNearReflectPaths", "hDirectCutRopesPaths", "hDirectCutPMTReflectionPaths", 
+                                        "hDirectCutExtWaterScatterPaths", "hDirectCutInnerAvReflectPaths", "hDirectCutAVPipesPaths", 
+                                        "hDirectCutAcrylicPaths", "hDirectCutOtherScatterPaths"};
 
-    hRegionSelectedReEmittedPaths->SetName("hRegionSelectedReEmittedPaths");
-    hRegionSelectedAllPaths->SetName("hRegionSelectedAllPaths");
-    hRegionSelectedNoisePaths->SetName("hRegionCutNoisePaths");
-    hRegionSelectedSingleScatterPaths->SetName("hRegionCutSingleScatterPaths");
-    hRegionSelectedOtherPaths->SetName("hRegionCutOtherPaths");
-    hRegionSelectedNoEffectPaths->SetName("hRegionCutNoEffectPaths");
-    hRegionSelectedNearReflectPaths->SetName("hRegionCutNearReflectPaths");
-    hRegionSelectedRopesPaths->SetName("hRegionCutRopesPaths");
-    hRegionSelectedPMTReflectionPaths->SetName("hRegionCutPMTReflectionPaths");
-    hRegionSelectedExtWaterScatterPaths->SetName("hRegionCutExtWaterScatterPaths");
-    hRegionSelectedInnerAvReflectPaths->SetName("hRegionCutInnerAvReflectPaths");
-    hRegionSelectedMultipleEffectPaths->SetName("hRegionCutMultipleEffectPaths");
-    hRegionSelectedAVPipesPaths->SetName("hRegionCutAVPipesPaths");
-    hRegionSelectedAcrylicPaths->SetName("hRegionCutAcrylicPaths");
-    hRegionSelectedOtherScatterPaths->SetName("hRegionCutOtherScatterPaths");
+    TH2F *hReflectedCutReEmittedPaths; TH2F *hReflectedCutAllPaths;
+    TH2F *hReflectedCutNoisePaths; TH2F *hReflectedCutSingleScatterPaths;
+    TH2F *hReflectedCutOtherPaths; TH2F *hReflectedCutNoEffectPaths;
+    TH2F *hReflectedCutNearReflectPaths; TH2F *hReflectedCutRopesPaths;
+    TH2F *hReflectedCutPMTReflectionPaths; TH2F *hReflectedCutExtWaterScatterPaths;
+    TH2F *hReflectedCutInnerAvReflectPaths; TH2F *hReflectedCutMultipleEffectPaths;
+    TH2F *hReflectedCutAVPipesPaths; TH2F *hReflectedCutAcrylicPaths;
+    TH2F *hReflectedCutOtherScatterPaths;
+    std::vector<TH2F*> ReflectedHists;
+    ReflectedHists.push_back(hReflectedCutReEmittedPaths); ReflectedHists.push_back(hReflectedCutAllPaths);
+    ReflectedHists.push_back(hReflectedCutNoisePaths); ReflectedHists.push_back(hReflectedCutSingleScatterPaths);
+    ReflectedHists.push_back(hReflectedCutOtherPaths); ReflectedHists.push_back(hReflectedCutNoEffectPaths);
+    ReflectedHists.push_back(hReflectedCutNearReflectPaths); ReflectedHists.push_back(hReflectedCutRopesPaths);
+    ReflectedHists.push_back(hReflectedCutPMTReflectionPaths); ReflectedHists.push_back(hReflectedCutExtWaterScatterPaths);
+    ReflectedHists.push_back(hReflectedCutInnerAvReflectPaths); ReflectedHists.push_back(hReflectedCutMultipleEffectPaths);
+    ReflectedHists.push_back(hReflectedCutAVPipesPaths); ReflectedHists.push_back(hReflectedCutAcrylicPaths);
+    ReflectedHists.push_back(hReflectedCutOtherScatterPaths);
+    std::string ReflectedHist_names[15] = {"hReflectedCutReEmittedPaths", "hReflectedCutAllPaths", "hReflectedCutNoisePaths", 
+                                        "hReflectedCutSingleScatterPaths", "hReflectedCutOtherPaths", "hReflectedCutNoEffectPaths", 
+                                        "hReflectedCutNearReflectPaths", "hReflectedCutRopesPaths", "hReflectedCutPMTReflectionPaths", 
+                                        "hReflectedCutExtWaterScatterPaths", "hReflectedCutInnerAvReflectPaths", "hReflectedCutMultipleEffectPaths", 
+                                        "hReflectedCutAVPipesPaths", "hReflectedCutAcrylicPaths", "hReflectedCutOtherScatterPaths"};
 
-    TH2F *hDirectCutReEmittedPaths = (TH2F*)hReEmittedPaths->Clone();
-    TH2F *hDirectCutAllPaths = (TH2F*)hAllPaths->Clone();
-    TH2F *hDirectCutNoisePaths = (TH2F*)hNoisePaths->Clone();
-    TH2F *hDirectCutSingleScatterPaths = (TH2F*)hSingleScatterPaths->Clone();
-    TH2F *hDirectCutOtherPaths = (TH2F*)hOtherPaths->Clone();
-    TH2F *hDirectCutNoEffectPaths = (TH2F*)hNoEffectPaths->Clone();
-    TH2F *hDirectCutNearReflectPaths = (TH2F*)hNearReflectPaths->Clone();
-    TH2F *hDirectCutRopesPaths = (TH2F*)hRopesPaths->Clone();
-    TH2F *hDirectCutPMTReflectionPaths = (TH2F*)hPMTReflectionPaths->Clone();
-    TH2F *hDirectCutExtWaterScatterPaths = (TH2F*)hExtWaterScatterPaths->Clone();
-    TH2F *hDirectCutInnerAvReflectPaths = (TH2F*)hInnerAvReflectPaths->Clone();
-    TH2F *hDirectCutMultipleEffectPaths = (TH2F*)hMultipleEffectPaths->Clone();
-    TH2F *hDirectCutAVPipesPaths = (TH2F*)hAVPipesPaths->Clone();
-    TH2F *hDirectCutAcrylicPaths = (TH2F*)hAcrylicPaths->Clone();
-    TH2F *hDirectCutOtherScatterPaths = (TH2F*)hOtherScatterPaths->Clone();
+    //assign hists
+    for (i = 0; i < 15; ++i) {
+        RegionHists.at(i)->(TH2F*)Hists.at(i)->Clone();
+        RegionHists.at(i)->SetName(RegionHist_names[i]);
 
-    hDirectCutReEmittedPaths->SetName("hDirectCutReEmittedPaths");
-    hDirectCutAllPaths->SetName("hDirectCutAllPaths");
-    hDirectCutNoisePaths->SetName("hDirectCutNoisePaths");
-    hDirectCutSingleScatterPaths->SetName("hDirectCutSingleScatterPaths");
-    hDirectCutOtherPaths->SetName("hDirectCutOtherPaths");
-    hDirectCutNoEffectPaths->SetName("hDirectCutNoEffectPaths");
-    hDirectCutNearReflectPaths->SetName("hDirectCutNearReflectPaths");
-    hDirectCutRopesPaths->SetName("hDirectCutRopesPaths");
-    hDirectCutPMTReflectionPaths->SetName("hDirectCutPMTReflectionPaths");
-    hDirectCutExtWaterScatterPaths->SetName("hDirectCutExtWaterScatterPaths");
-    hDirectCutInnerAvReflectPaths->SetName("hDirectCutInnerAvReflectPaths");
-    hDirectCutMultipleEffectPaths->SetName("hDirectCutMultipleEffectPaths");
-    hDirectCutAVPipesPaths->SetName("hDirectCutAVPipesPaths");
-    hDirectCutAcrylicPaths->SetName("hDirectCutAcrylicPaths");
-    hDirectCutOtherScatterPaths->SetName("hDirectCutOtherScatterPaths");
+        DirectHists.at(i)->(TH2F*)Hists.at(i)->Clone();
+        DirectHists.at(i)->SetName(DirectHist_names[i]);
 
-    TH2F *hReflectedCutReEmittedPaths = (TH2F*)hReEmittedPaths->Clone();
-    TH2F *hReflectedCutAllPaths = (TH2F*)hAllPaths->Clone();
-    TH2F *hReflectedCutNoisePaths = (TH2F*)hNoisePaths->Clone();
-    TH2F *hReflectedCutSingleScatterPaths = (TH2F*)hSingleScatterPaths->Clone();
-    TH2F *hReflectedCutOtherPaths = (TH2F*)hOtherPaths->Clone();
-    TH2F *hReflectedCutNoEffectPaths = (TH2F*)hNoEffectPaths->Clone();
-    TH2F *hReflectedCutNearReflectPaths = (TH2F*)hNearReflectPaths->Clone();
-    TH2F *hReflectedCutRopesPaths = (TH2F*)hRopesPaths->Clone();
-    TH2F *hReflectedCutPMTReflectionPaths = (TH2F*)hPMTReflectionPaths->Clone();
-    TH2F *hReflectedCutExtWaterScatterPaths = (TH2F*)hExtWaterScatterPaths->Clone();
-    TH2F *hReflectedCutInnerAvReflectPaths = (TH2F*)hInnerAvReflectPaths->Clone();
-    TH2F *hReflectedCutMultipleEffectPaths = (TH2F*)hMultipleEffectPaths->Clone();
-    TH2F *hReflectedCutAVPipesPaths = (TH2F*)hAVPipesPaths->Clone();
-    TH2F *hReflectedCutAcrylicPaths = (TH2F*)hAcrylicPaths->Clone();
-    TH2F *hReflectedCutOtherScatterPaths = (TH2F*)hOtherScatterPaths->Clone();
+        ReflectedHists.at(i)->(TH2F*)Hists.at(i)->Clone();
+        ReflectedHists.at(i)->SetName(ReflectedHist_names[i]);
+    }
 
-    hReflectedCutReEmittedPaths->SetName("hReflectedCutReEmittedPaths");
-    hReflectedCutAllPaths->SetName("hReflectedCutAllPaths");
-    hReflectedCutNoisePaths->SetName("hReflectedCutNoisePaths");
-    hReflectedCutSingleScatterPaths->SetName("hReflectedCutSingleScatterPaths");
-    hReflectedCutOtherPaths->SetName("hReflectedCutOtherPaths");
-    hReflectedCutNoEffectPaths->SetName("hReflectedCutNoEffectPaths");
-    hReflectedCutNearReflectPaths->SetName("hReflectedCutNearReflectPaths");
-    hReflectedCutRopesPaths->SetName("hReflectedCutRopesPaths");
-    hReflectedCutPMTReflectionPaths->SetName("hReflectedCutPMTReflectionPaths");
-    hReflectedCutExtWaterScatterPaths->SetName("hReflectedCutExtWaterScatterPaths");
-    hReflectedCutInnerAvReflectPaths->SetName("hReflectedCutInnerAvReflectPaths");
-    hReflectedCutMultipleEffectPaths->SetName("hReflectedCutMultipleEffectPaths");
-    hReflectedCutAVPipesPaths->SetName("hReflectedCutAVPipesPaths");
-    hReflectedCutAcrylicPaths->SetName("hReflectedCutAcrylicPaths");
-    hReflectedCutOtherScatterPaths->SetName("hReflectedCutOtherScatterPaths");
-
-    double direct_max_time = hNoEffectPaths->ProjectionY()->GetXaxis()->GetBinCenter(hNoEffectPaths->ProjectionY()->GetMaximumBin()) + 10;
-    double direct_min_time = hNoEffectPaths->ProjectionY()->GetXaxis()->GetBinCenter(hNoEffectPaths->ProjectionY()->GetMaximumBin()) - 10;
+    double direct_max_time = Hists.at(5)->ProjectionY()->GetXaxis()->GetBinCenter(Hists.at(5)->ProjectionY()->GetMaximumBin()) + 10;  //hNoEffectPaths
+    double direct_min_time = Hists.at(5)->ProjectionY()->GetXaxis()->GetBinCenter(Hists.at(5)->ProjectionY()->GetMaximumBin()) - 10;  //hNoEffectPaths
     double direct_cos_alpha = -0.9; //FIXME: don't hardcode this
 
-    double reflected_max_time = hNearReflectPaths->ProjectionY()->GetXaxis()->GetBinCenter(hNearReflectPaths->ProjectionY()->GetMaximumBin()) + 10;
-    double reflected_min_time = hNearReflectPaths->ProjectionY()->GetXaxis()->GetBinCenter(hNearReflectPaths->ProjectionY()->GetMaximumBin()) - 10;
+    double reflected_max_time = Hists.at(5)->ProjectionY()->GetXaxis()->GetBinCenter(Hists.at(5)->ProjectionY()->GetMaximumBin()) + 10;  //hNoEffectPaths
+    double reflected_min_time = Hists.at(5)->ProjectionY()->GetXaxis()->GetBinCenter(Hists.at(5)->ProjectionY()->GetMaximumBin()) - 10;  //hNoEffectPaths
     double reflected_cos_alpha = 0.95; //FIXME: don't hardcode this
 
     // Print to Regions lims file (append)
