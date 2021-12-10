@@ -68,45 +68,67 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, std::string fibre
 
     //create histograms and graphs
 
-    TH2F *hReEmittedPaths;
-    TH2F *hAllPaths;
-    TH2F *hNoisePaths;
-    TH2F *hSingleScatterPaths;
-    TH2F *hOtherPaths;
-    TH2F *hNoEffectPaths;
-    TH2F *hNearReflectPaths;
-    TH2F *hRopesPaths;
-    TH2F *hPMTReflectionPaths;
-    TH2F *hExtWaterScatterPaths;
-    TH2F *hInnerAvReflectPaths;
-    TH2F *hMultipleEffectPaths;
-    TH2F *hAVPipesPaths;
-    TH2F *hAcrylicPaths;
-    TH2F *hOtherScatterPaths;
-    TGraph *hFOMx_a = new TGraph();
-    TGraph *hFOMx_b = new TGraph();
-    TGraph *hFOMx_c = new TGraph();
-    TGraph *hFOMy_a = new TGraph();
-    TGraph *hFOMy_b = new TGraph();
-    TGraph *hFOMy_c = new TGraph();
-    TGraph *hFOMmainloop = new TGraph();
-    TGraph *hDiffx_a = new TGraph();
-    TGraph *hDiffx_b = new TGraph();
-    TGraph *hDiffx_c = new TGraph();
-    TGraph *hDiffy_a = new TGraph();
-    TGraph *hDiffy_b = new TGraph();
-    TGraph *hDiffy_c = new TGraph();
-    TGraph *hPointx_a = new TGraph();
-    TGraph *hPointx_b = new TGraph();
-    TGraph *hPointx_c = new TGraph();
-    TGraph *hPointy_a = new TGraph();
-    TGraph *hPointy_b = new TGraph();
+    TH2F *hReEmittedPaths; TH2F *hAllPaths; TH2F *hNoisePaths;
+    TH2F *hSingleScatterPaths; TH2F *hOtherPaths; TH2F *hNoEffectPaths;
+    TH2F *hNearReflectPaths; TH2F *hRopesPaths; TH2F *hPMTReflectionPaths;
+    TH2F *hExtWaterScatterPaths; TH2F *hInnerAvReflectPaths; TH2F *hMultipleEffectPaths;
+    TH2F *hAVPipesPaths; TH2F *hAcrylicPaths; TH2F *hOtherScatterPaths;
+
+    std::vector<TH2F*> Hists;
+    Hists.push_back(hReEmittedPaths); Hists.push_back(hAllPaths);
+    Hists.push_back(hNoisePaths); Hists.push_back(hSingleScatterPaths);
+    Hists.push_back(hOtherPaths); Hists.push_back(hNoEffectPaths);
+    Hists.push_back(hNearReflectPaths); Hists.push_back(hRopesPaths);
+    Hists.push_back(hPMTReflectionPaths); Hists.push_back(hExtWaterScatterPaths);
+    Hists.push_back(hInnerAvReflectPaths); Hists.push_back(hMultipleEffectPaths);
+    Hists.push_back(hAVPipesPaths); Hists.push_back(hAcrylicPaths);
+    Hists.push_back(hOtherScatterPaths);
+
+    TGraph *hFOMx_a = new TGraph(); TGraph *hFOMx_b = new TGraph();
+    TGraph *hFOMx_c = new TGraph(); TGraph *hFOMy_a = new TGraph();
+    TGraph *hFOMy_b = new TGraph(); TGraph *hFOMy_c = new TGraph();
+    TGraph *hFOMmainloop = new TGraph(); TGraph *hDiffx_a = new TGraph();
+    TGraph *hDiffx_b = new TGraph(); TGraph *hDiffx_c = new TGraph();
+    TGraph *hDiffy_a = new TGraph(); TGraph *hDiffy_b = new TGraph();
+    TGraph *hDiffy_c = new TGraph(); TGraph *hPointx_a = new TGraph();
+    TGraph *hPointx_b = new TGraph(); TGraph *hPointx_c = new TGraph();
+    TGraph *hPointy_a = new TGraph(); TGraph *hPointy_b = new TGraph();
     TGraph *hPointy_c = new TGraph();
 
+    std::vector<TGraph*> hFOMxy;
+    hFOMxy.push_back(hFOMx_a); hFOMxy.push_back(hFOMx_b);
+    hFOMxy.push_back(hFOMx_c); hFOMxy.push_back(hFOMy_a);
+    hFOMxy.push_back(hFOMy_b); hFOMxy.push_back(hFOMy_c);
+
+    std::vector<TGraph*> hDiffxy;
+    hDiffxy.push_back(hDiffx_a); hDiffxy.push_back(hDiffx_b);
+    hDiffxy.push_back(hDiffx_c); hDiffxy.push_back(hDiffy_a);
+    hDiffxy.push_back(hDiffy_b); hDiffxy.push_back(hDiffy_c);
+    
+    std::vector<TGraph*> hPointxy;
+    Graphs.push_back(hPointx_a); Graphs.push_back(hPointx_b);
+    Graphs.push_back(hPointx_c); Graphs.push_back(hPointy_a);
+    Graphs.push_back(hPointy_b); Graphs.push_back(hPointy_c);
+
+    std::vector<std::string> Hist_names;
+    Hist_names.push_back("hReemissionResTimeVsCosTheta");
+    Hist_names.push_back("hPmtResTimeVsCosTheta");
+    Hist_names.push_back("hNoiseResTimeVsCosTheta");
+    Hist_names.push_back("hSingleScatterResTimeVsCosTheta");
+    Hist_names.push_back("hOtherEffectResTimeVsCosTheta");
+    Hist_names.push_back("hNoEffectResTimeVsCosTheta");
+    Hist_names.push_back("hNearReflectResTimeVsCosTheta");
+    Hist_names.push_back("hRopesResTimeVsCosTheta");
+    Hist_names.push_back("hPMTReflectionResTimeVsCosTheta");
+    Hist_names.push_back("hExtWaterScatterResTimeVsCosTheta");
+    Hist_names.push_back("hInnerAvReflectionResTimeVsCosTheta");
+    Hist_names.push_back("hMultipleEffectResTimeVsCosTheta");
+    Hist_names.push_back("hAVPipesResTimeVsCosTheta");
+    Hist_names.push_back("hAcrylicScatterResTimeVsCosTheta");
+    Hist_names.push_back("OtherScatterResTimeVsCosTheta");
+
     //read in hist file
-
     TFile *raw_file;
-
     try{
         raw_file = TFile::Open(inputFile.c_str());
     }
@@ -116,45 +138,23 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, std::string fibre
     }
 
     //assign hists
-
-    raw_file->GetObject("hReemissionResTimeVsCosTheta",hReEmittedPaths);
-    raw_file->GetObject("hPmtResTimeVsCosTheta",hAllPaths);
-    raw_file->GetObject("hNoiseResTimeVsCosTheta",hNoisePaths);
-    raw_file->GetObject("hSingleScatterResTimeVsCosTheta",hSingleScatterPaths);
-    raw_file->GetObject("hOtherEffectResTimeVsCosTheta",hOtherPaths);
-    raw_file->GetObject("hNoEffectResTimeVsCosTheta",hNoEffectPaths);
-    raw_file->GetObject("hNearReflectResTimeVsCosTheta",hNearReflectPaths);
-    raw_file->GetObject("hRopesResTimeVsCosTheta",hRopesPaths);
-    raw_file->GetObject("hPMTReflectionResTimeVsCosTheta",hPMTReflectionPaths);
-    raw_file->GetObject("hExtWaterScatterResTimeVsCosTheta",hExtWaterScatterPaths);
-    raw_file->GetObject("hInnerAvReflectionResTimeVsCosTheta",hInnerAvReflectPaths);
-    raw_file->GetObject("hMultipleEffectResTimeVsCosTheta",hMultipleEffectPaths);
-    raw_file->GetObject("hAVPipesResTimeVsCosTheta",hAVPipesPaths);
-    raw_file->GetObject("hAcrylicScatterResTimeVsCosTheta",hAcrylicPaths);
-    raw_file->GetObject("OtherScatterResTimeVsCosTheta",hOtherScatterPaths);
+    for (i = 0; i < Hist_names.size(); ++i) {
+        raw_file->GetObject(Hist_names.at(i), Hists.at(i));
+    }
 
     //set up constants
-
     double countCalculations = 0;
     double countCycles = 0;
-    double x_a_min = -1;
-    double x_a_max = 1;
-    double x_a_tolerance = (x_a_max - x_a_min) / nbins;
-    double x_b_min = -1;
-    double x_b_max = 1;
-    double x_b_tolerance = (x_b_max - x_b_min) / nbins;
-    double x_c_min = -1;
-    double x_c_max = 1;
-    double x_c_tolerance = (x_c_max - x_c_min) / nbins;
-    double y_a_min = hReEmittedPaths->GetYaxis()->GetXmin();
-    double y_a_max = hReEmittedPaths->GetYaxis()->GetXmax();
-    double y_a_tolerance = (y_a_max - y_a_min) / nbins;
-    double y_b_min = hReEmittedPaths->GetYaxis()->GetXmin();
-    double y_b_max = hReEmittedPaths->GetYaxis()->GetXmax();
-    double y_b_tolerance = (y_b_max - y_b_min) / nbins;
-    double y_c_min = hReEmittedPaths->GetYaxis()->GetXmin();
-    double y_c_max = hReEmittedPaths->GetYaxis()->GetXmax();
-    double y_c_tolerance = (y_c_max - y_c_min) / nbins;
+
+    std::vector<std::string> point_names = {"x_a", "x_b", "x_c", "y_a", "y_b", "y_c"};
+    double y_min = hReEmittedPaths->GetYaxis()->GetXmin();
+    double y_max = hReEmittedPaths->GetYaxis()->GetXmax();
+    double point_mins[6] = {-1, -1, -1, y_min, y_min, y_min};
+    double point_maxs[6] = {1, 1, 1, y_max, y_max, y_max};
+    std::vector<double> point_tolerances;
+    for (int i = 0; i < 6; ++i) {
+        point_tolerances.push_back((point_maxs[i] - point_mins[i]) / nbins);
+    }
 
     int nBinsX = hReEmittedPaths->GetXaxis()->GetNbins();
     int nBinsY = hReEmittedPaths->GetYaxis()->GetNbins();
@@ -162,354 +162,114 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, std::string fibre
     double xBinWidth = hReEmittedPaths->GetXaxis()->GetBinCenter(2) - hReEmittedPaths->GetXaxis()->GetBinCenter(1);
     double yBinWidth = hReEmittedPaths->GetYaxis()->GetBinCenter(2) - hReEmittedPaths->GetYaxis()->GetBinCenter(1);
 
-    if(x_a_tolerance < xBinWidth){
-        x_a_tolerance = xBinWidth;
-        std::cout << "x_a_tolerance is set to bin width, nbins: " << (x_a_max - x_a_min) / xBinWidth << std::endl;
-    }
-    if(x_b_tolerance < xBinWidth){
-        x_b_tolerance = xBinWidth;
-        std::cout << "x_b_tolerance is set to bin width, nbins: " << (x_b_max - x_b_min) / xBinWidth << std::endl;
-    }
-    if(x_c_tolerance < xBinWidth){
-        x_c_tolerance = xBinWidth;
-        std::cout << "x_c_tolerance is set to bin width, nbins: " << (x_c_max - x_c_min) / xBinWidth << std::endl;
-    }
-    if(y_a_tolerance < yBinWidth){
-        y_a_tolerance = yBinWidth;
-        std::cout << "y_a_tolerance is set to bin width, nbins: " << (y_a_max - y_a_min) / yBinWidth << std::endl;
-    }
-    if(y_b_tolerance < yBinWidth){
-        y_b_tolerance = yBinWidth;
-        std::cout << "y_b_tolerance is set to bin width, nbins: " << (y_b_max - y_b_min) / yBinWidth << std::endl;
-    }
-    if(y_c_tolerance < yBinWidth){
-        y_c_tolerance = yBinWidth;
-        std::cout << "y_c_tolerance is set to bin width, nbins: " << (y_c_max - y_c_min) / yBinWidth << std::endl;
+    for (int i = 0; i < 3; ++i) {
+        if (point_tolerances.at(i) < xBinWidth) {
+            point_tolerances.at(i) = xBinWidth;
+            std::cout << point_names.at(i) << "_tolerance is set to bin width, nbins: " << (point_maxs[i] - point_mins[i]) / xBinWidth << std::endl;
+        }
+        j = i + 3;
+        if (point_tolerances.at(j) < yBinWidth) {
+            point_tolerances.at(j) = yBinWidth;
+            std::cout << point_names.at(j) << "_tolerance is set to bin width, nbins: " << (point_maxs[j] - point_mins[j]) / yBinWidth << std::endl;
+        }
     }
 
-    if(debug) std::cout << "x_a_tolerance: " << x_a_tolerance << ", x_b_tolerance: " << x_b_tolerance << std::endl;
+    if(debug) std::cout << "x_a_tolerance: " << point_tolerances.at(0) << ", x_b_tolerance: " << point_tolerances.at(1) << std::endl;
 
-    double x_a_diff = 9999999999;
-    double x_b_diff = 9999999999;
-    double x_c_diff = 9999999999;
-    double y_a_diff = 9999999999;
-    double y_b_diff = 9999999999;
-    double y_c_diff = 9999999999;
-
-    double x_a_temp_diff = 9999999999;
-    double x_b_temp_diff = 9999999999;
-    double x_c_temp_diff = 9999999999;
-    double y_a_temp_diff = 9999999999;
-    double y_b_temp_diff = 9999999999;
-    double y_c_temp_diff = 9999999999;
+    std::vector<double> points_diffs = {9999999999, 9999999999, 9999999999, 9999999999, 9999999999, 9999999999};
+    std::vector<double> points_temp_diffs = {9999999999, 9999999999, 9999999999, 9999999999, 9999999999, 9999999999};
 
     auto timeSetup = std::chrono::high_resolution_clock::now();
 
     if(verbose) std::cout << "Time to read in file and set up hists: " << std::chrono::duration_cast<std::chrono::microseconds>(timeSetup - timeStart).count() / 1E6 << "s" << std::endl;
-    // do loop: x_a, x_bc, y_a, y_b, y_c
+    // do loop: x_a, x_b, x_c, y_a, y_b, y_c
     // points: a vector containing the points to change for three regions
     // fixedPoints: a vector containing all the static points
 
     auto timeStartLoop = std::chrono::high_resolution_clock::now();
 
-    std::vector<double> fixedPoints = {x_a_min, x_b_max, x_c_max, y_a_min, y_b_max, y_c_min};
+    // Initialise variables:
+    // fixedPoints = {x_a_min, x_b_max, x_c_max, y_a_min, y_b_max, y_c_min};
+    std::vector<double> fixedPoints = {point_mins[0], point_maxs[1], point_maxs[2], point_mins[3], point_maxs[4], point_mins[5]};
     bool firstRun = true;
 
     int numMainLoopIterations = 0;
-    int numx_a_iterations = 0;
-    int numx_b_iterations = 0;
-    int numx_c_iterations = 0;
-    int numy_a_iterations = 0;
-    int numy_b_iterations = 0;
-    int numy_c_iterations = 0;
+    int num_iterations[6] = {0, 0, 0, 0, 0, 0};
+    double prev_best_points_main[6];
+    bool first_runs[6];
+    double prevBestFOMPoints[6];
+    double temp_diffs[6];
+    std::vector<double> FOMs[6] = {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}};
+    std::vector<double> bestworstFOMPoints[6] = {{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}};
 
-    double x_a_prev_best_point_main;
-    double x_b_prev_best_point_main;
-    double x_c_prev_best_point_main;
-    double y_a_prev_best_point_main;
-    double y_b_prev_best_point_main;
-    double y_c_prev_best_point_main;
+    std::vector<double> points[6];
+    for (int i = 0; i < 6; ++i) {
+        points[i] = {point_mins[i], (point_maxs[i] + point_mins[i])/2., point_maxs[i]};
+    }
+    
+    //while(((x_a_diff > x_a_tolerance or x_b_diff > x_b_tolerance or x_c_diff > x_c_tolerance or y_a_diff > y_a_tolerance or y_b_diff > y_b_tolerance or y_c_diff > y_c_tolerance) and !firstRun) or firstRun){
+    while((points_diffs > point_tolerances and !firstRun) or firstRun){
+        first_runs[6] = {true, true, true, true, true, true};
+        prevBestFOMPoints[6] = {9999999999, 9999999999, 9999999999, 9999999999, 9999999999, 9999999999};
+        temp_diffs[6] = {9999999999, 9999999999, 9999999999, 9999999999, 9999999999, 9999999999};
 
-    while(((x_a_diff > x_a_tolerance or x_b_diff > x_b_tolerance or x_c_diff > x_c_tolerance or y_a_diff > y_a_tolerance or y_b_diff > y_b_tolerance or y_c_diff > y_c_tolerance) and !firstRun) or firstRun){
-        bool first_x_a_run = true;
-        bool first_x_b_run = true;
-        bool first_x_c_run = true;
-        bool first_y_a_run = true;
-        bool first_y_b_run = true;
-        bool first_y_c_run = true;
+        if(debug) std::cout << "In main while loop with x_a_temp_diff: " << std::abs(temp_diffs[0]) << std::endl;
 
-        double prevBestFOMPoint_x_a = 9999999999;
-        double prevBestFOMPoint_x_b = 9999999999;
-        double prevBestFOMPoint_x_c = 9999999999;
-        double prevBestFOMPoint_y_a = 9999999999;
-        double prevBestFOMPoint_y_b = 9999999999;
-        double prevBestFOMPoint_y_c = 9999999999;
-
-        std::vector<double> points_x_a;
-        std::vector<double> points_x_b;
-        std::vector<double> points_x_c;
-        std::vector<double> points_y_a;
-        std::vector<double> points_y_b;
-        std::vector<double> points_y_c;
-        std::vector<double> bestworstFOMPoints_x_a;
-        std::vector<double> bestworstFOMPoints_x_b;
-        std::vector<double> bestworstFOMPoints_x_c;
-        std::vector<double> bestworstFOMPoints_y_a;
-        std::vector<double> bestworstFOMPoints_y_b;
-        std::vector<double> bestworstFOMPoints_y_c;
-
-        double x_a_temp_diff = 9999999999;
-        double x_b_temp_diff = 9999999999;
-        double x_c_temp_diff = 9999999999;
-        double y_a_temp_diff = 9999999999;
-        double y_b_temp_diff = 9999999999;
-        double y_c_temp_diff = 9999999999;
-
-        if(debug) std::cout << "In main while loop with x_a_temp_diff: " << std::abs(x_a_temp_diff) << std::endl;
-
-        while(std::abs(x_a_temp_diff) > x_a_tolerance){
-            if(first_x_a_run){
-                points_x_a = {x_a_min, (x_a_max + x_a_min)/2., x_a_max}; //l, c, r
-                points_x_a = CheckPoints(points_x_a, fixedPoints, 0);
-                first_x_a_run = false;
-                if(debug) std::cout << "Set up first x_a_run points: " << points_x_a.at(0) << ", " << points_x_a.at(1) << ", " << points_x_a.at(2) << std::endl;
+        for (int i = 0; i < 6; ++i) {
+            while(std::abs(temp_diffs[i]) > point_tolerances.at(i)){
+                if(first_runs[i]){
+                    points[i] = {point_mins[i], (point_maxs[i] + point_mins[i])/2., point_maxs[i]}; //l, c, r
+                    points[i] = CheckPoints(points[i], fixedPoints, 0);
+                    first_runs[i] = false;
+                    if(debug) std::cout << "Set up first " << point_names[i] << "_run points: " << points[i].at(0)
+                                        << ", " << points[i].at(1) << ", " << points[i].at(2) << std::endl;
+                }
+                FOMs.at(i) = GetFOMs(points[i], fixedPoints, i, hAllPaths, hReEmittedPaths, hSingleScatterPaths, signal_param);
+                if(debug) std::cout << "Got FOMs " << FOMs.at(i).at(0) << ", " << FOMs.at(i).at(1) << ", " << FOMs.at(i).at(2) << std::endl;
+                
+                bestworstFOMPoints[i] = GetBestFOM(FOMs.at(i), points[i]);
+                if(debug) std::cout << "Got best FOMs" << std::endl;
+                
+                points[i] = GetThreePoints(bestworstFOMPoints[i].at(0), bestworstFOMPoints[i].at(1), points[i]);
+                points[i] = CheckPoints(points[i], fixedPoints, i);
+                if(debug) std::cout << "Got new points: " << points[i].at(0) << ", " << points[i].at(1) << ", " << points[i].at(2) << std::endl;
+                
+                temp_diffs[i] = std::abs(points[i].at(1) - prevBestFOMPoints[i]);
+                if(debug) std::cout << "Got difference: " << temp_diffs[i] << std::endl;
+                
+                prevBestFOMPoints[i] = points[i].at(1);
+                if(extraInfo) hFOMxy.at(i)->SetPoint(num_iterations[i], num_iterations[i], bestworstFOMPoints[i].at(2));
+                num_iterations[i]++;
             }
-            std::vector<double> FOMs_x_a = GetFOMs(points_x_a, fixedPoints, 0, hAllPaths, hReEmittedPaths, hSingleScatterPaths, signal_param);
-            if(debug) std::cout << "Got FOMs " << FOMs_x_a.at(0) << ", " << FOMs_x_a.at(1) << ", " << FOMs_x_a.at(2) << std::endl;
-            
-            bestworstFOMPoints_x_a = GetBestFOM(FOMs_x_a, points_x_a);
-            if(debug) std::cout << "Got best FOMs" << std::endl;
-            
-            points_x_a = GetThreePoints(bestworstFOMPoints_x_a.at(0), bestworstFOMPoints_x_a.at(1), points_x_a);
-            points_x_a = CheckPoints(points_x_a, fixedPoints, 0);
-            if(debug) std::cout << "Got new points: " << points_x_a.at(0) << ", " << points_x_a.at(1) << ", " << points_x_a.at(2) << std::endl;
-            
-            x_a_temp_diff = std::abs(points_x_a.at(1) - prevBestFOMPoint_x_a);
-            if(debug) std::cout << "Got difference: " << x_a_temp_diff << std::endl;
-            
-            prevBestFOMPoint_x_a = points_x_a.at(1);
-            if(extraInfo) hFOMx_a->SetPoint(numx_a_iterations, numx_a_iterations, bestworstFOMPoints_x_a.at(2));
-            numx_a_iterations++;
         }
 
-        if(debug) std::cout << "Setting fixed point: " << bestworstFOMPoints_x_a.at(0) << std::endl;
-        fixedPoints.at(0) = bestworstFOMPoints_x_a.at(0);
-        if(debug) std::cout << "" << std::endl;
-
-        while(std::abs(x_b_temp_diff) > x_b_tolerance){
-            if(first_x_b_run){
-                points_x_b = {x_b_min, (x_b_max + x_b_min)/2., x_b_max}; //l, c, r
-                points_x_b = CheckPoints(points_x_b, fixedPoints, 1);
-                first_x_b_run = false;
-                if(debug) std::cout << "First x_bc_run points: " << points_x_b.at(0) << ", " << points_x_b.at(1) << ", " << points_x_b.at(2) << std::endl;
-            }
-            std::vector<double> FOMs_x_b = GetFOMs(points_x_b, fixedPoints, 1, hAllPaths, hReEmittedPaths, hSingleScatterPaths, signal_param);
-            if(debug) std::cout << "Got FOMs: " << FOMs_x_b.at(0) << ", " << FOMs_x_b.at(1) << ", " << FOMs_x_b.at(2) << std::endl;
-            
-            bestworstFOMPoints_x_b = GetBestFOM(FOMs_x_b, points_x_b);
-            if(debug) std::cout << "Got best FOMs" << std::endl;
-            
-            points_x_b = GetThreePoints(bestworstFOMPoints_x_b.at(0), bestworstFOMPoints_x_b.at(1), points_x_b);
-            points_x_b = CheckPoints(points_x_b, fixedPoints, 1);
-            if(debug) std::cout << "Got new points: " << points_x_b.at(0) << ", " << points_x_b.at(1) << ", " << points_x_b.at(2) << std::endl;
-            
-            x_b_temp_diff = std::abs(points_x_b.at(1) - prevBestFOMPoint_x_b);
-            if(debug) std::cout << "Got difference: " << x_b_temp_diff << std::endl;
-            
-            prevBestFOMPoint_x_b = points_x_b.at(1);
-            if(extraInfo) hFOMx_b->SetPoint(numx_b_iterations, numx_b_iterations, bestworstFOMPoints_x_b.at(2));
-            numx_b_iterations++;
-        }
-        if(debug) std::cout << "Setting fixed point: " << bestworstFOMPoints_x_b.at(0) << std::endl;
-        fixedPoints.at(1) = bestworstFOMPoints_x_b.at(0);
-        if(debug) std::cout << "" << std::endl;
-
-        while(std::abs(x_c_temp_diff) > x_c_tolerance){
-            if(first_x_c_run){
-                points_x_c = {x_c_min, (x_c_max + x_c_min)/2., x_c_max}; //l, c, r
-                points_x_c = CheckPoints(points_x_c, fixedPoints, 2);
-                first_x_c_run = false;
-                if(debug) std::cout << "First x_c_run points: " << points_x_c.at(0) << ", " << points_x_c.at(1) << ", " << points_x_c.at(2) << std::endl;
-            }
-            std::vector<double> FOMs_x_c = GetFOMs(points_x_c, fixedPoints, 2, hAllPaths, hReEmittedPaths, hSingleScatterPaths, signal_param);
-            if(debug) std::cout << "Got FOMs: " << FOMs_x_c.at(0) << ", " << FOMs_x_c.at(1) << ", " << FOMs_x_c.at(2) << std::endl;
-            
-            bestworstFOMPoints_x_c = GetBestFOM(FOMs_x_c, points_x_c);
-            if(debug) std::cout << "Got best FOMs" << std::endl;
-            
-            points_x_c = GetThreePoints(bestworstFOMPoints_x_c.at(0), bestworstFOMPoints_x_c.at(1), points_x_c);
-            points_x_c = CheckPoints(points_x_c, fixedPoints, 2);
-            if(debug) std::cout << "Got new points: " << points_x_c.at(0) << ", " << points_x_c.at(1) << ", " << points_x_c.at(2) << std::endl;
-            
-            x_c_temp_diff = std::abs(points_x_c.at(1) - prevBestFOMPoint_x_c);
-            if(debug) std::cout << "Got difference: " << x_c_temp_diff << std::endl;
-            
-            prevBestFOMPoint_x_c = points_x_c.at(1);
-            if(extraInfo) hFOMx_c->SetPoint(numx_c_iterations, numx_c_iterations, bestworstFOMPoints_x_c.at(2));
-            numx_c_iterations++;
-        }
-        if(debug) std::cout << "Setting fixed point: " << bestworstFOMPoints_x_c.at(0) << std::endl;
-        fixedPoints.at(2) = bestworstFOMPoints_x_c.at(0);
-        if(debug) std::cout << "" << std::endl;
-
-        while(std::abs(y_a_temp_diff) > y_a_tolerance){
-            if(first_y_a_run){
-                if(debug) std::cout << "Setting up first y_a_run" << std::endl;
-                points_y_a = {y_a_min, (y_a_max + y_a_min)/2., y_a_max}; //l, c, r
-                points_y_a = CheckPoints(points_y_a, fixedPoints, 3);
-                first_y_a_run = false;
-                if(debug) std::cout << "Set up first y_a_run points: " << points_y_a.at(0) << ", " << points_y_a.at(1) << ", " << points_y_a.at(2) << std::endl;
-            }
-            std::vector<double> FOMs_y_a = GetFOMs(points_y_a, fixedPoints, 3, hAllPaths, hReEmittedPaths, hSingleScatterPaths, signal_param);
-            if(debug) std::cout << "Got FOMs " << FOMs_y_a.at(0) << ", " << FOMs_y_a.at(1) << ", " << FOMs_y_a.at(2) << std::endl;
-            
-            bestworstFOMPoints_y_a = GetBestFOM(FOMs_y_a, points_y_a);
-            if(debug) std::cout << "Got best FOMs" << std::endl;
-            
-            points_y_a = GetThreePoints(bestworstFOMPoints_y_a.at(0), bestworstFOMPoints_y_a.at(1), points_y_a);
-            points_y_a = CheckPoints(points_y_a, fixedPoints, 3);
-            if(debug) std::cout << "Got new points: " << points_y_a.at(0) << ", " << points_y_a.at(1) << ", " << points_y_a.at(2) << std::endl;
-            
-            y_a_temp_diff = std::abs(points_y_a.at(1) - prevBestFOMPoint_y_a);
-            if(debug) std::cout << "Got difference: " << y_a_temp_diff << std::endl;
-            
-            prevBestFOMPoint_y_a = points_y_a.at(1);
-            if(extraInfo) hFOMy_a->SetPoint(numy_a_iterations, numy_a_iterations, bestworstFOMPoints_y_a.at(2));
-            numy_a_iterations++;
-        }
-        if(debug) std::cout << "Setting fixed point: " << bestworstFOMPoints_y_a.at(0) << std::endl;
-        fixedPoints.at(3) = bestworstFOMPoints_y_a.at(0);
-        if(debug) std::cout << "" << std::endl;
-
-        while(std::abs(y_b_temp_diff) > y_b_tolerance){
-            if(first_y_b_run){
-                if(debug) std::cout << "Setting up first y_b_run" << std::endl;
-                points_y_b = {y_b_min, (y_b_max + y_b_min)/2., y_b_max}; //l, c, r
-                points_y_b = CheckPoints(points_y_b, fixedPoints, 4);
-                first_y_b_run = false;
-                if(debug) std::cout << "Set up first y_b_run points: " << points_y_b.at(0) << ", " << points_y_b.at(1) << ", " << points_y_b.at(2) << std::endl;
-            }
-            std::vector<double> FOMs_y_b = GetFOMs(points_y_b, fixedPoints, 4, hAllPaths, hReEmittedPaths, hSingleScatterPaths, signal_param);
-            if(debug) std::cout << "Got FOMs " << FOMs_y_b.at(0) << ", " << FOMs_y_b.at(1) << ", " << FOMs_y_b.at(2) << std::endl;
-            
-            bestworstFOMPoints_y_b = GetBestFOM(FOMs_y_b, points_y_b);
-            if(debug) std::cout << "Got best FOMs" << std::endl;
-            
-            points_y_b = GetThreePoints(bestworstFOMPoints_y_b.at(0), bestworstFOMPoints_y_b.at(1), points_y_b);
-            points_y_b = CheckPoints(points_y_b, fixedPoints, 4);
-            if(debug) std::cout << "Got new points: " << points_y_b.at(0) << ", " << points_y_b.at(1) << ", " << points_y_b.at(2) << std::endl;
-            
-            y_b_temp_diff = std::abs(points_y_b.at(1) - prevBestFOMPoint_y_b);
-            if(debug) std::cout << "Got difference: " << y_b_temp_diff << std::endl;
-            
-            prevBestFOMPoint_y_b = points_y_b.at(1);
-            if(extraInfo) hFOMy_b->SetPoint(numy_b_iterations, numy_b_iterations, bestworstFOMPoints_y_b.at(2));
-            numy_b_iterations++;
-        }
-        if(debug) std::cout << "Setting fixed point: " << bestworstFOMPoints_y_b.at(0) << std::endl;
-        fixedPoints.at(4) = bestworstFOMPoints_y_b.at(0);
-        if(debug) std::cout << "" << std::endl;
-
-        while(std::abs(y_c_temp_diff) > y_c_tolerance){
-            if(first_y_c_run){
-                if(debug) std::cout << "Setting up first y_c_run" << std::endl;
-                points_y_c = {y_c_min, (y_c_max + y_c_min)/2., y_c_max}; //l, c, r
-                points_y_c = CheckPoints(points_y_c, fixedPoints, 5);
-                first_y_c_run = false;
-                if(debug) std::cout << "Set up first y_c_run points: " << points_y_c.at(0) << ", " << points_y_c.at(1) << ", " << points_y_c.at(2) << std::endl;
-            }
-            std::vector<double> FOMs_y_c = GetFOMs(points_y_c, fixedPoints, 5, hAllPaths, hReEmittedPaths, hSingleScatterPaths, signal_param);
-            if(debug) std::cout << "Got FOMs " << FOMs_y_c.at(0) << ", " << FOMs_y_c.at(1) << ", " << FOMs_y_c.at(2) << std::endl;
-            
-            bestworstFOMPoints_y_c = GetBestFOM(FOMs_y_c, points_y_c);
-            if(debug) std::cout << "Got best FOMs" << std::endl;
-            
-            points_y_c = GetThreePoints(bestworstFOMPoints_y_c.at(0), bestworstFOMPoints_y_c.at(1), points_y_c);
-            points_y_c = CheckPoints(points_y_c, fixedPoints, 5);
-            if(debug) std::cout << "Got new points: " << points_y_c.at(0) << ", " << points_y_c.at(1) << ", " << points_y_c.at(2) << std::endl;
-            
-            y_c_temp_diff = std::abs(points_y_c.at(1) - prevBestFOMPoint_y_c);
-            if(debug) std::cout << "Got difference: " << y_c_temp_diff << std::endl;
-            
-            prevBestFOMPoint_y_c = points_y_c.at(1);
-            if(extraInfo) hFOMy_c->SetPoint(numy_c_iterations, numy_c_iterations, bestworstFOMPoints_y_c.at(2));
-            numy_c_iterations++;
-        }
-        if(debug) std::cout << "Setting fixed point: " << bestworstFOMPoints_y_c.at(0) << std::endl;
-        fixedPoints.at(5) = bestworstFOMPoints_y_c.at(0);
+        if(debug) std::cout << "Setting fixed point: " << bestworstFOMPoints[5].at(0) << std::endl;
+        fixedPoints.at(5) = bestworstFOMPoints[5].at(0);
         if(debug) std::cout << "" << std::endl;
 
         if(debug) std::cout << "Getting main differences" << std::endl;
 
-        if(x_a_diff == 9999999999){
-            x_a_diff = std::abs(bestworstFOMPoints_x_a.at(0));
-            x_a_prev_best_point_main = bestworstFOMPoints_x_a.at(0);
+        for (int i = 0; i < 6; ++i) {
+            if(points_diffs.at(i) == 9999999999){
+                points_diffs.at(i) = std::abs(bestworstFOMPoints[i].at(0));
+                prev_best_points_main[i] = bestworstFOMPoints[i].at(0);
+            }
+            else{
+                points_diffs.at(i) = std::abs(prev_best_points_main[i] - bestworstFOMPoints[i].at(0));
+                prev_best_points_main[i] = bestworstFOMPoints[i].at(0);
+                firstRun = false;
+            }
         }
-        else{
-            x_a_diff = std::abs(x_a_prev_best_point_main - bestworstFOMPoints_x_a.at(0));
-            x_a_prev_best_point_main = bestworstFOMPoints_x_a.at(0);
-            firstRun = false;
-        }
-
-        if(x_b_diff == 9999999999){
-            x_b_diff = std::abs(bestworstFOMPoints_x_b.at(0));
-            x_b_prev_best_point_main = bestworstFOMPoints_x_b.at(0);
-        }
-        else{
-            x_b_diff = std::abs(x_b_prev_best_point_main - bestworstFOMPoints_x_b.at(0));
-            x_b_prev_best_point_main = bestworstFOMPoints_x_b.at(0);
-        }
-
-        if(x_c_diff == 9999999999){
-            x_c_diff = std::abs(bestworstFOMPoints_x_c.at(0));
-            x_c_prev_best_point_main = bestworstFOMPoints_x_c.at(0);
-        }
-        else{
-            x_c_diff = std::abs(x_c_prev_best_point_main - bestworstFOMPoints_x_c.at(0));
-            x_c_prev_best_point_main = bestworstFOMPoints_x_c.at(0);
-        }
-
-        if(y_a_diff == 9999999999){
-            y_a_diff = std::abs(bestworstFOMPoints_y_a.at(0));
-            y_a_prev_best_point_main = bestworstFOMPoints_y_a.at(0);
-        }
-        else{
-            y_a_diff = std::abs(y_a_prev_best_point_main - bestworstFOMPoints_y_a.at(0));
-            y_a_prev_best_point_main = bestworstFOMPoints_y_a.at(0);
-        }
-
-        if(y_b_diff == 9999999999){
-            y_b_diff = std::abs(bestworstFOMPoints_y_b.at(0));
-            y_b_prev_best_point_main = bestworstFOMPoints_y_b.at(0);
-        }
-        else{
-            y_b_diff = std::abs(y_b_prev_best_point_main - bestworstFOMPoints_y_b.at(0));
-            y_b_prev_best_point_main = bestworstFOMPoints_y_b.at(0);
-        }
-
-        if(y_c_diff == 9999999999){
-            y_c_diff = std::abs(bestworstFOMPoints_y_c.at(0));
-            y_c_prev_best_point_main = bestworstFOMPoints_y_c.at(0);
-        }
-        else{
-            y_c_diff = std::abs(y_c_prev_best_point_main - bestworstFOMPoints_y_c.at(0));
-            y_c_prev_best_point_main = bestworstFOMPoints_y_c.at(0);
-        }
+        
         if(debug) std::cout << "Got main differences" << std::endl;
         if(debug) std::cout << "" << std::endl;
-        if(extraInfo) hFOMmainloop->SetPoint(numMainLoopIterations, numMainLoopIterations, bestworstFOMPoints_y_c.at(2));
-        if(extraInfo) hDiffx_a->SetPoint(numMainLoopIterations, numMainLoopIterations, x_a_diff);
-        if(extraInfo) hDiffx_b->SetPoint(numMainLoopIterations, numMainLoopIterations, x_b_diff);
-        if(extraInfo) hDiffx_c->SetPoint(numMainLoopIterations, numMainLoopIterations, x_c_diff);
-        if(extraInfo) hDiffy_a->SetPoint(numMainLoopIterations, numMainLoopIterations, y_a_diff);
-        if(extraInfo) hDiffy_b->SetPoint(numMainLoopIterations, numMainLoopIterations, y_b_diff);
-        if(extraInfo) hDiffy_c->SetPoint(numMainLoopIterations, numMainLoopIterations, y_c_diff);
-        if(extraInfo) hPointx_a->SetPoint(numMainLoopIterations, numMainLoopIterations, fixedPoints.at(0));
-        if(extraInfo) hPointx_b->SetPoint(numMainLoopIterations, numMainLoopIterations, fixedPoints.at(1));
-        if(extraInfo) hPointx_c->SetPoint(numMainLoopIterations, numMainLoopIterations, fixedPoints.at(2));
-        if(extraInfo) hPointy_a->SetPoint(numMainLoopIterations, numMainLoopIterations, fixedPoints.at(3));
-        if(extraInfo) hPointy_b->SetPoint(numMainLoopIterations, numMainLoopIterations, fixedPoints.at(4));
-        if(extraInfo) hPointy_c->SetPoint(numMainLoopIterations, numMainLoopIterations, fixedPoints.at(5));
+        if(extraInfo) {
+            hFOMmainloop->SetPoint(numMainLoopIterations, numMainLoopIterations, bestworstFOMPoints[5].at(2));
+            for (int i = 0; i < 6; ++i) {
+                hDiffxy.at(i)->SetPoint(numMainLoopIterations, numMainLoopIterations, points_diffs.at(i));
+                hPointxy.at(i)->SetPoint(numMainLoopIterations, numMainLoopIterations, fixedPoints.at(i));
+            }
+        }
         numMainLoopIterations++;
     }
 
