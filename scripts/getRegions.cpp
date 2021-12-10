@@ -18,6 +18,7 @@ Create plots of the phase space showing the relationship between different param
 int CalculateRegions(std::string inputFile, int nbins);
 int OptimiseDivideAndConquer(std::string inputFile, int nbins, std::string fibre, bool verbose, bool debug, bool extraInfo, std::string signal_param);
 std::vector<double> GetThreePoints(double bestPoint, double worstPoint, std::vector<double> originalPoints);
+TCanvas* DrawRegionLims(std::vector<double> fixedPoints, std::vector<TH2F*> Hists, std::string fibre)
 std::vector<double> GetFOMs(std::vector<double> points, std::vector<double> fixedPoints, int numVar, TH2F *allPathsHist, TH2F *reEmittedHist, TH2F *scatteredHist, std::string signal);
 std::vector<double> GetBestFOM(std::vector<double> FOMs, std::vector<double> points);
 std::vector<TH2F*> GetRegionSelectedHists(std::vector<double> finalPoints, std::vector<TH2F*> Hists, std::string saveroot_txt);
@@ -67,7 +68,6 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, std::string fibre
     }
 
     //create histograms and graphs
-
     TH2F *hReEmittedPaths; TH2F *hAllPaths; TH2F *hNoisePaths;
     TH2F *hSingleScatterPaths; TH2F *hOtherPaths; TH2F *hNoEffectPaths;
     TH2F *hNearReflectPaths; TH2F *hRopesPaths; TH2F *hPMTReflectionPaths;
@@ -146,7 +146,7 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, std::string fibre
     double countCalculations = 0;
     double countCycles = 0;
 
-    std::vector<std::string> point_names = {"x_a", "x_b", "x_c", "y_a", "y_b", "y_c"};
+    std::string point_names[6] = {"x_a", "x_b", "x_c", "y_a", "y_b", "y_c"};
     double y_min = hReEmittedPaths->GetYaxis()->GetXmin();
     double y_max = hReEmittedPaths->GetYaxis()->GetXmax();
     double point_mins[6] = {-1, -1, -1, y_min, y_min, y_min};
@@ -165,12 +165,12 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, std::string fibre
     for (int i = 0; i < 3; ++i) {
         if (point_tolerances.at(i) < xBinWidth) {
             point_tolerances.at(i) = xBinWidth;
-            std::cout << point_names.at(i) << "_tolerance is set to bin width, nbins: " << (point_maxs[i] - point_mins[i]) / xBinWidth << std::endl;
+            std::cout << point_names[i] << "_tolerance is set to bin width, nbins: " << (point_maxs[i] - point_mins[i]) / xBinWidth << std::endl;
         }
         j = i + 3;
         if (point_tolerances.at(j) < yBinWidth) {
             point_tolerances.at(j) = yBinWidth;
-            std::cout << point_names.at(j) << "_tolerance is set to bin width, nbins: " << (point_maxs[j] - point_mins[j]) / yBinWidth << std::endl;
+            std::cout << point_names[j] << "_tolerance is set to bin width, nbins: " << (point_maxs[j] - point_mins[j]) / yBinWidth << std::endl;
         }
     }
 
@@ -224,7 +224,7 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, std::string fibre
                     if(debug) std::cout << "Set up first " << point_names[i] << "_run points: " << points[i].at(0)
                                         << ", " << points[i].at(1) << ", " << points[i].at(2) << std::endl;
                 }
-                FOMs.at(i) = GetFOMs(points[i], fixedPoints, i, hAllPaths, hReEmittedPaths, hSingleScatterPaths, signal_param);
+                FOMs.at(i) = GetFOMs(points[i], fixedPoints, i, Hists.at(1), Hists.at(0), Hists.at(3), signal_param);  //hAllPaths, hReEmittedPaths, hSingleScatterPaths
                 if(debug) std::cout << "Got FOMs " << FOMs.at(i).at(0) << ", " << FOMs.at(i).at(1) << ", " << FOMs.at(i).at(2) << std::endl;
                 
                 bestworstFOMPoints[i] = GetBestFOM(FOMs.at(i), points[i]);
@@ -310,100 +310,22 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, std::string fibre
         tempHist->Write();
     }
     if(extraInfo){
-        hFOMx_a->SetName("hFOMx_a");
-        hFOMx_b->SetName("hFOMx_b");
-        hFOMx_c->SetName("hFOMx_c");
-        hFOMy_a->SetName("hFOMy_a");
-        hFOMy_b->SetName("hFOMy_b");
-        hFOMy_c->SetName("hFOMy_c");
+        for (int i = 0; i < 6; ++i) {
+            hFOMxy.at(i)->SetName("hFOM" + point_names[i]);
+            hFOMxy.at(i)->Write();
+
+            hDiffxy.at(i)->SetName("hDiff" + point_names[i]);
+            hDiffxy.at(i)->Write();
+
+            hPointxy.at(i)->SetName("hPoint" + point_names[i]);
+            hPointxy.at(i)->Write();
+        }
         hFOMmainloop->SetName("hFOMmainloop");
-        hDiffx_a->SetName("hDiffx_a");
-        hDiffx_b->SetName("hDiffx_b");
-        hDiffx_c->SetName("hDiffx_c");
-        hDiffy_a->SetName("hDiffy_a");
-        hDiffy_b->SetName("hDiffy_b");
-        hDiffy_c->SetName("hDiffy_c");
-        hPointx_a->SetName("hPointx_a");
-        hPointx_b->SetName("hPointx_b");
-        hPointx_c->SetName("hPointx_c");
-        hPointy_a->SetName("hPointy_a");
-        hPointy_b->SetName("hPointy_b");
-        hPointy_c->SetName("hPointy_c");
-        hFOMx_a->Write();
-        hFOMx_b->Write();
-        hFOMx_c->Write();
-        hFOMy_a->Write();
-        hFOMy_b->Write();
-        hFOMy_c->Write();
         hFOMmainloop->Write();
-        hDiffx_a->Write();
-        hDiffx_b->Write();
-        hDiffx_c->Write();
-        hDiffy_a->Write();
-        hDiffy_b->Write();
-        hDiffy_c->Write();
-        hPointx_a->Write();
-        hPointx_b->Write();
-        hPointx_c->Write();
-        hPointy_a->Write();
-        hPointy_b->Write();
-        hPointy_c->Write();
     }
 
-    // get points
-    double x_a = fixedPoints.at(0);
-    double x_b = fixedPoints.at(1);
-    double x_c = fixedPoints.at(2);
-    double y_a = fixedPoints.at(3);
-    double y_b = fixedPoints.at(4);
-    double y_c = fixedPoints.at(5);
-
-    double direct_max_time = hNoEffectPaths->ProjectionY()->GetXaxis()->GetBinCenter(hNoEffectPaths->ProjectionY()->GetMaximumBin()) + 10;
-    double direct_min_time = hNoEffectPaths->ProjectionY()->GetXaxis()->GetBinCenter(hNoEffectPaths->ProjectionY()->GetMaximumBin()) - 10;
-    //FIXME: don't hardcode this:
-    double direct_cos_alpha;
-    if (fibre == "FA089") {  // 10deg off-axis
-        direct_cos_alpha = -0.85; 
-    } else if (fibre == "FA173" or fibre == "FA150" or fibre == "FA093") {  // 20deg off-axis
-        direct_cos_alpha = -0.6;
-    } else {  // on-axis
-        direct_cos_alpha = -0.9;
-    }
-
-    double reflected_max_time = hNearReflectPaths->ProjectionY()->GetXaxis()->GetBinCenter(hNearReflectPaths->ProjectionY()->GetMaximumBin()) + 10;
-    double reflected_min_time = hNearReflectPaths->ProjectionY()->GetXaxis()->GetBinCenter(hNearReflectPaths->ProjectionY()->GetMaximumBin()) - 10;
-    double reflected_cos_alpha = 0.95; //FIXME: don't hardcode this
-
-    // Draw box cuts on resthit vs costheta hist
-    TCanvas *c1 = new TCanvas("cuts","cuts");  //Create output canvas to be saved in output file
-    TH2F *h = (TH2F*)hAllPaths->Clone();
-    h->Draw("colz");  // Draw histogram
-
-    // create lines
-    std::vector<TLine> lines;
-    // region
-    lines.push_back(TLine(x_a, y_a, x_b, y_b));
-    lines.push_back(TLine(x_a, y_a, x_c, y_c));
-    lines.push_back(TLine(x_c, y_c, x_b, y_b));
-    // direct box
-    lines.push_back(TLine(direct_cos_alpha, direct_min_time, direct_cos_alpha, direct_max_time));
-    lines.push_back(TLine(-1, direct_min_time, -1, direct_max_time));
-    lines.push_back(TLine(-1, direct_max_time, direct_cos_alpha, direct_max_time));
-    lines.push_back(TLine(-1, direct_min_time, direct_cos_alpha, direct_min_time));
-    // reflected box
-    lines.push_back(TLine(reflected_cos_alpha, reflected_min_time, reflected_cos_alpha, reflected_max_time));
-    lines.push_back(TLine(1, reflected_min_time, 1, reflected_max_time));
-    lines.push_back(TLine(1, reflected_max_time, reflected_cos_alpha, reflected_max_time));
-    lines.push_back(TLine(1, reflected_min_time, reflected_cos_alpha, reflected_min_time));
-
-    // draw lines
-    for(int i=0; i<lines.size(); ++i){
-        lines[i].SetLineColor(kBlack);
-        lines[i].Draw("SAME");
-    }
-
-    // Write canvas to root file
-    rootfile->cd();
+    // Draw region limits on 2D hist and write to root file
+    TCanvas* c1 = DrawRegionLims(fixedPoints, Hists, fibre);
     c1->Write();  
     delete c1;
 
@@ -443,6 +365,70 @@ std::vector<double> GetThreePoints(double bestPoint, double worstPoint, std::vec
     }
 
     return newPoints;
+}
+
+
+/**
+ * @brief Draw region limits as lines on RestHitvsCosTheta histogram.
+ * 
+ * @param fixedPoints 
+ * @param Hists 
+ * @param fibre 
+ * @return TCanvas* 
+ */
+TCanvas* DrawRegionLims(std::vector<double> fixedPoints, std::vector<TH2F*> Hists, std::string fibre) {
+    // get points
+    double x_a = fixedPoints.at(0);
+    double x_b = fixedPoints.at(1);
+    double x_c = fixedPoints.at(2);
+    double y_a = fixedPoints.at(3);
+    double y_b = fixedPoints.at(4);
+    double y_c = fixedPoints.at(5);
+
+    double direct_max_time = Hists.at(5)->ProjectionY()->GetXaxis()->GetBinCenter(Hists.at(5)->ProjectionY()->GetMaximumBin()) + 10;  //hNoEffectPaths
+    double direct_min_time = Hists.at(5)->ProjectionY()->GetXaxis()->GetBinCenter(Hists.at(5)->ProjectionY()->GetMaximumBin()) - 10;  //hNoEffectPaths
+    //FIXME: don't hardcode this:
+    double direct_cos_alpha;
+    if (fibre == "FA089") {  // 10deg off-axis
+        direct_cos_alpha = -0.85; 
+    } else if (fibre == "FA173" or fibre == "FA150" or fibre == "FA093") {  // 20deg off-axis
+        direct_cos_alpha = -0.6;
+    } else {  // on-axis
+        direct_cos_alpha = -0.9;
+    }
+
+    double reflected_max_time = Hists.at(5)->ProjectionY()->GetXaxis()->GetBinCenter(Hists.at(5)->ProjectionY()->GetMaximumBin()) + 10;  //hNoEffectPaths
+    double reflected_min_time = Hists.at(5)->ProjectionY()->GetXaxis()->GetBinCenter(Hists.at(5)->ProjectionY()->GetMaximumBin()) - 10;  //hNoEffectPaths
+    double reflected_cos_alpha = 0.95; //FIXME: don't hardcode this
+
+    // Draw box cuts on resthit vs costheta hist
+    TCanvas *c1 = new TCanvas("cuts","cuts");  //Create output canvas to be saved in output file
+    TH2F *h = (TH2F*)Hists.at(1)->Clone();  //hAllPaths
+    h->Draw("colz");  // Draw histogram
+
+    // create lines
+    std::vector<TLine> lines;
+    // region
+    lines.push_back(TLine(x_a, y_a, x_b, y_b));
+    lines.push_back(TLine(x_a, y_a, x_c, y_c));
+    lines.push_back(TLine(x_c, y_c, x_b, y_b));
+    // direct box
+    lines.push_back(TLine(direct_cos_alpha, direct_min_time, direct_cos_alpha, direct_max_time));
+    lines.push_back(TLine(-1, direct_min_time, -1, direct_max_time));
+    lines.push_back(TLine(-1, direct_max_time, direct_cos_alpha, direct_max_time));
+    lines.push_back(TLine(-1, direct_min_time, direct_cos_alpha, direct_min_time));
+    // reflected box
+    lines.push_back(TLine(reflected_cos_alpha, reflected_min_time, reflected_cos_alpha, reflected_max_time));
+    lines.push_back(TLine(1, reflected_min_time, 1, reflected_max_time));
+    lines.push_back(TLine(1, reflected_max_time, reflected_cos_alpha, reflected_max_time));
+    lines.push_back(TLine(1, reflected_min_time, reflected_cos_alpha, reflected_min_time));
+
+    // draw lines
+    for(int i=0; i<lines.size(); ++i){
+        lines[i].SetLineColor(kBlack);
+        lines[i].Draw("SAME");
+    }
+    return c1;
 }
 
 
