@@ -241,11 +241,10 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, std::string fibre
                 if(extraInfo) hFOMxy.at(i)->SetPoint(num_iterations[i], num_iterations[i], bestworstFOMPoints[i].at(2));
                 num_iterations[i]++;
             }
+            if(debug) std::cout << "Setting fixed point: " << bestworstFOMPoints[i].at(0) << std::endl;
+            fixedPoints.at(i) = bestworstFOMPoints[i].at(0);
+            if(debug) std::cout << "" << std::endl;
         }
-
-        if(debug) std::cout << "Setting fixed point: " << bestworstFOMPoints[5].at(0) << std::endl;
-        fixedPoints.at(5) = bestworstFOMPoints[5].at(0);
-        if(debug) std::cout << "" << std::endl;
 
         if(debug) std::cout << "Getting main differences" << std::endl;
 
