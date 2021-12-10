@@ -24,7 +24,7 @@ std::vector<double> GetBestFOM(std::vector<double> FOMs, std::vector<double> poi
 std::vector<TH2F*> GetRegionSelectedHists(std::vector<double> finalPoints, std::vector<TH2F*> Hists, std::string saveroot_txt);
 std::vector<double> CheckPoints(std::vector<double> points, std::vector<double> fixedPoints, int numVar);
 
-int main(int argc, char** argv){
+int main(char** argv){
     std::string file = argv[1];
     int nbins = std::stoi(argv[2]);
     std::string fibre = argv[3];
