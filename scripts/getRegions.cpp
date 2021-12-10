@@ -563,20 +563,7 @@ std::vector<double> GetBestFOM(std::vector<double> FOMs, std::vector<double> poi
  * Returns vector of resultings histograms.
  * 
  * @param finalPoints final fixed points (x_a_min, x_b_max, x_c_max, y_a_min, y_b_max, y_c_min).
- * @param hReEmittedPaths Original histogram.
- * @param hAllPaths Original histogram.
- * @param hNoisePaths Original histogram.
- * @param hSingleScatterPaths Original histogram.
- * @param hOtherPaths Original histogram.
- * @param hNoEffectPaths Original histogram.
- * @param hNearReflectPaths Original histogram.
- * @param hRopesPaths Original histogram.
- * @param hPMTReflectionPaths Original histogram.
- * @param hExtWaterScatterPaths Original histogram.
- * @param hInnerAvReflectPaths Original histogram.
- * @param hMultipleEffectPaths Original histogram.
- * @param hAVPipesPaths Original histogram.
- * @param hAcrylicPaths Original histogram.
+ * @param Hists Original histograms.
  * @param hOtherScatterPaths Original histogram.
  * @return std::vector<TH2F*> 
  */
@@ -695,118 +682,41 @@ std::vector<TH2F*> GetRegionSelectedHists(std::vector<double> finalPoints, std::
     std::cout << "Min reflected time: " << reflected_min_time << std::endl;
     std::cout << "Max reflected time: " << reflected_max_time << std::endl;
 
+    // Create triangle with final points, to check if bin centers are within it in the following loop
+    triangle Tri = triangle(finalPoints.at(0), finalPoints.at(1), finalPoints.at(2), finalPoints.at(3),
+                            finalPoints.at(4), finalPoints.at(5));
+
     for(int x=1; x<hReEmittedPaths->GetNbinsX()+1; x++){ //loop over histogram bins
         double xBinCenter = hReEmittedPaths->GetXaxis()->GetBinCenter(x);
         for(int y=1; y<hReEmittedPaths->GetNbinsY()+1; y++){ //loop over histogram bins
             double yBinCenter = hReEmittedPaths->GetYaxis()->GetBinCenter(y);
-            double upperGrad = (finalPoints.at(4) - finalPoints.at(3)) / (finalPoints.at(1) - finalPoints.at(0));
-            double upperIntercept = finalPoints.at(4) - (upperGrad*finalPoints.at(1));
-            double bottomGrad = (finalPoints.at(5) - finalPoints.at(3)) / (finalPoints.at(2) - finalPoints.at(0));
-            double bottomIntercept = finalPoints.at(5) - (bottomGrad*finalPoints.at(2));
-            double rightHandGrad = (finalPoints.at(4) - finalPoints.at(5)) / (finalPoints.at(1) - finalPoints.at(2));
-            double rightHandIntercept = finalPoints.at(4) - (rightHandGrad*finalPoints.at(1));
-            if(yBinCenter < ((bottomGrad*xBinCenter) + bottomIntercept) or yBinCenter > ((upperGrad*xBinCenter) + upperIntercept) or xBinCenter < finalPoints.at(0) or (rightHandGrad < 0 and yBinCenter > (rightHandGrad*xBinCenter) + rightHandIntercept) or (rightHandGrad > 0 and yBinCenter < (rightHandGrad*xBinCenter) + rightHandIntercept) or (rightHandGrad == 0 and xBinCenter > finalPoints.at(2))){
-                hRegionSelectedReEmittedPaths->SetBinContent(x,y,0);
-                hRegionSelectedAllPaths->SetBinContent(x,y,0);
-                hRegionSelectedNoisePaths->SetBinContent(x,y,0);
-                hRegionSelectedSingleScatterPaths->SetBinContent(x,y,0);
-                hRegionSelectedOtherPaths->SetBinContent(x,y,0);
-                hRegionSelectedNoEffectPaths->SetBinContent(x,y,0);
-                hRegionSelectedNearReflectPaths->SetBinContent(x,y,0);
-                hRegionSelectedRopesPaths->SetBinContent(x,y,0);
-                hRegionSelectedPMTReflectionPaths->SetBinContent(x,y,0);
-                hRegionSelectedExtWaterScatterPaths->SetBinContent(x,y,0);
-                hRegionSelectedInnerAvReflectPaths->SetBinContent(x,y,0);
-                hRegionSelectedMultipleEffectPaths->SetBinContent(x,y,0);
-                hRegionSelectedAVPipesPaths->SetBinContent(x,y,0);
-                hRegionSelectedAcrylicPaths->SetBinContent(x,y,0);
-                hRegionSelectedOtherScatterPaths->SetBinContent(x,y,0);
+            if(Tri.check_point_inside_triangle(xBinCenter, yBinCenter)){
+                for (int i = 0; i < 15; ++i) {
+                    RegionHists.at(i)->SetBinContent(x,y,0);
+                }
             }
             if(xBinCenter > direct_cos_alpha or yBinCenter >= direct_max_time or yBinCenter <= direct_min_time){
-                hDirectCutReEmittedPaths->SetBinContent(x,y,0);
-                hDirectCutAllPaths->SetBinContent(x,y,0);
-                hDirectCutNoisePaths->SetBinContent(x,y,0);
-                hDirectCutSingleScatterPaths->SetBinContent(x,y,0);
-                hDirectCutOtherPaths->SetBinContent(x,y,0);
-                hDirectCutNoEffectPaths->SetBinContent(x,y,0);
-                hDirectCutNearReflectPaths->SetBinContent(x,y,0);
-                hDirectCutRopesPaths->SetBinContent(x,y,0);
-                hDirectCutPMTReflectionPaths->SetBinContent(x,y,0);
-                hDirectCutExtWaterScatterPaths->SetBinContent(x,y,0);
-                hDirectCutInnerAvReflectPaths->SetBinContent(x,y,0);
-                hDirectCutMultipleEffectPaths->SetBinContent(x,y,0);
-                hDirectCutAVPipesPaths->SetBinContent(x,y,0);
-                hDirectCutAcrylicPaths->SetBinContent(x,y,0);
-                hDirectCutOtherScatterPaths->SetBinContent(x,y,0);
+                for (int i = 0; i < 15; ++i) {
+                    DirectHists.at(i)->SetBinContent(x,y,0);
+                }
             }
             if(xBinCenter < reflected_cos_alpha or yBinCenter >= reflected_max_time or yBinCenter <= reflected_min_time){
-                hReflectedCutReEmittedPaths->SetBinContent(x,y,0);
-                hReflectedCutAllPaths->SetBinContent(x,y,0);
-                hReflectedCutNoisePaths->SetBinContent(x,y,0);
-                hReflectedCutSingleScatterPaths->SetBinContent(x,y,0);
-                hReflectedCutOtherPaths->SetBinContent(x,y,0);
-                hReflectedCutNoEffectPaths->SetBinContent(x,y,0);
-                hReflectedCutNearReflectPaths->SetBinContent(x,y,0);
-                hReflectedCutRopesPaths->SetBinContent(x,y,0);
-                hReflectedCutPMTReflectionPaths->SetBinContent(x,y,0);
-                hReflectedCutExtWaterScatterPaths->SetBinContent(x,y,0);
-                hReflectedCutInnerAvReflectPaths->SetBinContent(x,y,0);
-                hReflectedCutMultipleEffectPaths->SetBinContent(x,y,0);
-                hReflectedCutAVPipesPaths->SetBinContent(x,y,0);
-                hReflectedCutAcrylicPaths->SetBinContent(x,y,0);
-                hReflectedCutOtherScatterPaths->SetBinContent(x,y,0);
+                for (int i = 0; i < 15; ++i) {
+                    ReflectedHists.at(i)->SetBinContent(x,y,0);
+                }
             }
         }
     }
     std::vector<TH2F*> outputHists;
-    outputHists.push_back(hRegionSelectedReEmittedPaths);
-    outputHists.push_back(hRegionSelectedAllPaths);
-    outputHists.push_back(hRegionSelectedNoisePaths);
-    outputHists.push_back(hRegionSelectedSingleScatterPaths);
-    outputHists.push_back(hRegionSelectedOtherPaths);
-    outputHists.push_back(hRegionSelectedNoEffectPaths);
-    outputHists.push_back(hRegionSelectedNearReflectPaths);
-    outputHists.push_back(hRegionSelectedRopesPaths);
-    outputHists.push_back(hRegionSelectedPMTReflectionPaths);
-    outputHists.push_back(hRegionSelectedExtWaterScatterPaths);
-    outputHists.push_back(hRegionSelectedInnerAvReflectPaths);
-    outputHists.push_back(hRegionSelectedMultipleEffectPaths);
-    outputHists.push_back(hRegionSelectedAVPipesPaths);
-    outputHists.push_back(hRegionSelectedAcrylicPaths);
-    outputHists.push_back(hRegionSelectedOtherScatterPaths);
-
-    outputHists.push_back(hDirectCutReEmittedPaths);
-    outputHists.push_back(hDirectCutAllPaths);
-    outputHists.push_back(hDirectCutNoisePaths);
-    outputHists.push_back(hDirectCutSingleScatterPaths);
-    outputHists.push_back(hDirectCutOtherPaths);
-    outputHists.push_back(hDirectCutNoEffectPaths);
-    outputHists.push_back(hDirectCutNearReflectPaths);
-    outputHists.push_back(hDirectCutRopesPaths);
-    outputHists.push_back(hDirectCutPMTReflectionPaths);
-    outputHists.push_back(hDirectCutExtWaterScatterPaths);
-    outputHists.push_back(hDirectCutInnerAvReflectPaths);
-    outputHists.push_back(hDirectCutMultipleEffectPaths);
-    outputHists.push_back(hDirectCutAVPipesPaths);
-    outputHists.push_back(hDirectCutAcrylicPaths);
-    outputHists.push_back(hDirectCutOtherScatterPaths);
-
-    outputHists.push_back(hReflectedCutReEmittedPaths);
-    outputHists.push_back(hReflectedCutAllPaths);
-    outputHists.push_back(hReflectedCutNoisePaths);
-    outputHists.push_back(hReflectedCutSingleScatterPaths);
-    outputHists.push_back(hReflectedCutOtherPaths);
-    outputHists.push_back(hReflectedCutNoEffectPaths);
-    outputHists.push_back(hReflectedCutNearReflectPaths);
-    outputHists.push_back(hReflectedCutRopesPaths);
-    outputHists.push_back(hReflectedCutPMTReflectionPaths);
-    outputHists.push_back(hReflectedCutExtWaterScatterPaths);
-    outputHists.push_back(hReflectedCutInnerAvReflectPaths);
-    outputHists.push_back(hReflectedCutMultipleEffectPaths);
-    outputHists.push_back(hReflectedCutAVPipesPaths);
-    outputHists.push_back(hReflectedCutAcrylicPaths);
-    outputHists.push_back(hReflectedCutOtherScatterPaths);
-
+    for (int i = 0; i < 15; ++i) {
+        outputHists.push_back(RegionHists.at(i));
+    }
+    for (int i = 0; i < 15; ++i) {
+        outputHists.push_back(DirectHists.at(i));
+    }
+    for (int i = 0; i < 15; ++i) {
+        outputHists.push_back(ReflectedHists.at(i));
+    }
     return outputHists;
 }
 

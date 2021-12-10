@@ -14,6 +14,9 @@
 triangle::triangle(double x_a, double x_b, double x_c, double y_a, double y_b, double y_c) {
     points[0] = x_a; points[1] = x_b; points[2] = x_c;
     points[3] = y_a; points[4] = y_b; points[5] = y_c;
+    // Twice the area of the triangle (twice to save on computation later)
+    Area2 = abs(points[0] * (points[4] - points[5]) + points[1] * (points[5] - points[3])
+                + points[2] * (points[3] - points[4]));
 }
 
 // member functions
@@ -38,12 +41,7 @@ double& triangle::Y_c() {return points[5];}
  * @return false 
  */
 bool triangle::check_point_inside_triangle(const double point_x, const double point_y, const bool lim_count) {
-    // Calculate (twice, since the factor 0.5 is irrelevent here) the triangle's area
-    // A = abs(x_a * (y_b - y_c) + x_b * (y_c - y_a) + x_c * (y_a - y_b));
-    double A = abs(points[0] * (points[4] - points[5]) + points[1] * (points[5] - points[3])
-                    + points[2] * (points[3] - points[4]));
-
-    if (A == 0.0) {
+    if (Area2 == 0.0) {
         std::cout << "Triangle area is zero." << std::endl;
         if (point_x == points[0] and point_y == points[3]) {
             return lim_count;  // still might be on the point of the triangle
@@ -67,7 +65,7 @@ bool triangle::check_point_inside_triangle(const double point_x, const double po
 
     // Check sum of areas of point triangles adds up to original triangle aread (tolerance of 0.1%).
     // If they equal, the point is inside triangle. If the sum is larger, the point is outside.
-    double frac_diff = ((A_a + A_b + A_c) / A) - 1.0;
+    double frac_diff = ((A_a + A_b + A_c) / Area2) - 1.0;
     if (frac_diff <= 0.001) {
         return true;
     } else {
