@@ -259,10 +259,10 @@ int make_region_cut(std::string tracked_file, triangle Tri,
         Hists.push_back(hAVPipesPaths); Hists.push_back(hAcrylicPaths);
         Hists.push_back(hOtherScatterPaths);
         std::vector<const char*> Hist_names = {"hReemissionResTimeVsCosTheta", "hPmtResTimeVsCosTheta", "hNoiseResTimeVsCosTheta", 
-                                    "hSingleScatterResTimeVsCosTheta", "hOtherEffectResTimeVsCosTheta", "hNoEffectResTimeVsCosTheta", 
-                                    "hNearReflectResTimeVsCosTheta", "hRopesResTimeVsCosTheta", "hPMTReflectionResTimeVsCosTheta", 
-                                    "hExtWaterScatterResTimeVsCosTheta", "hInnerAvReflectionResTimeVsCosTheta", "hAVPipesResTimeVsCosTheta", 
-                                    "hAcrylicScatterResTimeVsCosTheta", "OtherScatterResTimeVsCosTheta"};
+                                "hSingleScatterResTimeVsCosTheta", "hOtherEffectResTimeVsCosTheta", "hNoEffectResTimeVsCosTheta", 
+                                "hNearReflectResTimeVsCosTheta", "hRopesResTimeVsCosTheta", "hPMTReflectionResTimeVsCosTheta", 
+                                "hExtWaterScatterResTimeVsCosTheta", "hInnerAvReflectionResTimeVsCosTheta", "hMultipleEffectResTimeVsCosTheta",
+                                "hAVPipesResTimeVsCosTheta", "hAcrylicScatterResTimeVsCosTheta", "OtherScatterResTimeVsCosTheta"};
 
 
         // New hists to clone to

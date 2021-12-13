@@ -85,8 +85,8 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, std::string fibre
     std::vector<const char*> Hist_names = {"hReemissionResTimeVsCosTheta", "hPmtResTimeVsCosTheta", "hNoiseResTimeVsCosTheta", 
                                 "hSingleScatterResTimeVsCosTheta", "hOtherEffectResTimeVsCosTheta", "hNoEffectResTimeVsCosTheta", 
                                 "hNearReflectResTimeVsCosTheta", "hRopesResTimeVsCosTheta", "hPMTReflectionResTimeVsCosTheta", 
-                                "hExtWaterScatterResTimeVsCosTheta", "hInnerAvReflectionResTimeVsCosTheta", "hAVPipesResTimeVsCosTheta", 
-                                "hAcrylicScatterResTimeVsCosTheta", "OtherScatterResTimeVsCosTheta"};
+                                "hExtWaterScatterResTimeVsCosTheta", "hInnerAvReflectionResTimeVsCosTheta", "hMultipleEffectResTimeVsCosTheta",
+                                "hAVPipesResTimeVsCosTheta", "hAcrylicScatterResTimeVsCosTheta", "OtherScatterResTimeVsCosTheta"};
 
     TGraph *hFOMx_a = new TGraph(); TGraph *hFOMx_b = new TGraph();
     TGraph *hFOMx_c = new TGraph(); TGraph *hFOMy_a = new TGraph();

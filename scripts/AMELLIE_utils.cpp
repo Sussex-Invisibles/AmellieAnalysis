@@ -1,6 +1,8 @@
 #include "AMELLIE_utils.hpp"
 
 
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ TRIANGLE ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
 /**
  * @brief Construct a new triangle::triangle object
  * 
@@ -78,4 +80,49 @@ bool triangle::check_point_inside_triangle(const double point_x, const double po
 double& triangle::operator [] (int i) {
     assert((i < 6 && i >= 0) && "Index out of range");
     return points[i];
+}
+
+
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ HISTLIST ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+/**
+ * @brief Construct a new Hist List:: Hist List object.
+ * Creates vector of 2D Hists in root file.
+ * 
+ * @param tracking_file Root file containing hists.
+ * @param name_list List of histogram names the user wishes to read in. Default list defined
+ * in header file.
+ */
+HistList::HistList(std::string tracking_file, std::vector<std::string> name_list) {
+    // Read in root file
+    TFile* fin = new TFile(tracking_file.c_str()) ;
+    if (!fin->IsOpen()) {
+        std::cout << "Cannot open input file " << tracking_file << std::endl;
+        exit(1);
+    }
+    
+    // Iterate through list of objects in root file
+    TList* list = fin->GetListOfKeys() ;
+    if (!list) {std::cout << "No keys found in file\n" << std::endl; exit(1);}
+    TIter next(list) ;
+    TKey* key;
+    TObject* obj;
+    int i = 0;
+    std::string name;
+
+    while((key = (TKey*)next())){
+        obj = key->ReadObj() ;
+        if(obj->InheritsFrom(TH2::Class())){
+            // Check if histogram is in list of desired histograms
+            name = (std::string)(((TH2F*)obj)->GetName());
+            if ((std::count(name_list.begin(), name_list.end(), name))) {
+                Hists.push_back((TH2F*)obj);
+                Hists_names.push_back(name);
+                std::cout << name << std::endl;
+                ++i;
+            }
+            
+        }
+    }
+
 }

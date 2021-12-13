@@ -4,7 +4,16 @@
 
 // include
 #include <iostream>
+#include <fstream>
 #include <assert.h>
+#include <algorithm>
+#include <TFile.h>
+#include <TH1.h>
+#include <TH2.h>
+#include <TKey.h>
+#include <TObject.h>
+#include <TList.h>
+#include <TVectorD.h>
 
 class triangle {
     private:
@@ -29,6 +38,33 @@ class triangle {
 
         // access elements easier
         double& operator [] (int i);
+};
+
+
+class HistList {
+    private:
+        std::vector<TH2F*> Hists;
+        std::vector<std::string> Hists_names;
+
+    public:
+    // constructor
+    HistList(std::string tracking_file, std::vector<std::string> name_list
+                = {"hReemissionResTimeVsCosTheta", "hPmtResTimeVsCosTheta", "hNoiseResTimeVsCosTheta", 
+                "hSingleScatterResTimeVsCosTheta", "hOtherEffectResTimeVsCosTheta", "hNoEffectResTimeVsCosTheta", 
+                "hNearReflectResTimeVsCosTheta", "hRopesResTimeVsCosTheta", "hPMTReflectionResTimeVsCosTheta", 
+                "hExtWaterScatterResTimeVsCosTheta", "hInnerAvReflectionResTimeVsCosTheta", "hMultipleEffectResTimeVsCosTheta",
+                "hAVPipesResTimeVsCosTheta", "hAcrylicScatterResTimeVsCosTheta", "OtherScatterResTimeVsCosTheta"});
+
+    // return suitable histograms
+    std::vector<TH2F*> Tracking_Hists();
+    std::vector<TH2F*> Region_Hists();
+    std::vector<TH2F*> Direct_Hists();
+    std::vector<TH2F*> Reflected_Hists();
+
+/* ~~~~~~~~~ operator overload ~~~~~~~~~ */
+
+        // access tracking hist elements easier
+        TH2F& operator [] (int i);
 };
 
 //end header guard
