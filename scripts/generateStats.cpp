@@ -378,7 +378,7 @@ int make_region_cut(std::string tracked_file, triangle Tri,
 
                 // Check if bin is in direct beam spot
                 if (direct_Xcut) {
-                    if (yBinCenter <= min_time_direct_beam_spot or yBinCenter >= max_time_direct_beam_spot)) {
+                    if (yBinCenter <= min_time_direct_beam_spot or yBinCenter >= max_time_direct_beam_spot) {
                         for (int i = 0; i < 15; ++i) {
                             DirectHists.at(i)->SetBinContent(x, y, 0);
                         }
@@ -387,7 +387,7 @@ int make_region_cut(std::string tracked_file, triangle Tri,
 
                 // Check if bin is in direct beam spot
                 if (reflected_Xcut) {
-                    if (yBinCenter <= min_time_reflected_beam_spot or yBinCenter >= max_time_reflected_beam_spot)) {
+                    if (yBinCenter <= min_time_reflected_beam_spot or yBinCenter >= max_time_reflected_beam_spot) {
                         for (int i = 0; i < 15; ++i) {
                             DirectHists.at(i)->SetBinContent(x, y, 0);
                         }
@@ -455,13 +455,13 @@ int make_region_cut(std::string tracked_file, triangle Tri,
                 }
                 // Check if bin is in direct beam spot
                 if (direct_Xcut) {
-                    if (yBinCenter <= min_time_direct_beam_spot or yBinCenter >= max_time_direct_beam_spot)) {
+                    if (yBinCenter <= min_time_direct_beam_spot or yBinCenter >= max_time_direct_beam_spot) {
                         hDirectCutAllPaths->SetBinContent(x, y, 0);
                     }
                 }
                 // Check if bin is in direct beam spot
                 if (reflected_Xcut) {
-                    if (yBinCenter <= min_time_reflected_beam_spot or yBinCenter >= max_time_reflected_beam_spot)) {
+                    if (yBinCenter <= min_time_reflected_beam_spot or yBinCenter >= max_time_reflected_beam_spot) {
                         hReflectedCutAllPaths->SetBinContent(x, y, 0);
                     }
                 }
