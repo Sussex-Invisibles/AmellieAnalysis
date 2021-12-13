@@ -539,7 +539,7 @@ std::vector<double> GetBestFOM(std::vector<double> FOMs, std::vector<double> poi
 }
 
 /**
- * @brief Clone all the original histograms (all but the first params below) 3 times: One for the triangle region,
+ * @brief Clone all the original histograms 3 times: One for the triangle region,
  * called Region, and one for the direct (called Direct) and reflected (Reflected) beam spots each.
  * The bins falling outside of these regions are then set to zero in each corresponding histogram.
  * Returns vector of resultings histograms.
@@ -673,7 +673,7 @@ std::vector<TH2F*> GetRegionSelectedHists(std::vector<double> finalPoints, std::
         double xBinCenter = Hists.at(0)->GetXaxis()->GetBinCenter(x);
         for(int y=1; y<Hists.at(0)->GetNbinsY()+1; y++){ //loop over histogram bins
             double yBinCenter = Hists.at(0)->GetYaxis()->GetBinCenter(y);
-            if(Tri.check_point_inside_triangle(xBinCenter, yBinCenter)){
+            if(!(Tri.check_point_inside_triangle(xBinCenter, yBinCenter))){
                 for (int i = 0; i < 15; ++i) {
                     RegionHists.at(i)->SetBinContent(x,y,0);
                 }

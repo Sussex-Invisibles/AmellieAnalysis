@@ -121,24 +121,24 @@ int generate_stats(std::string region_selected_file, std::string full_file, std:
 
         for(int i=0;i<fullHist->GetXaxis()->GetNbins();i++){  // <-------------
             for(int j=0;j<fullHist->GetYaxis()->GetNbins();j++){  // <-------------
-                sumFullHist = sumFullHist + fullHist->GetBinContent(i,j);  // <-------------
-                sumFullHistDirect = sumFullHistDirect + directHistAll->GetBinContent(i,j);  // <--------------
-                sumFullHistReflected = sumFullHistReflected + reflectedHistAll->GetBinContent(i,j);
-                sumFullHistRegion = sumFullHistRegion + regionHistAll->GetBinContent(i,j);  // <--------------
+                sumFullHist += fullHist->GetBinContent(i,j);  // <-------------
+                sumFullHistDirect += directHistAll->GetBinContent(i,j);  // <--------------
+                sumFullHistReflected += reflectedHistAll->GetBinContent(i,j);
+                sumFullHistRegion += regionHistAll->GetBinContent(i,j);  // <--------------
                 if(signal == "reemitted"){
-                    sumSignalHistRegion = sumSignalHistRegion + regionHistReemitted->GetBinContent(i,j);
-                    sumSignalHistDirect = sumSignalHistDirect + directHistReemitted->GetBinContent(i,j);
-                    sumSignalHistReflected = sumSignalHistReflected + reflectedHistReemitted->GetBinContent(i,j);
+                    sumSignalHistRegion += regionHistReemitted->GetBinContent(i,j);
+                    sumSignalHistDirect += directHistReemitted->GetBinContent(i,j);
+                    sumSignalHistReflected += reflectedHistReemitted->GetBinContent(i,j);
                 }
                 if(signal == "scattered"){
-                    sumSignalHistRegion = sumSignalHistRegion + regionHistScattered->GetBinContent(i,j);
-                    sumSignalHistDirect = sumSignalHistDirect + directHistScattered->GetBinContent(i,j);
-                    sumSignalHistReflected = sumSignalHistReflected + reflectedHistScattered->GetBinContent(i,j);
+                    sumSignalHistRegion += regionHistScattered->GetBinContent(i,j);
+                    sumSignalHistDirect += directHistScattered->GetBinContent(i,j);
+                    sumSignalHistReflected += reflectedHistScattered->GetBinContent(i,j);
                 }
                 if(signal == "attenuated"){
-                    sumSignalHistRegion = sumSignalHistRegion + regionHistScattered->GetBinContent(i,j) + regionHistReemitted->GetBinContent(i,j);
-                    sumSignalHistDirect = sumSignalHistDirect + directHistScattered->GetBinContent(i,j) + directHistReemitted->GetBinContent(i,j);
-                    sumSignalHistReflected = sumSignalHistReflected + reflectedHistScattered->GetBinContent(i,j) + reflectedHistReemitted->GetBinContent(i,j);
+                    sumSignalHistRegion += regionHistScattered->GetBinContent(i,j) + regionHistReemitted->GetBinContent(i,j);
+                    sumSignalHistDirect += directHistScattered->GetBinContent(i,j) + directHistReemitted->GetBinContent(i,j);
+                    sumSignalHistReflected += reflectedHistScattered->GetBinContent(i,j) + reflectedHistReemitted->GetBinContent(i,j);
                 }
             }
         }
@@ -182,10 +182,10 @@ int generate_stats(std::string region_selected_file, std::string full_file, std:
 
         for(int i=0;i<fullHist->GetXaxis()->GetNbins();i++){  // <-------------
             for(int j=0;j<fullHist->GetYaxis()->GetNbins();j++){  // <-------------
-                sumFullHist = sumFullHist + fullHist->GetBinContent(i,j);  // <-------------
-                sumFullHistDirect = sumFullHistDirect + directHistAll->GetBinContent(i,j);  // <--------------
-                sumFullHistReflected = sumFullHistReflected + reflectedHistAll->GetBinContent(i,j);
-                sumFullHistRegion = sumFullHistRegion + regionHistAll->GetBinContent(i,j);  // <--------------
+                sumFullHist += fullHist->GetBinContent(i,j);  // <-------------
+                sumFullHistDirect += directHistAll->GetBinContent(i,j);  // <--------------
+                sumFullHistReflected += reflectedHistAll->GetBinContent(i,j);
+                sumFullHistRegion += regionHistAll->GetBinContent(i,j);  // <--------------
             }
         }
 
@@ -241,307 +241,157 @@ int make_region_cut(std::string tracked_file, triangle Tri,
     }
 
     if (data_type == "MC") {
-        TH2F *hReEmittedPaths;
-        TH2F *hAllPaths;  // <----------------
-        TH2F *hNoisePaths;
-        TH2F *hSingleScatterPaths;
-        TH2F *hOtherPaths;
-        TH2F *hNoEffectPaths;
-        TH2F *hNearReflectPaths;
-        TH2F *hRopesPaths;
-        TH2F *hPMTReflectionPaths;
-        TH2F *hExtWaterScatterPaths;
-        TH2F *hInnerAvReflectPaths;
-        TH2F *hMultipleEffectPaths;
-        TH2F *hAVPipesPaths;
-        TH2F *hAcrylicPaths;
-        TH2F *hOtherScatterPaths;
+        //~~~ create histograms and graphs ~~~//
 
-        tracked_hists_file->GetObject("hReemissionResTimeVsCosTheta",hReEmittedPaths);
-        tracked_hists_file->GetObject("hPmtResTimeVsCosTheta",hAllPaths);  // <--------------------
+        // Tracking root file hists
+        TH2F *hReEmittedPaths; TH2F *hAllPaths; TH2F *hNoisePaths;
+        TH2F *hSingleScatterPaths; TH2F *hOtherPaths; TH2F *hNoEffectPaths;
+        TH2F *hNearReflectPaths; TH2F *hRopesPaths; TH2F *hPMTReflectionPaths;
+        TH2F *hExtWaterScatterPaths; TH2F *hInnerAvReflectPaths; TH2F *hMultipleEffectPaths;
+        TH2F *hAVPipesPaths; TH2F *hAcrylicPaths; TH2F *hOtherScatterPaths;
+        std::vector<TH2F*> Hists;
+        Hists.push_back(hReEmittedPaths); Hists.push_back(hAllPaths);
+        Hists.push_back(hNoisePaths); Hists.push_back(hSingleScatterPaths);
+        Hists.push_back(hOtherPaths); Hists.push_back(hNoEffectPaths);
+        Hists.push_back(hNearReflectPaths); Hists.push_back(hRopesPaths);
+        Hists.push_back(hPMTReflectionPaths); Hists.push_back(hExtWaterScatterPaths);
+        Hists.push_back(hInnerAvReflectPaths); Hists.push_back(hMultipleEffectPaths);
+        Hists.push_back(hAVPipesPaths); Hists.push_back(hAcrylicPaths);
+        Hists.push_back(hOtherScatterPaths);
+        std::vector<const char*> Hist_names = {"hReemissionResTimeVsCosTheta", "hPmtResTimeVsCosTheta", "hNoiseResTimeVsCosTheta", 
+                                    "hSingleScatterResTimeVsCosTheta", "hOtherEffectResTimeVsCosTheta", "hNoEffectResTimeVsCosTheta", 
+                                    "hNearReflectResTimeVsCosTheta", "hRopesResTimeVsCosTheta", "hPMTReflectionResTimeVsCosTheta", 
+                                    "hExtWaterScatterResTimeVsCosTheta", "hInnerAvReflectionResTimeVsCosTheta", "hAVPipesResTimeVsCosTheta", 
+                                    "hAcrylicScatterResTimeVsCosTheta", "OtherScatterResTimeVsCosTheta"};
 
-        tracked_hists_file->GetObject("hNoiseResTimeVsCosTheta",hNoisePaths);
-        tracked_hists_file->GetObject("hSingleScatterResTimeVsCosTheta",hSingleScatterPaths);
-        tracked_hists_file->GetObject("hOtherEffectResTimeVsCosTheta",hOtherPaths);
-        tracked_hists_file->GetObject("hNoEffectResTimeVsCosTheta",hNoEffectPaths);
-        tracked_hists_file->GetObject("hNearReflectResTimeVsCosTheta",hNearReflectPaths);
-        tracked_hists_file->GetObject("hRopesResTimeVsCosTheta",hRopesPaths);
-        tracked_hists_file->GetObject("hPMTReflectionResTimeVsCosTheta",hPMTReflectionPaths);
-        tracked_hists_file->GetObject("hExtWaterScatterResTimeVsCosTheta",hExtWaterScatterPaths);
-        tracked_hists_file->GetObject("hInnerAvReflectionResTimeVsCosTheta",hInnerAvReflectPaths);
-        tracked_hists_file->GetObject("hMultipleEffectResTimeVsCosTheta",hMultipleEffectPaths);
-        tracked_hists_file->GetObject("hAVPipesResTimeVsCosTheta",hAVPipesPaths);
-        tracked_hists_file->GetObject("hAcrylicScatterResTimeVsCosTheta",hAcrylicPaths);
-        tracked_hists_file->GetObject("OtherScatterResTimeVsCosTheta",hOtherScatterPaths);
 
-        TH2F *hRegionCutReemissionResTimeVsCosTheta = (TH2F*)hReEmittedPaths->Clone();
-        TH2F *hRegionCutPmtResTimeVsCosTheta = (TH2F*)hAllPaths->Clone(); // <------------------
-        TH2F *hRegionCutNoisePaths = (TH2F*)hNoisePaths->Clone();
-        TH2F *hRegionCutSingleScatterPaths = (TH2F*)hSingleScatterPaths->Clone();
-        TH2F *hRegionCutOtherPaths = (TH2F*)hOtherPaths->Clone();
-        TH2F *hRegionCutNoEffectPaths = (TH2F*)hNoEffectPaths->Clone();
-        TH2F *hRegionCutNearReflectPaths = (TH2F*)hNearReflectPaths->Clone();
-        TH2F *hRegionCutRopesPaths = (TH2F*)hRopesPaths->Clone();
-        TH2F *hRegionCutPMTReflectionPaths = (TH2F*)hPMTReflectionPaths->Clone();
-        TH2F *hRegionCutExtWaterScatterPaths = (TH2F*)hExtWaterScatterPaths->Clone();
-        TH2F *hRegionCutInnerAvReflectPaths = (TH2F*)hInnerAvReflectPaths->Clone();
-        TH2F *hRegionCutMultipleEffectPaths = (TH2F*)hMultipleEffectPaths->Clone();
-        TH2F *hRegionCutAVPipesPaths = (TH2F*)hAVPipesPaths->Clone();
-        TH2F *hRegionCutAcrylicPaths = (TH2F*)hAcrylicPaths->Clone();
-        TH2F *hRegionCutOtherScatterPaths = (TH2F*)hOtherScatterPaths->Clone();
+        // New hists to clone to
+        TH2F *hRegionSelectedReEmittedPaths; TH2F *hRegionSelectedAllPaths;
+        TH2F *hRegionSelectedNoisePaths; TH2F *hRegionSelectedSingleScatterPaths;
+        TH2F *hRegionSelectedOtherPaths; TH2F *hRegionSelectedNoEffectPaths;
+        TH2F *hRegionSelectedNearReflectPaths; TH2F *hRegionSelectedRopesPaths;
+        TH2F *hRegionSelectedPMTReflectionPaths; TH2F *hRegionSelectedExtWaterScatterPaths;
+        TH2F *hRegionSelectedInnerAvReflectPaths; TH2F *hRegionSelectedMultipleEffectPaths;
+        TH2F *hRegionSelectedAVPipesPaths; TH2F *hRegionSelectedAcrylicPaths;
+        TH2F *hRegionSelectedOtherScatterPaths;
+        std::vector<TH2F*> RegionHists;
+        RegionHists.push_back(hRegionSelectedReEmittedPaths); RegionHists.push_back(hRegionSelectedAllPaths);
+        RegionHists.push_back(hRegionSelectedNoisePaths); RegionHists.push_back(hRegionSelectedSingleScatterPaths);
+        RegionHists.push_back(hRegionSelectedOtherPaths); RegionHists.push_back(hRegionSelectedNoEffectPaths);
+        RegionHists.push_back(hRegionSelectedNearReflectPaths); RegionHists.push_back(hRegionSelectedRopesPaths);
+        RegionHists.push_back(hRegionSelectedPMTReflectionPaths); RegionHists.push_back(hRegionSelectedExtWaterScatterPaths);
+        RegionHists.push_back(hRegionSelectedInnerAvReflectPaths); RegionHists.push_back(hRegionSelectedMultipleEffectPaths);
+        RegionHists.push_back(hRegionSelectedAVPipesPaths); RegionHists.push_back(hRegionSelectedAcrylicPaths);
+        RegionHists.push_back(hRegionSelectedOtherScatterPaths);
+        std::vector<const char*> RegionHist_names = {"hRegionSelectedReEmittedPaths", "hRegionSelectedAllPaths", "hRegionCutNoisePaths",
+                                            "hRegionCutSingleScatterPaths", "hRegionCutOtherPaths", "hRegionCutNoEffectPaths"
+                                            "hRegionCutNearReflectPaths", "hRegionCutRopesPaths", "hRegionCutPMTReflectionPaths"
+                                            "hRegionCutExtWaterScatterPaths", "hRegionCutInnerAvReflectPaths", "hRegionCutMultipleEffectPaths"
+                                            "hRegionCutAVPipesPaths", "hRegionCutAcrylicPaths", "hRegionCutOtherScatterPaths"};
 
-        hRegionCutReemissionResTimeVsCosTheta->SetName("hRegionSelectedReEmittedPaths");
-        hRegionCutPmtResTimeVsCosTheta->SetName("hRegionSelectedAllPaths");  // <-------------------
-        hRegionCutNoisePaths->SetName("hRegionCutNoisePaths");
-        hRegionCutSingleScatterPaths->SetName("hRegionCutSingleScatterPaths");
-        hRegionCutOtherPaths->SetName("hRegionCutOtherPaths");
-        hRegionCutNoEffectPaths->SetName("hRegionCutNoEffectPaths");
-        hRegionCutNearReflectPaths->SetName("hRegionCutNearReflectPaths");
-        hRegionCutRopesPaths->SetName("hRegionCutRopesPaths");
-        hRegionCutPMTReflectionPaths->SetName("hRegionCutPMTReflectionPaths");
-        hRegionCutExtWaterScatterPaths->SetName("hRegionCutExtWaterScatterPaths");
-        hRegionCutInnerAvReflectPaths->SetName("hRegionCutInnerAvReflectPaths");
-        hRegionCutMultipleEffectPaths->SetName("hRegionCutMultipleEffectPaths");
-        hRegionCutAVPipesPaths->SetName("hRegionCutAVPipesPaths");
-        hRegionCutAcrylicPaths->SetName("hRegionCutAcrylicPaths");
-        hRegionCutOtherScatterPaths->SetName("hRegionCutOtherScatterPaths");
+        TH2F *hDirectCutReEmittedPaths; TH2F *hDirectCutAllPaths;
+        TH2F *hDirectCutNoisePaths; TH2F *hDirectCutSingleScatterPaths;
+        TH2F *hDirectCutOtherPaths; TH2F *hDirectCutNoEffectPaths;
+        TH2F *hDirectCutNearReflectPaths; TH2F *hDirectCutRopesPaths;
+        TH2F *hDirectCutPMTReflectionPaths; TH2F *hDirectCutExtWaterScatterPaths;
+        TH2F *hDirectCutInnerAvReflectPaths; TH2F *hDirectCutMultipleEffectPaths;
+        TH2F *hDirectCutAVPipesPaths; TH2F *hDirectCutAcrylicPaths;
+        TH2F *hDirectCutOtherScatterPaths;
+        std::vector<TH2F*> DirectHists;
+        DirectHists.push_back(hDirectCutReEmittedPaths); DirectHists.push_back(hDirectCutAllPaths);
+        DirectHists.push_back(hDirectCutNoisePaths); DirectHists.push_back(hDirectCutSingleScatterPaths);
+        DirectHists.push_back(hDirectCutOtherPaths); DirectHists.push_back(hDirectCutNoEffectPaths);
+        DirectHists.push_back(hDirectCutNearReflectPaths); DirectHists.push_back(hDirectCutRopesPaths);
+        DirectHists.push_back(hDirectCutPMTReflectionPaths); DirectHists.push_back(hDirectCutExtWaterScatterPaths);
+        DirectHists.push_back(hDirectCutInnerAvReflectPaths); DirectHists.push_back(hDirectCutMultipleEffectPaths);
+        DirectHists.push_back(hDirectCutAVPipesPaths); DirectHists.push_back(hDirectCutAcrylicPaths);
+        DirectHists.push_back(hDirectCutOtherScatterPaths);
+        std::vector<const char*> DirectHist_names = {"hDirectCutReEmittedPaths", "hDirectCutAllPaths", "hDirectCutNoisePaths", 
+                                            "hDirectCutSingleScatterPaths", "hDirectCutOtherPaths", "hDirectCutNoEffectPaths", 
+                                            "hDirectCutNearReflectPaths", "hDirectCutRopesPaths", "hDirectCutPMTReflectionPaths", 
+                                            "hDirectCutExtWaterScatterPaths", "hDirectCutInnerAvReflectPaths", "hDirectCutAVPipesPaths", 
+                                            "hDirectCutAcrylicPaths", "hDirectCutOtherScatterPaths"};
 
-        int nBinsX = hReEmittedPaths->GetXaxis()->GetNbins();
-        int nBinsY = hReEmittedPaths->GetYaxis()->GetNbins();
+        TH2F *hReflectedCutReEmittedPaths; TH2F *hReflectedCutAllPaths;
+        TH2F *hReflectedCutNoisePaths; TH2F *hReflectedCutSingleScatterPaths;
+        TH2F *hReflectedCutOtherPaths; TH2F *hReflectedCutNoEffectPaths;
+        TH2F *hReflectedCutNearReflectPaths; TH2F *hReflectedCutRopesPaths;
+        TH2F *hReflectedCutPMTReflectionPaths; TH2F *hReflectedCutExtWaterScatterPaths;
+        TH2F *hReflectedCutInnerAvReflectPaths; TH2F *hReflectedCutMultipleEffectPaths;
+        TH2F *hReflectedCutAVPipesPaths; TH2F *hReflectedCutAcrylicPaths;
+        TH2F *hReflectedCutOtherScatterPaths;
+        std::vector<TH2F*> ReflectedHists;
+        ReflectedHists.push_back(hReflectedCutReEmittedPaths); ReflectedHists.push_back(hReflectedCutAllPaths);
+        ReflectedHists.push_back(hReflectedCutNoisePaths); ReflectedHists.push_back(hReflectedCutSingleScatterPaths);
+        ReflectedHists.push_back(hReflectedCutOtherPaths); ReflectedHists.push_back(hReflectedCutNoEffectPaths);
+        ReflectedHists.push_back(hReflectedCutNearReflectPaths); ReflectedHists.push_back(hReflectedCutRopesPaths);
+        ReflectedHists.push_back(hReflectedCutPMTReflectionPaths); ReflectedHists.push_back(hReflectedCutExtWaterScatterPaths);
+        ReflectedHists.push_back(hReflectedCutInnerAvReflectPaths); ReflectedHists.push_back(hReflectedCutMultipleEffectPaths);
+        ReflectedHists.push_back(hReflectedCutAVPipesPaths); ReflectedHists.push_back(hReflectedCutAcrylicPaths);
+        ReflectedHists.push_back(hReflectedCutOtherScatterPaths);
+        std::vector<const char*> ReflectedHist_names = {"hReflectedCutReEmittedPaths", "hReflectedCutAllPaths", "hReflectedCutNoisePaths", 
+                                            "hReflectedCutSingleScatterPaths", "hReflectedCutOtherPaths", "hReflectedCutNoEffectPaths", 
+                                            "hReflectedCutNearReflectPaths", "hReflectedCutRopesPaths", "hReflectedCutPMTReflectionPaths", 
+                                            "hReflectedCutExtWaterScatterPaths", "hReflectedCutInnerAvReflectPaths", "hReflectedCutMultipleEffectPaths", 
+                                            "hReflectedCutAVPipesPaths", "hReflectedCutAcrylicPaths", "hReflectedCutOtherScatterPaths"};
 
-        for(int x=0; x<nBinsX+1; x++){
-            double xBinCenter = hReEmittedPaths->GetXaxis()->GetBinCenter(x);
-            for(int y=0; y<nBinsY+1; y++){
-                double yBinCenter = hReEmittedPaths->GetYaxis()->GetBinCenter(y);
-                // Check if bin is within triangle region
-                if (Tri.check_point_inside_triangle(xBinCenter, yBinCenter)) {
-                    hRegionCutReemissionResTimeVsCosTheta->SetBinContent(x,y,hReEmittedPaths->GetBinContent(x,y));
-                    hRegionCutPmtResTimeVsCosTheta->SetBinContent(x,y,hAllPaths->GetBinContent(x,y));  // <----------------------
-                    hRegionCutNoisePaths->SetBinContent(x,y,hNoisePaths->GetBinContent(x,y));
-                    hRegionCutSingleScatterPaths->SetBinContent(x,y,hSingleScatterPaths->GetBinContent(x,y));
-                    hRegionCutOtherPaths->SetBinContent(x,y,hOtherPaths->GetBinContent(x,y));
-                    hRegionCutNoEffectPaths->SetBinContent(x,y,hNoEffectPaths->GetBinContent(x,y));
-                    hRegionCutNearReflectPaths->SetBinContent(x,y,hNearReflectPaths->GetBinContent(x,y));
-                    hRegionCutRopesPaths->SetBinContent(x,y,hRopesPaths->GetBinContent(x,y));
-                    hRegionCutPMTReflectionPaths->SetBinContent(x,y,hPMTReflectionPaths->GetBinContent(x,y));
-                    hRegionCutExtWaterScatterPaths->SetBinContent(x,y,hExtWaterScatterPaths->GetBinContent(x,y));
-                    hRegionCutInnerAvReflectPaths->SetBinContent(x,y,hInnerAvReflectPaths->GetBinContent(x,y));
-                    hRegionCutMultipleEffectPaths->SetBinContent(x,y,hMultipleEffectPaths->GetBinContent(x,y));
-                    hRegionCutAVPipesPaths->SetBinContent(x,y,hAVPipesPaths->GetBinContent(x,y));
-                    hRegionCutAcrylicPaths->SetBinContent(x,y,hAcrylicPaths->GetBinContent(x,y));
-                    hRegionCutOtherScatterPaths->SetBinContent(x,y,hOtherScatterPaths->GetBinContent(x,y));
-                } else {
-                    hRegionCutReemissionResTimeVsCosTheta->SetBinContent(x,y,0);
-                    hRegionCutPmtResTimeVsCosTheta->SetBinContent(x,y,0);
-                    hRegionCutNoisePaths->SetBinContent(x,y,0);
-                    hRegionCutSingleScatterPaths->SetBinContent(x,y,0);
-                    hRegionCutOtherPaths->SetBinContent(x,y,0);
-                    hRegionCutNoEffectPaths->SetBinContent(x,y,0);
-                    hRegionCutNearReflectPaths->SetBinContent(x,y,0);
-                    hRegionCutRopesPaths->SetBinContent(x,y,0);
-                    hRegionCutPMTReflectionPaths->SetBinContent(x,y,0);
-                    hRegionCutExtWaterScatterPaths->SetBinContent(x,y,0);
-                    hRegionCutInnerAvReflectPaths->SetBinContent(x,y,0);
-                    hRegionCutMultipleEffectPaths->SetBinContent(x,y,0);
-                    hRegionCutAVPipesPaths->SetBinContent(x,y,0);
-                    hRegionCutAcrylicPaths->SetBinContent(x,y,0);
-                    hRegionCutOtherScatterPaths->SetBinContent(x,y,0);
-                }
-            }
+        // Assign hists
+        for (int i = 0; i < 15; ++i) {
+            tracked_hists_file->GetObject(Hist_names.at(i), Hists.at(i));
+
+            RegionHists.at(i) = (TH2F*)Hists.at(i)->Clone();
+            RegionHists.at(i)->SetName(RegionHist_names.at(i));
+
+            DirectHists.at(i) = (TH2F*)Hists.at(i)->Clone();
+            DirectHists.at(i)->SetName(DirectHist_names.at(i));
+
+            ReflectedHists.at(i) = (TH2F*)Hists.at(i)->Clone();
+            ReflectedHists.at(i)->SetName(ReflectedHist_names.at(i));
         }
+
+        //~~~ Apply region cuts by looping through bins ~~~//
 
         //direct beam spot, max +/- 10 ns, -0.9 cos theta (straight through)
-
-        TH2F *hDirectCutReemissionResTimeVsCosTheta = (TH2F*)hReEmittedPaths->Clone();
-        TH2F *hDirectCutPmtResTimeVsCosTheta = (TH2F*)hAllPaths->Clone();  // <--------------------
-        TH2F *hDirectCutNoisePaths = (TH2F*)hNoisePaths->Clone();
-        TH2F *hDirectCutSingleScatterPaths = (TH2F*)hSingleScatterPaths->Clone();
-        TH2F *hDirectCutOtherPaths = (TH2F*)hOtherPaths->Clone();
-        TH2F *hDirectCutNoEffectPaths = (TH2F*)hNoEffectPaths->Clone();
-        TH2F *hDirectCutNearReflectPaths = (TH2F*)hNearReflectPaths->Clone();
-        TH2F *hDirectCutRopesPaths = (TH2F*)hRopesPaths->Clone();
-        TH2F *hDirectCutPMTReflectionPaths = (TH2F*)hPMTReflectionPaths->Clone();
-        TH2F *hDirectCutExtWaterScatterPaths = (TH2F*)hExtWaterScatterPaths->Clone();
-        TH2F *hDirectCutInnerAvReflectPaths = (TH2F*)hInnerAvReflectPaths->Clone();
-        TH2F *hDirectCutMultipleEffectPaths = (TH2F*)hMultipleEffectPaths->Clone();
-        TH2F *hDirectCutAVPipesPaths = (TH2F*)hAVPipesPaths->Clone();
-        TH2F *hDirectCutAcrylicPaths = (TH2F*)hAcrylicPaths->Clone();
-        TH2F *hDirectCutOtherScatterPaths = (TH2F*)hOtherScatterPaths->Clone();
-
-        hDirectCutReemissionResTimeVsCosTheta->SetName("hDirectCutReEmittedPaths");
-        hDirectCutPmtResTimeVsCosTheta->SetName("hDirectCutAllPaths");
-        hDirectCutNoisePaths->SetName("hDirectCutNoisePaths");
-        hDirectCutSingleScatterPaths->SetName("hDirectCutSingleScatterPaths");
-        hDirectCutOtherPaths->SetName("hDirectCutOtherPaths");
-        hDirectCutNoEffectPaths->SetName("hDirectCutNoEffectPaths");
-        hDirectCutNearReflectPaths->SetName("hDirectCutNearReflectPaths");
-        hDirectCutRopesPaths->SetName("hDirectCutRopesPaths");
-        hDirectCutPMTReflectionPaths->SetName("hDirectCutPMTReflectionPaths");
-        hDirectCutExtWaterScatterPaths->SetName("hDirectCutExtWaterScatterPaths");
-        hDirectCutInnerAvReflectPaths->SetName("hDirectCutInnerAvReflectPaths");
-        hDirectCutMultipleEffectPaths->SetName("hDirectCutMultipleEffectPaths");
-        hDirectCutAVPipesPaths->SetName("hDirectCutAVPipesPaths");
-        hDirectCutAcrylicPaths->SetName("hDirectCutAcrylicPaths");
-        hDirectCutOtherScatterPaths->SetName("hDirectCutOtherScatterPaths");
-
         double min_angle_direct_beam_spot = -0.9;
-
-        for(int x=0; x<nBinsX+1; x++){
-            double xBinCenter = hReEmittedPaths->GetXaxis()->GetBinCenter(x);
-            if(xBinCenter <= min_angle_direct_beam_spot){
-                for(int y=0; y<nBinsY+1; y++){
-                    double yBinCenter = hReEmittedPaths->GetYaxis()->GetBinCenter(y);
-                    if(yBinCenter >= min_time_direct_beam_spot and yBinCenter <= max_time_direct_beam_spot){
-                        hDirectCutReemissionResTimeVsCosTheta->SetBinContent(x,y,hReEmittedPaths->GetBinContent(x,y));
-                        hDirectCutPmtResTimeVsCosTheta->SetBinContent(x,y,hAllPaths->GetBinContent(x,y));  // <-------------------
-                        hDirectCutNoisePaths->SetBinContent(x,y,hNoisePaths->GetBinContent(x,y));
-                        hDirectCutSingleScatterPaths->SetBinContent(x,y,hSingleScatterPaths->GetBinContent(x,y));
-                        hDirectCutOtherPaths->SetBinContent(x,y,hOtherPaths->GetBinContent(x,y));
-                        hDirectCutNoEffectPaths->SetBinContent(x,y,hNoEffectPaths->GetBinContent(x,y));
-                        hDirectCutNearReflectPaths->SetBinContent(x,y,hNearReflectPaths->GetBinContent(x,y));
-                        hDirectCutRopesPaths->SetBinContent(x,y,hRopesPaths->GetBinContent(x,y));
-                        hDirectCutPMTReflectionPaths->SetBinContent(x,y,hPMTReflectionPaths->GetBinContent(x,y));
-                        hDirectCutExtWaterScatterPaths->SetBinContent(x,y,hExtWaterScatterPaths->GetBinContent(x,y));
-                        hDirectCutInnerAvReflectPaths->SetBinContent(x,y,hInnerAvReflectPaths->GetBinContent(x,y));
-                        hDirectCutMultipleEffectPaths->SetBinContent(x,y,hMultipleEffectPaths->GetBinContent(x,y));
-                        hDirectCutAVPipesPaths->SetBinContent(x,y,hAVPipesPaths->GetBinContent(x,y));
-                        hDirectCutAcrylicPaths->SetBinContent(x,y,hAcrylicPaths->GetBinContent(x,y));
-                        hDirectCutOtherScatterPaths->SetBinContent(x,y,hOtherScatterPaths->GetBinContent(x,y));
-                    }
-                    else{
-                        hDirectCutReemissionResTimeVsCosTheta->SetBinContent(x,y,0);
-                        hDirectCutPmtResTimeVsCosTheta->SetBinContent(x,y,0);
-                        hDirectCutNoisePaths->SetBinContent(x,y,0);
-                        hDirectCutSingleScatterPaths->SetBinContent(x,y,0);
-                        hDirectCutOtherPaths->SetBinContent(x,y,0);
-                        hDirectCutNoEffectPaths->SetBinContent(x,y,0);
-                        hDirectCutNearReflectPaths->SetBinContent(x,y,0);
-                        hDirectCutRopesPaths->SetBinContent(x,y,0);
-                        hDirectCutPMTReflectionPaths->SetBinContent(x,y,0);
-                        hDirectCutExtWaterScatterPaths->SetBinContent(x,y,0);
-                        hDirectCutInnerAvReflectPaths->SetBinContent(x,y,0);
-                        hDirectCutMultipleEffectPaths->SetBinContent(x,y,0);
-                        hDirectCutAVPipesPaths->SetBinContent(x,y,0);
-                        hDirectCutAcrylicPaths->SetBinContent(x,y,0);
-                        hDirectCutOtherScatterPaths->SetBinContent(x,y,0);
-                    }
-                }
-            }
-            else{
-                for(int y=0; y<nBinsY+1; y++){
-                    hDirectCutReemissionResTimeVsCosTheta->SetBinContent(x,y,0);
-                    hDirectCutPmtResTimeVsCosTheta->SetBinContent(x,y,0);
-                    hDirectCutNoisePaths->SetBinContent(x,y,0);
-                    hDirectCutSingleScatterPaths->SetBinContent(x,y,0);
-                    hDirectCutOtherPaths->SetBinContent(x,y,0);
-                    hDirectCutNoEffectPaths->SetBinContent(x,y,0);
-                    hDirectCutNearReflectPaths->SetBinContent(x,y,0);
-                    hDirectCutRopesPaths->SetBinContent(x,y,0);
-                    hDirectCutPMTReflectionPaths->SetBinContent(x,y,0);
-                    hDirectCutExtWaterScatterPaths->SetBinContent(x,y,0);
-                    hDirectCutInnerAvReflectPaths->SetBinContent(x,y,0);
-                    hDirectCutMultipleEffectPaths->SetBinContent(x,y,0);
-                    hDirectCutAVPipesPaths->SetBinContent(x,y,0);
-                    hDirectCutAcrylicPaths->SetBinContent(x,y,0);
-                    hDirectCutOtherScatterPaths->SetBinContent(x,y,0);
-                }
-            }
-        }
-
         //reflected beam spot, max +/- 10 ns, 0.95 cos theta (straight through)
-
-        TH2F *hReflectedCutReemissionResTimeVsCosTheta = (TH2F*)hAllPaths->Clone();
-        TH2F *hReflectedCutPmtResTimeVsCosTheta = (TH2F*)hAllPaths->Clone();  // <-----------------
-        TH2F *hReflectedCutNoisePaths = (TH2F*)hAllPaths->Clone();
-        TH2F *hReflectedCutSingleScatterPaths = (TH2F*)hAllPaths->Clone();
-        TH2F *hReflectedCutOtherPaths = (TH2F*)hAllPaths->Clone();
-        TH2F *hReflectedCutNoEffectPaths = (TH2F*)hAllPaths->Clone();
-        TH2F *hReflectedCutNearReflectPaths = (TH2F*)hAllPaths->Clone();
-        TH2F *hReflectedCutRopesPaths = (TH2F*)hAllPaths->Clone();
-        TH2F *hReflectedCutPMTReflectionPaths = (TH2F*)hAllPaths->Clone();
-        TH2F *hReflectedCutExtWaterScatterPaths = (TH2F*)hAllPaths->Clone();
-        TH2F *hReflectedCutInnerAvReflectPaths = (TH2F*)hAllPaths->Clone();
-        TH2F *hReflectedCutMultipleEffectPaths = (TH2F*)hAllPaths->Clone();
-        TH2F *hReflectedCutAVPipesPaths = (TH2F*)hAllPaths->Clone();
-        TH2F *hReflectedCutAcrylicPaths = (TH2F*)hAllPaths->Clone();
-        TH2F *hReflectedCutOtherScatterPaths = (TH2F*)hAllPaths->Clone();
-
-        hReflectedCutReemissionResTimeVsCosTheta->SetName("hReflectedCutReEmittedPaths");
-        hReflectedCutPmtResTimeVsCosTheta->SetName("hReflectedCutAllPaths");  // <------------------
-        hReflectedCutNoisePaths->SetName("hReflectedCutNoisePaths");
-        hReflectedCutSingleScatterPaths->SetName("hReflectedCutSingleScatterPaths");
-        hReflectedCutOtherPaths->SetName("hReflectedCutOtherPaths");
-        hReflectedCutNoEffectPaths->SetName("hReflectedCutNoEffectPaths");
-        hReflectedCutNearReflectPaths->SetName("hReflectedCutNearReflectPaths");
-        hReflectedCutRopesPaths->SetName("hReflectedCutRopesPaths");
-        hReflectedCutPMTReflectionPaths->SetName("hReflectedCutPMTReflectionPaths");
-        hReflectedCutExtWaterScatterPaths->SetName("hReflectedCutExtWaterScatterPaths");
-        hReflectedCutInnerAvReflectPaths->SetName("hReflectedCutInnerAvReflectPaths");
-        hReflectedCutMultipleEffectPaths->SetName("hReflectedCutMultipleEffectPaths");
-        hReflectedCutAVPipesPaths->SetName("hReflectedCutAVPipesPaths");
-        hReflectedCutAcrylicPaths->SetName("hReflectedCutAcrylicPaths");
-        hReflectedCutOtherScatterPaths->SetName("hReflectedCutOtherScatterPaths");
-
         double min_angle_reflected_beam_spot = 0.95;
 
-        for(int x=0; x<nBinsX+1; x++){
-            double xBinCenter = hReEmittedPaths->GetXaxis()->GetBinCenter(x);
-            if(xBinCenter >= min_angle_reflected_beam_spot){
-                for(int y=0; y<nBinsY+1; y++){
-                    double yBinCenter = hReEmittedPaths->GetYaxis()->GetBinCenter(y);
-                    if(yBinCenter >= min_time_reflected_beam_spot and yBinCenter <= max_time_reflected_beam_spot){
-                        hReflectedCutReemissionResTimeVsCosTheta->SetBinContent(x,y,hReEmittedPaths->GetBinContent(x,y));
-                        hReflectedCutPmtResTimeVsCosTheta->SetBinContent(x,y,hAllPaths->GetBinContent(x,y));  // <-------------------
-                        hReflectedCutNoisePaths->SetBinContent(x,y,hNoisePaths->GetBinContent(x,y));
-                        hReflectedCutSingleScatterPaths->SetBinContent(x,y,hSingleScatterPaths->GetBinContent(x,y));
-                        hReflectedCutOtherPaths->SetBinContent(x,y,hOtherPaths->GetBinContent(x,y));
-                        hReflectedCutNoEffectPaths->SetBinContent(x,y,hNoEffectPaths->GetBinContent(x,y));
-                        hReflectedCutNearReflectPaths->SetBinContent(x,y,hNearReflectPaths->GetBinContent(x,y));
-                        hReflectedCutRopesPaths->SetBinContent(x,y,hRopesPaths->GetBinContent(x,y));
-                        hReflectedCutPMTReflectionPaths->SetBinContent(x,y,hPMTReflectionPaths->GetBinContent(x,y));
-                        hReflectedCutExtWaterScatterPaths->SetBinContent(x,y,hExtWaterScatterPaths->GetBinContent(x,y));
-                        hReflectedCutInnerAvReflectPaths->SetBinContent(x,y,hInnerAvReflectPaths->GetBinContent(x,y));
-                        hReflectedCutMultipleEffectPaths->SetBinContent(x,y,hMultipleEffectPaths->GetBinContent(x,y));
-                        hReflectedCutAVPipesPaths->SetBinContent(x,y,hAVPipesPaths->GetBinContent(x,y));
-                        hReflectedCutAcrylicPaths->SetBinContent(x,y,hAcrylicPaths->GetBinContent(x,y));
-                        hReflectedCutOtherScatterPaths->SetBinContent(x,y,hOtherScatterPaths->GetBinContent(x,y));
-                    }
-                    else{
-                        hReflectedCutReemissionResTimeVsCosTheta->SetBinContent(x,y,0);
-                        hReflectedCutPmtResTimeVsCosTheta->SetBinContent(x,y,0);  // <-----------------------
-                        hReflectedCutNoisePaths->SetBinContent(x,y,0);
-                        hReflectedCutSingleScatterPaths->SetBinContent(x,y,0);
-                        hReflectedCutOtherPaths->SetBinContent(x,y,0);
-                        hReflectedCutNoEffectPaths->SetBinContent(x,y,0);
-                        hReflectedCutNearReflectPaths->SetBinContent(x,y,0);
-                        hReflectedCutRopesPaths->SetBinContent(x,y,0);
-                        hReflectedCutPMTReflectionPaths->SetBinContent(x,y,0);
-                        hReflectedCutExtWaterScatterPaths->SetBinContent(x,y,0);
-                        hReflectedCutInnerAvReflectPaths->SetBinContent(x,y,0);
-                        hReflectedCutMultipleEffectPaths->SetBinContent(x,y,0);
-                        hReflectedCutAVPipesPaths->SetBinContent(x,y,0);
-                        hReflectedCutAcrylicPaths->SetBinContent(x,y,0);
-                        hReflectedCutOtherScatterPaths->SetBinContent(x,y,0);
+        int nBinsX = hAllPaths->GetXaxis()->GetNbins();
+        int nBinsY = hAllPaths->GetYaxis()->GetNbins();
+        double xBinCenter;
+        double yBinCenter;
+        bool direct_Xcut;
+        bool reflected_Xcut;
+        for (int x=0; x<nBinsX+1; x++) {
+            xBinCenter = hAllPaths->GetXaxis()->GetBinCenter(x);
+            if (xBinCenter >= min_angle_direct_beam_spot) {direct_Xcut = true;} else {direct_Xcut = false;}
+            if (xBinCenter >= min_angle_reflected_beam_spot) {reflected_Xcut = true;} else {reflected_Xcut = false;}
+            for (int y=0; y<nBinsY+1; y++) {
+                yBinCenter = hAllPaths->GetYaxis()->GetBinCenter(y);
+
+                // Check if bin is within triangle region
+                if (!(Tri.check_point_inside_triangle(xBinCenter, yBinCenter))) {
+                    for (int i = 0; i < 15; ++i) {
+                        RegionHists.at(i)->SetBinContent(x, y, 0);
                     }
                 }
-            }
-            else{
-                for(int y=0; y<nBinsY+1; y++){
-                    hReflectedCutReemissionResTimeVsCosTheta->SetBinContent(x,y,0);
-                    hReflectedCutPmtResTimeVsCosTheta->SetBinContent(x,y,0);  // <----------------------------
-                    hReflectedCutNoisePaths->SetBinContent(x,y,0);
-                    hReflectedCutSingleScatterPaths->SetBinContent(x,y,0);
-                    hReflectedCutOtherPaths->SetBinContent(x,y,0);
-                    hReflectedCutNoEffectPaths->SetBinContent(x,y,0);
-                    hReflectedCutNearReflectPaths->SetBinContent(x,y,0);
-                    hReflectedCutRopesPaths->SetBinContent(x,y,0);
-                    hReflectedCutPMTReflectionPaths->SetBinContent(x,y,0);
-                    hReflectedCutExtWaterScatterPaths->SetBinContent(x,y,0);
-                    hReflectedCutInnerAvReflectPaths->SetBinContent(x,y,0);
-                    hReflectedCutMultipleEffectPaths->SetBinContent(x,y,0);
-                    hReflectedCutAVPipesPaths->SetBinContent(x,y,0);
-                    hReflectedCutAcrylicPaths->SetBinContent(x,y,0);
-                    hReflectedCutOtherScatterPaths->SetBinContent(x,y,0);
+
+                // Check if bin is in direct beam spot
+                if (direct_Xcut) {
+                    if (yBinCenter <= min_time_direct_beam_spot or yBinCenter >= max_time_direct_beam_spot)) {
+                        for (int i = 0; i < 15; ++i) {
+                            DirectHists.at(i)->SetBinContent(x, y, 0);
+                        }
+                    }
+                }
+
+                // Check if bin is in direct beam spot
+                if (reflected_Xcut) {
+                    if (yBinCenter <= min_time_reflected_beam_spot or yBinCenter >= max_time_reflected_beam_spot)) {
+                        for (int i = 0; i < 15; ++i) {
+                            DirectHists.at(i)->SetBinContent(x, y, 0);
+                        }
+                    }
                 }
             }
         }
@@ -554,123 +404,66 @@ int make_region_cut(std::string tracked_file, triangle Tri,
                                 + std::to_string(Tri.X_c()) + "_y_a_" + std::to_string(Tri.Y_a()) + "_y_b_" + std::to_string(Tri.Y_b())
                                 + "_y_c_" + std::to_string(Tri.Y_c()) + "_" + tracked_filename;
         TFile *rootfile = new TFile(saveroot.c_str(),"RECREATE");
+
         rootfile->cd();
-        hRegionCutReemissionResTimeVsCosTheta->Write();
-        hRegionCutPmtResTimeVsCosTheta->Write();  // <-----------------------------
-        hRegionCutNoisePaths->Write();
-        hRegionCutSingleScatterPaths->Write();
-        hRegionCutOtherPaths->Write();
-        hRegionCutNoEffectPaths->Write();
-        hRegionCutNearReflectPaths->Write();
-        hRegionCutRopesPaths->Write();
-        hRegionCutPMTReflectionPaths->Write();
-        hRegionCutExtWaterScatterPaths->Write();
-        hRegionCutInnerAvReflectPaths->Write();
-        hRegionCutMultipleEffectPaths->Write();
-        hRegionCutAVPipesPaths->Write();
-        hRegionCutAcrylicPaths->Write();
-        hRegionCutOtherScatterPaths->Write();
-        hDirectCutReemissionResTimeVsCosTheta->Write();
-        hDirectCutPmtResTimeVsCosTheta->Write();  // <------------------------
-        hDirectCutNoisePaths->Write();
-        hDirectCutSingleScatterPaths->Write();
-        hDirectCutOtherPaths->Write();
-        hDirectCutNoEffectPaths->Write();
-        hDirectCutNearReflectPaths->Write();
-        hDirectCutRopesPaths->Write();
-        hDirectCutPMTReflectionPaths->Write();
-        hDirectCutExtWaterScatterPaths->Write();
-        hDirectCutInnerAvReflectPaths->Write();
-        hDirectCutMultipleEffectPaths->Write();
-        hDirectCutAVPipesPaths->Write();
-        hDirectCutAcrylicPaths->Write();
-        hDirectCutOtherScatterPaths->Write();
-        hReflectedCutReemissionResTimeVsCosTheta->Write();
-        hReflectedCutPmtResTimeVsCosTheta->Write();  // <-----------------------
-        hReflectedCutNoisePaths->Write();
-        hReflectedCutSingleScatterPaths->Write();
-        hReflectedCutOtherPaths->Write();
-        hReflectedCutNoEffectPaths->Write();
-        hReflectedCutNearReflectPaths->Write();
-        hReflectedCutRopesPaths->Write();
-        hReflectedCutPMTReflectionPaths->Write();
-        hReflectedCutExtWaterScatterPaths->Write();
-        hReflectedCutInnerAvReflectPaths->Write();
-        hReflectedCutMultipleEffectPaths->Write();
-        hReflectedCutAVPipesPaths->Write();
-        hReflectedCutAcrylicPaths->Write();
-        hReflectedCutOtherScatterPaths->Write();
+        for (int i = 0; i < 15; ++i) {
+            RegionHists.at(i)->Write();
+            DirectHists.at(i)->Write();
+            ReflectedHists.at(i)->Write();
+        }
         rootfile->Write();
         rootfile->Close();
 
     } else if (data_type == "raw") {
+        //~~~ create histograms and graphs ~~~//
+
+        // Tracking root file hists
         TH2F *hAllPaths;
         tracked_hists_file->GetObject("hPmtResTimeVsCosTheta",hAllPaths);
-        TH2F *hRegionCutPmtResTimeVsCosTheta = (TH2F*)hAllPaths->Clone();
-        hRegionCutPmtResTimeVsCosTheta->SetName("hRegionSelectedAllPaths");
+
+        // New hists to clone to
+        TH2F *hRegionSelectedAllPaths = (TH2F*)hAllPaths->Clone();
+        hRegionSelectedAllPaths->SetName("hRegionSelectedAllPaths");
+        TH2F *hDirectCutAllPaths = (TH2F*)hAllPaths->Clone();
+        hDirectCutAllPaths->SetName("hDirectCutAllPaths");
+        TH2F *hReflectedCutAllPaths = (TH2F*)hAllPaths->Clone();
+        hReflectedCutAllPaths->SetName("hReflectedCutAllPaths");
+
+        //~~~ Apply region cuts by looping through bins ~~~//
+
+        //direct beam spot, max +/- 10 ns, -0.9 cos theta (straight through)
+        double min_angle_direct_beam_spot = -0.9;
+        //reflected beam spot, max +/- 10 ns, 0.95 cos theta (straight through)
+        double min_angle_reflected_beam_spot = 0.95;
 
         int nBinsX = hAllPaths->GetXaxis()->GetNbins();
         int nBinsY = hAllPaths->GetYaxis()->GetNbins();
-
+        double xBinCenter;
+        double yBinCenter;
+        bool direct_Xcut;
+        bool reflected_Xcut;
         for (int x=0; x<nBinsX+1; x++) {
-            double xBinCenter = hAllPaths->GetXaxis()->GetBinCenter(x);
+            xBinCenter = hAllPaths->GetXaxis()->GetBinCenter(x);
+            if (xBinCenter >= min_angle_direct_beam_spot) {direct_Xcut = true;} else {direct_Xcut = false;}
+            if (xBinCenter >= min_angle_reflected_beam_spot) {reflected_Xcut = true;} else {reflected_Xcut = false;}
             for (int y=0; y<nBinsY+1; y++) {
-                double yBinCenter = hAllPaths->GetYaxis()->GetBinCenter(y);
+                yBinCenter = hAllPaths->GetYaxis()->GetBinCenter(y);
+
                 // Check if bin is within triangle region
-                if (Tri.check_point_inside_triangle(xBinCenter, yBinCenter)) {
-                    hRegionCutPmtResTimeVsCosTheta->SetBinContent(x,y,hAllPaths->GetBinContent(x,y));
-                } else {
-                    hRegionCutPmtResTimeVsCosTheta->SetBinContent(x,y,0);
+                if (!(Tri.check_point_inside_triangle(xBinCenter, yBinCenter))) {
+                    hRegionSelectedAllPaths->SetBinContent(x, y, 0);
                 }
-            }
-        }
-
-        //direct beam spot, max +/- 10 ns, -0.9 cos theta (straight through)
-
-        TH2F *hDirectCutPmtResTimeVsCosTheta = (TH2F*)hAllPaths->Clone();
-        hDirectCutPmtResTimeVsCosTheta->SetName("hDirectCutAllPaths");
-
-        double min_angle_direct_beam_spot = -0.9;
-
-        for(int x=0; x<nBinsX+1; x++){
-            double xBinCenter = hAllPaths->GetXaxis()->GetBinCenter(x);
-            if(xBinCenter <= min_angle_direct_beam_spot){
-                for(int y=0; y<nBinsY+1; y++){
-                    double yBinCenter = hAllPaths->GetYaxis()->GetBinCenter(y);
-                    if(yBinCenter >= min_time_direct_beam_spot and yBinCenter <= max_time_direct_beam_spot){
-                        hDirectCutPmtResTimeVsCosTheta->SetBinContent(x,y,hAllPaths->GetBinContent(x,y));
-                    } else {
-                        hDirectCutPmtResTimeVsCosTheta->SetBinContent(x,y,0);
+                // Check if bin is in direct beam spot
+                if (direct_Xcut) {
+                    if (yBinCenter <= min_time_direct_beam_spot or yBinCenter >= max_time_direct_beam_spot)) {
+                        hDirectCutAllPaths->SetBinContent(x, y, 0);
                     }
                 }
-            } else {
-                for (int y=0; y<nBinsY+1; y++) {
-                    hDirectCutPmtResTimeVsCosTheta->SetBinContent(x,y,0);
-                }
-            }
-        }
-
-        //reflected beam spot, max +/- 10 ns, 0.95 cos theta (straight through)
-
-        TH2F *hReflectedCutPmtResTimeVsCosTheta = (TH2F*)hAllPaths->Clone();
-        hReflectedCutPmtResTimeVsCosTheta->SetName("hReflectedCutAllPaths");
-
-        double min_angle_reflected_beam_spot = 0.95;
-
-        for (int x=0; x<nBinsX+1; x++) {
-            double xBinCenter = hAllPaths->GetXaxis()->GetBinCenter(x);
-            if(xBinCenter >= min_angle_reflected_beam_spot){
-                for(int y=0; y<nBinsY+1; y++){
-                    double yBinCenter = hAllPaths->GetYaxis()->GetBinCenter(y);
-                    if(yBinCenter >= min_time_reflected_beam_spot and yBinCenter <= max_time_reflected_beam_spot){
-                        hReflectedCutPmtResTimeVsCosTheta->SetBinContent(x,y,hAllPaths->GetBinContent(x,y));
-                    } else {
-                        hReflectedCutPmtResTimeVsCosTheta->SetBinContent(x,y,0);
+                // Check if bin is in direct beam spot
+                if (reflected_Xcut) {
+                    if (yBinCenter <= min_time_reflected_beam_spot or yBinCenter >= max_time_reflected_beam_spot)) {
+                        hReflectedCutAllPaths->SetBinContent(x, y, 0);
                     }
-                }
-            } else {
-                for(int y=0; y<nBinsY+1; y++){
-                    hReflectedCutPmtResTimeVsCosTheta->SetBinContent(x,y,0);
                 }
             }
         }
@@ -683,10 +476,11 @@ int make_region_cut(std::string tracked_file, triangle Tri,
                                 + "_x_c_" + std::to_string(Tri.X_c()) + "_y_a_" + std::to_string(Tri.Y_a()) + "_y_b_" + std::to_string(Tri.Y_b())
                                 + "_y_c_" + std::to_string(Tri.Y_c()) + "_" + tracked_filename;
         TFile *rootfile = new TFile(saveroot.c_str(),"RECREATE");
+
         rootfile->cd();
-        hRegionCutPmtResTimeVsCosTheta->Write();
-        hDirectCutPmtResTimeVsCosTheta->Write();
-        hReflectedCutPmtResTimeVsCosTheta->Write();
+        hRegionSelectedAllPaths->Write();
+        hDirectCutAllPaths->Write();
+        hReflectedCutAllPaths->Write();
         rootfile->Write();
         rootfile->Close();
 

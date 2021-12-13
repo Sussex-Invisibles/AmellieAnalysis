@@ -23,13 +23,6 @@ class triangle {
         double& Y_b();
         double& Y_c();
 
-        // double X_a(double d);
-        // double X_b(double d);
-        // double X_c(double d);
-        // double Y_a(double d);
-        // double Y_b(double d);
-        // double Y_c(double d);
-
         bool check_point_inside_triangle(const double point_x, const double point_y, const bool lim_count=true);
 
     /* ~~~~~~~~~ operator overload ~~~~~~~~~ */
