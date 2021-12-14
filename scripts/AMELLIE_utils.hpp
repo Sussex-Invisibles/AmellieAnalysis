@@ -50,8 +50,17 @@ class HistList {
         std::vector<TH2F*> reflected_hists;
 
     public:
-    // constructor
+    // constructors
+    HistList();
     HistList(std::string tracking_file, std::vector<std::string> name_list
+                = {"hReemissionResTimeVsCosTheta", "hPmtResTimeVsCosTheta", "hNoiseResTimeVsCosTheta", 
+                "hSingleScatterResTimeVsCosTheta", "hOtherEffectResTimeVsCosTheta", "hNoEffectResTimeVsCosTheta", 
+                "hNearReflectResTimeVsCosTheta", "hRopesResTimeVsCosTheta", "hPMTReflectionResTimeVsCosTheta", 
+                "hExtWaterScatterResTimeVsCosTheta", "hInnerAvReflectionResTimeVsCosTheta", "hMultipleEffectResTimeVsCosTheta",
+                "hAVPipesResTimeVsCosTheta", "hAcrylicScatterResTimeVsCosTheta", "OtherScatterResTimeVsCosTheta"});
+
+    // read_file (does the same as previous constructor)
+    void Read_File(std::string tracking_file, std::vector<std::string> name_list
                 = {"hReemissionResTimeVsCosTheta", "hPmtResTimeVsCosTheta", "hNoiseResTimeVsCosTheta", 
                 "hSingleScatterResTimeVsCosTheta", "hOtherEffectResTimeVsCosTheta", "hNoEffectResTimeVsCosTheta", 
                 "hNearReflectResTimeVsCosTheta", "hRopesResTimeVsCosTheta", "hPMTReflectionResTimeVsCosTheta", 
@@ -64,6 +73,9 @@ class HistList {
     std::vector<TH2F*>& Region_Hists();
     std::vector<TH2F*>& Direct_Hists();
     std::vector<TH2F*>& Reflected_Hists();
+
+    // Write all histograms to fiel
+    void Write();
 };
 
 //end header guard

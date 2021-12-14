@@ -18,10 +18,10 @@ Create plots of the phase space showing the relationship between different param
 int CalculateRegions(std::string inputFile, int nbins);
 int OptimiseDivideAndConquer(std::string inputFile, int nbins, std::string fibre, bool verbose, bool debug, bool extraInfo, std::string signal_param);
 std::vector<double> GetThreePoints(double bestPoint, double worstPoint, std::vector<double> originalPoints);
-TCanvas* DrawRegionLims(std::vector<double> fixedPoints, std::vector<TH2F*> Hists, std::string fibre);
+TCanvas* DrawRegionLims(std::vector<double> fixedPoints, HistList hists_lists, std::string fibre);
 std::vector<double> GetFOMs(std::vector<double> points, std::vector<double> fixedPoints, int numVar, TH2F *allPathsHist, TH2F *reEmittedHist, TH2F *scatteredHist, std::string signal);
 std::vector<double> GetBestFOM(std::vector<double> FOMs, std::vector<double> points);
-std::vector<TH2F*> GetRegionSelectedHists(std::vector<double> finalPoints, std::vector<TH2F*> Hists, std::string fibre, std::string saveroot_txt);
+HistList GetRegionSelectedHists(std::vector<double> finalPoints, HistList hists_lists, std::string fibre, std::string saveroot_txt);
 std::vector<double> CheckPoints(std::vector<double> points, std::vector<double> fixedPoints, int numVar);
 
 int main(int argc, char** argv){
@@ -68,25 +68,7 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, std::string fibre
     }
 
     //create histograms and graphs
-    TH2F *hReEmittedPaths; TH2F *hAllPaths; TH2F *hNoisePaths;
-    TH2F *hSingleScatterPaths; TH2F *hOtherPaths; TH2F *hNoEffectPaths;
-    TH2F *hNearReflectPaths; TH2F *hRopesPaths; TH2F *hPMTReflectionPaths;
-    TH2F *hExtWaterScatterPaths; TH2F *hInnerAvReflectPaths; TH2F *hMultipleEffectPaths;
-    TH2F *hAVPipesPaths; TH2F *hAcrylicPaths; TH2F *hOtherScatterPaths;
-    std::vector<TH2F*> Hists;
-    Hists.push_back(hReEmittedPaths); Hists.push_back(hAllPaths);
-    Hists.push_back(hNoisePaths); Hists.push_back(hSingleScatterPaths);
-    Hists.push_back(hOtherPaths); Hists.push_back(hNoEffectPaths);
-    Hists.push_back(hNearReflectPaths); Hists.push_back(hRopesPaths);
-    Hists.push_back(hPMTReflectionPaths); Hists.push_back(hExtWaterScatterPaths);
-    Hists.push_back(hInnerAvReflectPaths); Hists.push_back(hMultipleEffectPaths);
-    Hists.push_back(hAVPipesPaths); Hists.push_back(hAcrylicPaths);
-    Hists.push_back(hOtherScatterPaths);
-    std::vector<const char*> Hist_names = {"hReemissionResTimeVsCosTheta", "hPmtResTimeVsCosTheta", "hNoiseResTimeVsCosTheta", 
-                                "hSingleScatterResTimeVsCosTheta", "hOtherEffectResTimeVsCosTheta", "hNoEffectResTimeVsCosTheta", 
-                                "hNearReflectResTimeVsCosTheta", "hRopesResTimeVsCosTheta", "hPMTReflectionResTimeVsCosTheta", 
-                                "hExtWaterScatterResTimeVsCosTheta", "hInnerAvReflectionResTimeVsCosTheta", "hMultipleEffectResTimeVsCosTheta",
-                                "hAVPipesResTimeVsCosTheta", "hAcrylicScatterResTimeVsCosTheta", "OtherScatterResTimeVsCosTheta"};
+    HistList hists_lists = HistList(inputFile);
 
     TGraph *hFOMx_a = new TGraph(); TGraph *hFOMx_b = new TGraph();
     TGraph *hFOMx_c = new TGraph(); TGraph *hFOMy_a = new TGraph();
@@ -111,25 +93,10 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, std::string fibre
     hPointxy.push_back(hPointx_c); hPointxy.push_back(hPointy_a);
     hPointxy.push_back(hPointy_b); hPointxy.push_back(hPointy_c);
 
-    //read in hist file
-    TFile *raw_file;
-    try{
-        raw_file = TFile::Open(inputFile.c_str());
-    }
-    catch(...){
-        std::cout << "Could not open input file." << std::endl;
-        return 1;
-    }
-
-    //assign hists
-    for (int i = 0; i < 15; ++i) {
-        raw_file->GetObject(Hist_names.at(i), Hists.at(i));
-    }
-
     //set up constants
     std::string point_names[6] = {"x_a", "x_b", "x_c", "y_a", "y_b", "y_c"};
-    double y_min = hReEmittedPaths->GetYaxis()->GetXmin();
-    double y_max = hReEmittedPaths->GetYaxis()->GetXmax();
+    double y_min = hists_lists.Tracking_Hists().at(0)->GetYaxis()->GetXmin();
+    double y_max = hists_lists.Tracking_Hists().at(0)->GetYaxis()->GetXmax();
     double point_mins[6] = {-1, -1, -1, y_min, y_min, y_min};
     double point_maxs[6] = {1, 1, 1, y_max, y_max, y_max};
     std::vector<double> point_tolerances;
@@ -137,8 +104,8 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, std::string fibre
         point_tolerances.push_back((point_maxs[i] - point_mins[i]) / nbins);
     }
 
-    double xBinWidth = hReEmittedPaths->GetXaxis()->GetBinCenter(2) - hReEmittedPaths->GetXaxis()->GetBinCenter(1);
-    double yBinWidth = hReEmittedPaths->GetYaxis()->GetBinCenter(2) - hReEmittedPaths->GetYaxis()->GetBinCenter(1);
+    double xBinWidth = hists_lists.Tracking_Hists().at(0)->GetXaxis()->GetBinCenter(2) - hists_lists.Tracking_Hists().at(0)->GetXaxis()->GetBinCenter(1);
+    double yBinWidth = hists_lists.Tracking_Hists().at(0)->GetYaxis()->GetBinCenter(2) - hists_lists.Tracking_Hists().at(0)->GetYaxis()->GetBinCenter(1);
 
     int j;
     for (int i = 0; i < 3; ++i) {
@@ -203,7 +170,7 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, std::string fibre
                     if(debug) std::cout << "Set up first " << point_names[i] << "_run points: " << points[i].at(0)
                                         << ", " << points[i].at(1) << ", " << points[i].at(2) << std::endl;
                 }
-                FOMs[i] = GetFOMs(points[i], fixedPoints, i, Hists.at(1), Hists.at(0), Hists.at(3), signal_param);  //hAllPaths, hReEmittedPaths, hSingleScatterPaths
+                FOMs[i] = GetFOMs(points[i], fixedPoints, i, hists_lists.Tracking_Hists().at(1), hists_lists.Tracking_Hists().at(0), hists_lists.Tracking_Hists().at(3), signal_param);  //hAllPaths, hReEmittedPaths, hSingleScatterPaths
                 if(debug) std::cout << "Got FOMs " << FOMs[i].at(0) << ", " << FOMs[i].at(1) << ", " << FOMs[i].at(2) << std::endl;
                 
                 bestworstFOMPoints[i] = GetBestFOM(FOMs[i], points[i]);
@@ -274,7 +241,7 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, std::string fibre
         std::cout << "There were " << numMainLoopIterations << " iterations of the main loop" << std::endl;
     }
 
-    std::vector<TH2F*> regionSelectedHists = GetRegionSelectedHists(fixedPoints, Hists, fibre, saveroot_txt);
+    HistList regionSelectedHists = GetRegionSelectedHists(fixedPoints, hists_lists, fibre, saveroot_txt);
 
     // get file name from path+filename string
     std::size_t botDirPos = inputFile.find_last_of("/");
@@ -282,11 +249,10 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, std::string fibre
     std::string saveroot = "region_selected_hists_" + signal_param + "_" + filename;
     TFile *rootfile = new TFile(saveroot.c_str(),"RECREATE");
     
+    // Write hists to file
     rootfile->cd();
-    for(int i=0; i<regionSelectedHists.size();i++){
-        TH2F *tempHist = regionSelectedHists.at(i);
-        tempHist->Write();
-    }
+    regionSelectedHists.Write();
+    
     std::string temp_name;
     if(extraInfo){
         for (int i = 0; i < 6; ++i) {
@@ -307,7 +273,7 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, std::string fibre
     }
 
     // Draw region limits on 2D hist and write to root file
-    TCanvas* c1 = DrawRegionLims(fixedPoints, Hists, fibre);
+    TCanvas* c1 = DrawRegionLims(fixedPoints, hists_lists, fibre);
     c1->Write();  
     delete c1;
 
@@ -358,7 +324,7 @@ std::vector<double> GetThreePoints(double bestPoint, double worstPoint, std::vec
  * @param fibre 
  * @return TCanvas* 
  */
-TCanvas* DrawRegionLims(std::vector<double> fixedPoints, std::vector<TH2F*> Hists, std::string fibre) {
+TCanvas* DrawRegionLims(std::vector<double> fixedPoints, HistList hists_lists, std::string fibre) {
     // get points
     double x_a = fixedPoints.at(0);
     double x_b = fixedPoints.at(1);
@@ -367,8 +333,8 @@ TCanvas* DrawRegionLims(std::vector<double> fixedPoints, std::vector<TH2F*> Hist
     double y_b = fixedPoints.at(4);
     double y_c = fixedPoints.at(5);
 
-    double direct_max_time = Hists.at(5)->ProjectionY()->GetXaxis()->GetBinCenter(Hists.at(5)->ProjectionY()->GetMaximumBin()) + 10;  //hNoEffectPaths
-    double direct_min_time = Hists.at(5)->ProjectionY()->GetXaxis()->GetBinCenter(Hists.at(5)->ProjectionY()->GetMaximumBin()) - 10;  //hNoEffectPaths
+    double direct_max_time = hists_lists.Tracking_Hists().at(5)->ProjectionY()->GetXaxis()->GetBinCenter(hists_lists.Tracking_Hists().at(5)->ProjectionY()->GetMaximumBin()) + 10;  //hNoEffectPaths
+    double direct_min_time = hists_lists.Tracking_Hists().at(5)->ProjectionY()->GetXaxis()->GetBinCenter(hists_lists.Tracking_Hists().at(5)->ProjectionY()->GetMaximumBin()) - 10;  //hNoEffectPaths
     //FIXME: don't hardcode this:
     double direct_cos_alpha;
     if (fibre == "FA089") {  // 10deg off-axis
@@ -379,13 +345,13 @@ TCanvas* DrawRegionLims(std::vector<double> fixedPoints, std::vector<TH2F*> Hist
         direct_cos_alpha = -0.9;
     }
 
-    double reflected_max_time = Hists.at(5)->ProjectionY()->GetXaxis()->GetBinCenter(Hists.at(5)->ProjectionY()->GetMaximumBin()) + 10;  //hNoEffectPaths
-    double reflected_min_time = Hists.at(5)->ProjectionY()->GetXaxis()->GetBinCenter(Hists.at(5)->ProjectionY()->GetMaximumBin()) - 10;  //hNoEffectPaths
+    double reflected_max_time = hists_lists.Tracking_Hists().at(5)->ProjectionY()->GetXaxis()->GetBinCenter(hists_lists.Tracking_Hists().at(5)->ProjectionY()->GetMaximumBin()) + 10;  //hNoEffectPaths
+    double reflected_min_time = hists_lists.Tracking_Hists().at(5)->ProjectionY()->GetXaxis()->GetBinCenter(hists_lists.Tracking_Hists().at(5)->ProjectionY()->GetMaximumBin()) - 10;  //hNoEffectPaths
     double reflected_cos_alpha = 0.95; //FIXME: don't hardcode this
 
     // Draw box cuts on resthit vs costheta hist
     TCanvas *c1 = new TCanvas("cuts","cuts");  //Create output canvas to be saved in output file
-    TH2F *h = (TH2F*)Hists.at(1)->Clone();  //hAllPaths
+    TH2F *h = (TH2F*)hists_lists.Tracking_Hists().at(1)->Clone();  //hAllPaths
     h->Draw("colz");  // Draw histogram
 
     // create lines
@@ -550,92 +516,10 @@ std::vector<double> GetBestFOM(std::vector<double> FOMs, std::vector<double> poi
  * @param saveroot_txt Name of txt file to save region lims to.
  * @return std::vector<TH2F*> 
  */
-std::vector<TH2F*> GetRegionSelectedHists(std::vector<double> finalPoints, std::vector<TH2F*> Hists, std::string fibre, std::string saveroot_txt){
+HistList GetRegionSelectedHists(std::vector<double> finalPoints, HistList hists_lists, std::string fibre, std::string saveroot_txt){
 
-    //Clone histograms and graphs
-    TH2F *hRegionSelectedReEmittedPaths; TH2F *hRegionSelectedAllPaths;
-    TH2F *hRegionSelectedNoisePaths; TH2F *hRegionSelectedSingleScatterPaths;
-    TH2F *hRegionSelectedOtherPaths; TH2F *hRegionSelectedNoEffectPaths;
-    TH2F *hRegionSelectedNearReflectPaths; TH2F *hRegionSelectedRopesPaths;
-    TH2F *hRegionSelectedPMTReflectionPaths; TH2F *hRegionSelectedExtWaterScatterPaths;
-    TH2F *hRegionSelectedInnerAvReflectPaths; TH2F *hRegionSelectedMultipleEffectPaths;
-    TH2F *hRegionSelectedAVPipesPaths; TH2F *hRegionSelectedAcrylicPaths;
-    TH2F *hRegionSelectedOtherScatterPaths;
-    std::vector<TH2F*> RegionHists;
-    RegionHists.push_back(hRegionSelectedReEmittedPaths); RegionHists.push_back(hRegionSelectedAllPaths);
-    RegionHists.push_back(hRegionSelectedNoisePaths); RegionHists.push_back(hRegionSelectedSingleScatterPaths);
-    RegionHists.push_back(hRegionSelectedOtherPaths); RegionHists.push_back(hRegionSelectedNoEffectPaths);
-    RegionHists.push_back(hRegionSelectedNearReflectPaths); RegionHists.push_back(hRegionSelectedRopesPaths);
-    RegionHists.push_back(hRegionSelectedPMTReflectionPaths); RegionHists.push_back(hRegionSelectedExtWaterScatterPaths);
-    RegionHists.push_back(hRegionSelectedInnerAvReflectPaths); RegionHists.push_back(hRegionSelectedMultipleEffectPaths);
-    RegionHists.push_back(hRegionSelectedAVPipesPaths); RegionHists.push_back(hRegionSelectedAcrylicPaths);
-    RegionHists.push_back(hRegionSelectedOtherScatterPaths);
-    std::vector<const char*> RegionHist_names = {"hRegionSelectedReEmittedPaths", "hRegionSelectedAllPaths", "hRegionCutNoisePaths",
-                                        "hRegionCutSingleScatterPaths", "hRegionCutOtherPaths", "hRegionCutNoEffectPaths"
-                                        "hRegionCutNearReflectPaths", "hRegionCutRopesPaths", "hRegionCutPMTReflectionPaths"
-                                        "hRegionCutExtWaterScatterPaths", "hRegionCutInnerAvReflectPaths", "hRegionCutMultipleEffectPaths"
-                                        "hRegionCutAVPipesPaths", "hRegionCutAcrylicPaths", "hRegionCutOtherScatterPaths"};
-
-    TH2F *hDirectCutReEmittedPaths; TH2F *hDirectCutAllPaths;
-    TH2F *hDirectCutNoisePaths; TH2F *hDirectCutSingleScatterPaths;
-    TH2F *hDirectCutOtherPaths; TH2F *hDirectCutNoEffectPaths;
-    TH2F *hDirectCutNearReflectPaths; TH2F *hDirectCutRopesPaths;
-    TH2F *hDirectCutPMTReflectionPaths; TH2F *hDirectCutExtWaterScatterPaths;
-    TH2F *hDirectCutInnerAvReflectPaths; TH2F *hDirectCutMultipleEffectPaths;
-    TH2F *hDirectCutAVPipesPaths; TH2F *hDirectCutAcrylicPaths;
-    TH2F *hDirectCutOtherScatterPaths;
-    std::vector<TH2F*> DirectHists;
-    DirectHists.push_back(hDirectCutReEmittedPaths); DirectHists.push_back(hDirectCutAllPaths);
-    DirectHists.push_back(hDirectCutNoisePaths); DirectHists.push_back(hDirectCutSingleScatterPaths);
-    DirectHists.push_back(hDirectCutOtherPaths); DirectHists.push_back(hDirectCutNoEffectPaths);
-    DirectHists.push_back(hDirectCutNearReflectPaths); DirectHists.push_back(hDirectCutRopesPaths);
-    DirectHists.push_back(hDirectCutPMTReflectionPaths); DirectHists.push_back(hDirectCutExtWaterScatterPaths);
-    DirectHists.push_back(hDirectCutInnerAvReflectPaths); DirectHists.push_back(hDirectCutMultipleEffectPaths);
-    DirectHists.push_back(hDirectCutAVPipesPaths); DirectHists.push_back(hDirectCutAcrylicPaths);
-    DirectHists.push_back(hDirectCutOtherScatterPaths);
-    std::vector<const char*> DirectHist_names = {"hDirectCutReEmittedPaths", "hDirectCutAllPaths", "hDirectCutNoisePaths", 
-                                        "hDirectCutSingleScatterPaths", "hDirectCutOtherPaths", "hDirectCutNoEffectPaths", 
-                                        "hDirectCutNearReflectPaths", "hDirectCutRopesPaths", "hDirectCutPMTReflectionPaths", 
-                                        "hDirectCutExtWaterScatterPaths", "hDirectCutInnerAvReflectPaths", "hDirectCutAVPipesPaths", 
-                                        "hDirectCutAcrylicPaths", "hDirectCutOtherScatterPaths"};
-
-    TH2F *hReflectedCutReEmittedPaths; TH2F *hReflectedCutAllPaths;
-    TH2F *hReflectedCutNoisePaths; TH2F *hReflectedCutSingleScatterPaths;
-    TH2F *hReflectedCutOtherPaths; TH2F *hReflectedCutNoEffectPaths;
-    TH2F *hReflectedCutNearReflectPaths; TH2F *hReflectedCutRopesPaths;
-    TH2F *hReflectedCutPMTReflectionPaths; TH2F *hReflectedCutExtWaterScatterPaths;
-    TH2F *hReflectedCutInnerAvReflectPaths; TH2F *hReflectedCutMultipleEffectPaths;
-    TH2F *hReflectedCutAVPipesPaths; TH2F *hReflectedCutAcrylicPaths;
-    TH2F *hReflectedCutOtherScatterPaths;
-    std::vector<TH2F*> ReflectedHists;
-    ReflectedHists.push_back(hReflectedCutReEmittedPaths); ReflectedHists.push_back(hReflectedCutAllPaths);
-    ReflectedHists.push_back(hReflectedCutNoisePaths); ReflectedHists.push_back(hReflectedCutSingleScatterPaths);
-    ReflectedHists.push_back(hReflectedCutOtherPaths); ReflectedHists.push_back(hReflectedCutNoEffectPaths);
-    ReflectedHists.push_back(hReflectedCutNearReflectPaths); ReflectedHists.push_back(hReflectedCutRopesPaths);
-    ReflectedHists.push_back(hReflectedCutPMTReflectionPaths); ReflectedHists.push_back(hReflectedCutExtWaterScatterPaths);
-    ReflectedHists.push_back(hReflectedCutInnerAvReflectPaths); ReflectedHists.push_back(hReflectedCutMultipleEffectPaths);
-    ReflectedHists.push_back(hReflectedCutAVPipesPaths); ReflectedHists.push_back(hReflectedCutAcrylicPaths);
-    ReflectedHists.push_back(hReflectedCutOtherScatterPaths);
-    std::vector<const char*> ReflectedHist_names = {"hReflectedCutReEmittedPaths", "hReflectedCutAllPaths", "hReflectedCutNoisePaths", 
-                                        "hReflectedCutSingleScatterPaths", "hReflectedCutOtherPaths", "hReflectedCutNoEffectPaths", 
-                                        "hReflectedCutNearReflectPaths", "hReflectedCutRopesPaths", "hReflectedCutPMTReflectionPaths", 
-                                        "hReflectedCutExtWaterScatterPaths", "hReflectedCutInnerAvReflectPaths", "hReflectedCutMultipleEffectPaths", 
-                                        "hReflectedCutAVPipesPaths", "hReflectedCutAcrylicPaths", "hReflectedCutOtherScatterPaths"};
-
-    //assign hists
-    for (int i = 0; i < 15; ++i) {
-        RegionHists.at(i) = (TH2F*)Hists.at(i)->Clone();
-        RegionHists.at(i)->SetName(RegionHist_names.at(i));
-
-        DirectHists.at(i) = (TH2F*)Hists.at(i)->Clone();
-        DirectHists.at(i)->SetName(DirectHist_names.at(i));
-
-        ReflectedHists.at(i) = (TH2F*)Hists.at(i)->Clone();
-        ReflectedHists.at(i)->SetName(ReflectedHist_names.at(i));
-    }
-
-    double direct_max_time = Hists.at(5)->ProjectionY()->GetXaxis()->GetBinCenter(Hists.at(5)->ProjectionY()->GetMaximumBin()) + 10;  //hNoEffectPaths
-    double direct_min_time = Hists.at(5)->ProjectionY()->GetXaxis()->GetBinCenter(Hists.at(5)->ProjectionY()->GetMaximumBin()) - 10;  //hNoEffectPaths
+    double direct_max_time = hists_lists.Tracking_Hists().at(5)->ProjectionY()->GetXaxis()->GetBinCenter(hists_lists.Tracking_Hists().at(5)->ProjectionY()->GetMaximumBin()) + 10;  //hNoEffectPaths
+    double direct_min_time = hists_lists.Tracking_Hists().at(5)->ProjectionY()->GetXaxis()->GetBinCenter(hists_lists.Tracking_Hists().at(5)->ProjectionY()->GetMaximumBin()) - 10;  //hNoEffectPaths
     //FIXME: don't hardcode this:
     double direct_cos_alpha;
     if (fibre == "FA089") {  // 10deg off-axis
@@ -646,8 +530,8 @@ std::vector<TH2F*> GetRegionSelectedHists(std::vector<double> finalPoints, std::
         direct_cos_alpha = -0.9;
     }
 
-    double reflected_max_time = Hists.at(5)->ProjectionY()->GetXaxis()->GetBinCenter(Hists.at(5)->ProjectionY()->GetMaximumBin()) + 10;  //hNoEffectPaths
-    double reflected_min_time = Hists.at(5)->ProjectionY()->GetXaxis()->GetBinCenter(Hists.at(5)->ProjectionY()->GetMaximumBin()) - 10;  //hNoEffectPaths
+    double reflected_max_time = hists_lists.Tracking_Hists().at(5)->ProjectionY()->GetXaxis()->GetBinCenter(hists_lists.Tracking_Hists().at(5)->ProjectionY()->GetMaximumBin()) + 10;  //hNoEffectPaths
+    double reflected_min_time = hists_lists.Tracking_Hists().at(5)->ProjectionY()->GetXaxis()->GetBinCenter(hists_lists.Tracking_Hists().at(5)->ProjectionY()->GetMaximumBin()) - 10;  //hNoEffectPaths
     double reflected_cos_alpha = 0.95; //FIXME: don't hardcode this
 
     // Print to Regions lims file (append)
@@ -669,38 +553,28 @@ std::vector<TH2F*> GetRegionSelectedHists(std::vector<double> finalPoints, std::
     triangle Tri = triangle(finalPoints.at(0), finalPoints.at(1), finalPoints.at(2), finalPoints.at(3),
                             finalPoints.at(4), finalPoints.at(5));
 
-    for(int x=1; x<Hists.at(0)->GetNbinsX()+1; x++){ //loop over histogram bins
-        double xBinCenter = Hists.at(0)->GetXaxis()->GetBinCenter(x);
-        for(int y=1; y<Hists.at(0)->GetNbinsY()+1; y++){ //loop over histogram bins
-            double yBinCenter = Hists.at(0)->GetYaxis()->GetBinCenter(y);
+    for(int x=1; x<hists_lists.Tracking_Hists().at(0)->GetNbinsX()+1; x++){ //loop over histogram bins
+        double xBinCenter = hists_lists.Tracking_Hists().at(0)->GetXaxis()->GetBinCenter(x);
+        for(int y=1; y<hists_lists.Tracking_Hists().at(0)->GetNbinsY()+1; y++){ //loop over histogram bins
+            double yBinCenter = hists_lists.Tracking_Hists().at(0)->GetYaxis()->GetBinCenter(y);
             if(!(Tri.check_point_inside_triangle(xBinCenter, yBinCenter))){
                 for (int i = 0; i < 15; ++i) {
-                    RegionHists.at(i)->SetBinContent(x,y,0);
+                    hists_lists.Region_Hists().at(i)->SetBinContent(x,y,0);
                 }
             }
             if(xBinCenter > direct_cos_alpha or yBinCenter >= direct_max_time or yBinCenter <= direct_min_time){
                 for (int i = 0; i < 15; ++i) {
-                    DirectHists.at(i)->SetBinContent(x,y,0);
+                    hists_lists.Direct_Hists().at(i)->SetBinContent(x,y,0);
                 }
             }
             if(xBinCenter < reflected_cos_alpha or yBinCenter >= reflected_max_time or yBinCenter <= reflected_min_time){
                 for (int i = 0; i < 15; ++i) {
-                    ReflectedHists.at(i)->SetBinContent(x,y,0);
+                    hists_lists.Reflected_Hists().at(i)->SetBinContent(x,y,0);
                 }
             }
         }
     }
-    std::vector<TH2F*> outputHists;
-    for (int i = 0; i < 15; ++i) {
-        outputHists.push_back(RegionHists.at(i));
-    }
-    for (int i = 0; i < 15; ++i) {
-        outputHists.push_back(DirectHists.at(i));
-    }
-    for (int i = 0; i < 15; ++i) {
-        outputHists.push_back(ReflectedHists.at(i));
-    }
-    return outputHists;
+    return hists_lists;
 }
 
 

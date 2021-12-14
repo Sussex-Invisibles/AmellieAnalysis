@@ -230,264 +230,74 @@ int make_region_cut(std::string tracked_file, triangle Tri,
                     double min_time_direct_beam_spot, double max_time_direct_beam_spot, double min_time_reflected_beam_spot,
                     double max_time_reflected_beam_spot, std::string data_type){
 
-    TFile *tracked_hists_file;
-
-    try{
-        tracked_hists_file = TFile::Open(tracked_file.c_str());
-    }
-    catch(...){
-        std::cout << "Could not open input files." << std::endl;
-        return 1;
-    }
-
+    //~~~ create histograms ~~~//
+    HistList hists_lists;
     if (data_type == "MC") {
-        //~~~ create histograms and graphs ~~~//
-
-        // Tracking root file hists
-        TH2F *hReEmittedPaths; TH2F *hAllPaths; TH2F *hNoisePaths;
-        TH2F *hSingleScatterPaths; TH2F *hOtherPaths; TH2F *hNoEffectPaths;
-        TH2F *hNearReflectPaths; TH2F *hRopesPaths; TH2F *hPMTReflectionPaths;
-        TH2F *hExtWaterScatterPaths; TH2F *hInnerAvReflectPaths; TH2F *hMultipleEffectPaths;
-        TH2F *hAVPipesPaths; TH2F *hAcrylicPaths; TH2F *hOtherScatterPaths;
-        std::vector<TH2F*> Hists;
-        Hists.push_back(hReEmittedPaths); Hists.push_back(hAllPaths);
-        Hists.push_back(hNoisePaths); Hists.push_back(hSingleScatterPaths);
-        Hists.push_back(hOtherPaths); Hists.push_back(hNoEffectPaths);
-        Hists.push_back(hNearReflectPaths); Hists.push_back(hRopesPaths);
-        Hists.push_back(hPMTReflectionPaths); Hists.push_back(hExtWaterScatterPaths);
-        Hists.push_back(hInnerAvReflectPaths); Hists.push_back(hMultipleEffectPaths);
-        Hists.push_back(hAVPipesPaths); Hists.push_back(hAcrylicPaths);
-        Hists.push_back(hOtherScatterPaths);
-        std::vector<const char*> Hist_names = {"hReemissionResTimeVsCosTheta", "hPmtResTimeVsCosTheta", "hNoiseResTimeVsCosTheta", 
-                                "hSingleScatterResTimeVsCosTheta", "hOtherEffectResTimeVsCosTheta", "hNoEffectResTimeVsCosTheta", 
-                                "hNearReflectResTimeVsCosTheta", "hRopesResTimeVsCosTheta", "hPMTReflectionResTimeVsCosTheta", 
-                                "hExtWaterScatterResTimeVsCosTheta", "hInnerAvReflectionResTimeVsCosTheta", "hMultipleEffectResTimeVsCosTheta",
-                                "hAVPipesResTimeVsCosTheta", "hAcrylicScatterResTimeVsCosTheta", "OtherScatterResTimeVsCosTheta"};
-
-
-        // New hists to clone to
-        TH2F *hRegionSelectedReEmittedPaths; TH2F *hRegionSelectedAllPaths;
-        TH2F *hRegionSelectedNoisePaths; TH2F *hRegionSelectedSingleScatterPaths;
-        TH2F *hRegionSelectedOtherPaths; TH2F *hRegionSelectedNoEffectPaths;
-        TH2F *hRegionSelectedNearReflectPaths; TH2F *hRegionSelectedRopesPaths;
-        TH2F *hRegionSelectedPMTReflectionPaths; TH2F *hRegionSelectedExtWaterScatterPaths;
-        TH2F *hRegionSelectedInnerAvReflectPaths; TH2F *hRegionSelectedMultipleEffectPaths;
-        TH2F *hRegionSelectedAVPipesPaths; TH2F *hRegionSelectedAcrylicPaths;
-        TH2F *hRegionSelectedOtherScatterPaths;
-        std::vector<TH2F*> RegionHists;
-        RegionHists.push_back(hRegionSelectedReEmittedPaths); RegionHists.push_back(hRegionSelectedAllPaths);
-        RegionHists.push_back(hRegionSelectedNoisePaths); RegionHists.push_back(hRegionSelectedSingleScatterPaths);
-        RegionHists.push_back(hRegionSelectedOtherPaths); RegionHists.push_back(hRegionSelectedNoEffectPaths);
-        RegionHists.push_back(hRegionSelectedNearReflectPaths); RegionHists.push_back(hRegionSelectedRopesPaths);
-        RegionHists.push_back(hRegionSelectedPMTReflectionPaths); RegionHists.push_back(hRegionSelectedExtWaterScatterPaths);
-        RegionHists.push_back(hRegionSelectedInnerAvReflectPaths); RegionHists.push_back(hRegionSelectedMultipleEffectPaths);
-        RegionHists.push_back(hRegionSelectedAVPipesPaths); RegionHists.push_back(hRegionSelectedAcrylicPaths);
-        RegionHists.push_back(hRegionSelectedOtherScatterPaths);
-        std::vector<const char*> RegionHist_names = {"hRegionSelectedReEmittedPaths", "hRegionSelectedAllPaths", "hRegionCutNoisePaths",
-                                            "hRegionCutSingleScatterPaths", "hRegionCutOtherPaths", "hRegionCutNoEffectPaths"
-                                            "hRegionCutNearReflectPaths", "hRegionCutRopesPaths", "hRegionCutPMTReflectionPaths"
-                                            "hRegionCutExtWaterScatterPaths", "hRegionCutInnerAvReflectPaths", "hRegionCutMultipleEffectPaths"
-                                            "hRegionCutAVPipesPaths", "hRegionCutAcrylicPaths", "hRegionCutOtherScatterPaths"};
-
-        TH2F *hDirectCutReEmittedPaths; TH2F *hDirectCutAllPaths;
-        TH2F *hDirectCutNoisePaths; TH2F *hDirectCutSingleScatterPaths;
-        TH2F *hDirectCutOtherPaths; TH2F *hDirectCutNoEffectPaths;
-        TH2F *hDirectCutNearReflectPaths; TH2F *hDirectCutRopesPaths;
-        TH2F *hDirectCutPMTReflectionPaths; TH2F *hDirectCutExtWaterScatterPaths;
-        TH2F *hDirectCutInnerAvReflectPaths; TH2F *hDirectCutMultipleEffectPaths;
-        TH2F *hDirectCutAVPipesPaths; TH2F *hDirectCutAcrylicPaths;
-        TH2F *hDirectCutOtherScatterPaths;
-        std::vector<TH2F*> DirectHists;
-        DirectHists.push_back(hDirectCutReEmittedPaths); DirectHists.push_back(hDirectCutAllPaths);
-        DirectHists.push_back(hDirectCutNoisePaths); DirectHists.push_back(hDirectCutSingleScatterPaths);
-        DirectHists.push_back(hDirectCutOtherPaths); DirectHists.push_back(hDirectCutNoEffectPaths);
-        DirectHists.push_back(hDirectCutNearReflectPaths); DirectHists.push_back(hDirectCutRopesPaths);
-        DirectHists.push_back(hDirectCutPMTReflectionPaths); DirectHists.push_back(hDirectCutExtWaterScatterPaths);
-        DirectHists.push_back(hDirectCutInnerAvReflectPaths); DirectHists.push_back(hDirectCutMultipleEffectPaths);
-        DirectHists.push_back(hDirectCutAVPipesPaths); DirectHists.push_back(hDirectCutAcrylicPaths);
-        DirectHists.push_back(hDirectCutOtherScatterPaths);
-        std::vector<const char*> DirectHist_names = {"hDirectCutReEmittedPaths", "hDirectCutAllPaths", "hDirectCutNoisePaths", 
-                                            "hDirectCutSingleScatterPaths", "hDirectCutOtherPaths", "hDirectCutNoEffectPaths", 
-                                            "hDirectCutNearReflectPaths", "hDirectCutRopesPaths", "hDirectCutPMTReflectionPaths", 
-                                            "hDirectCutExtWaterScatterPaths", "hDirectCutInnerAvReflectPaths", "hDirectCutAVPipesPaths", 
-                                            "hDirectCutAcrylicPaths", "hDirectCutOtherScatterPaths"};
-
-        TH2F *hReflectedCutReEmittedPaths; TH2F *hReflectedCutAllPaths;
-        TH2F *hReflectedCutNoisePaths; TH2F *hReflectedCutSingleScatterPaths;
-        TH2F *hReflectedCutOtherPaths; TH2F *hReflectedCutNoEffectPaths;
-        TH2F *hReflectedCutNearReflectPaths; TH2F *hReflectedCutRopesPaths;
-        TH2F *hReflectedCutPMTReflectionPaths; TH2F *hReflectedCutExtWaterScatterPaths;
-        TH2F *hReflectedCutInnerAvReflectPaths; TH2F *hReflectedCutMultipleEffectPaths;
-        TH2F *hReflectedCutAVPipesPaths; TH2F *hReflectedCutAcrylicPaths;
-        TH2F *hReflectedCutOtherScatterPaths;
-        std::vector<TH2F*> ReflectedHists;
-        ReflectedHists.push_back(hReflectedCutReEmittedPaths); ReflectedHists.push_back(hReflectedCutAllPaths);
-        ReflectedHists.push_back(hReflectedCutNoisePaths); ReflectedHists.push_back(hReflectedCutSingleScatterPaths);
-        ReflectedHists.push_back(hReflectedCutOtherPaths); ReflectedHists.push_back(hReflectedCutNoEffectPaths);
-        ReflectedHists.push_back(hReflectedCutNearReflectPaths); ReflectedHists.push_back(hReflectedCutRopesPaths);
-        ReflectedHists.push_back(hReflectedCutPMTReflectionPaths); ReflectedHists.push_back(hReflectedCutExtWaterScatterPaths);
-        ReflectedHists.push_back(hReflectedCutInnerAvReflectPaths); ReflectedHists.push_back(hReflectedCutMultipleEffectPaths);
-        ReflectedHists.push_back(hReflectedCutAVPipesPaths); ReflectedHists.push_back(hReflectedCutAcrylicPaths);
-        ReflectedHists.push_back(hReflectedCutOtherScatterPaths);
-        std::vector<const char*> ReflectedHist_names = {"hReflectedCutReEmittedPaths", "hReflectedCutAllPaths", "hReflectedCutNoisePaths", 
-                                            "hReflectedCutSingleScatterPaths", "hReflectedCutOtherPaths", "hReflectedCutNoEffectPaths", 
-                                            "hReflectedCutNearReflectPaths", "hReflectedCutRopesPaths", "hReflectedCutPMTReflectionPaths", 
-                                            "hReflectedCutExtWaterScatterPaths", "hReflectedCutInnerAvReflectPaths", "hReflectedCutMultipleEffectPaths", 
-                                            "hReflectedCutAVPipesPaths", "hReflectedCutAcrylicPaths", "hReflectedCutOtherScatterPaths"};
-
-        // Assign hists
-        for (int i = 0; i < 15; ++i) {
-            tracked_hists_file->GetObject(Hist_names.at(i), Hists.at(i));
-
-            RegionHists.at(i) = (TH2F*)Hists.at(i)->Clone();
-            RegionHists.at(i)->SetName(RegionHist_names.at(i));
-
-            DirectHists.at(i) = (TH2F*)Hists.at(i)->Clone();
-            DirectHists.at(i)->SetName(DirectHist_names.at(i));
-
-            ReflectedHists.at(i) = (TH2F*)Hists.at(i)->Clone();
-            ReflectedHists.at(i)->SetName(ReflectedHist_names.at(i));
-        }
-
-        //~~~ Apply region cuts by looping through bins ~~~//
-
-        //direct beam spot, max +/- 10 ns, -0.9 cos theta (straight through)
-        double min_angle_direct_beam_spot = -0.9;
-        //reflected beam spot, max +/- 10 ns, 0.95 cos theta (straight through)
-        double min_angle_reflected_beam_spot = 0.95;
-
-        int nBinsX = hAllPaths->GetXaxis()->GetNbins();
-        int nBinsY = hAllPaths->GetYaxis()->GetNbins();
-        double xBinCenter;
-        double yBinCenter;
-        bool direct_Xcut;
-        bool reflected_Xcut;
-        for (int x=0; x<nBinsX+1; x++) {
-            xBinCenter = hAllPaths->GetXaxis()->GetBinCenter(x);
-            if (xBinCenter >= min_angle_direct_beam_spot) {direct_Xcut = true;} else {direct_Xcut = false;}
-            if (xBinCenter >= min_angle_reflected_beam_spot) {reflected_Xcut = true;} else {reflected_Xcut = false;}
-            for (int y=0; y<nBinsY+1; y++) {
-                yBinCenter = hAllPaths->GetYaxis()->GetBinCenter(y);
-
-                // Check if bin is within triangle region
-                if (!(Tri.check_point_inside_triangle(xBinCenter, yBinCenter))) {
-                    for (int i = 0; i < 15; ++i) {
-                        RegionHists.at(i)->SetBinContent(x, y, 0);
-                    }
-                }
-
-                // Check if bin is in direct beam spot
-                if (direct_Xcut) {
-                    if (yBinCenter <= min_time_direct_beam_spot or yBinCenter >= max_time_direct_beam_spot) {
-                        for (int i = 0; i < 15; ++i) {
-                            DirectHists.at(i)->SetBinContent(x, y, 0);
-                        }
-                    }
-                }
-
-                // Check if bin is in direct beam spot
-                if (reflected_Xcut) {
-                    if (yBinCenter <= min_time_reflected_beam_spot or yBinCenter >= max_time_reflected_beam_spot) {
-                        for (int i = 0; i < 15; ++i) {
-                            DirectHists.at(i)->SetBinContent(x, y, 0);
-                        }
-                    }
-                }
-            }
-        }
-
-        //write to file
-        // get file name from path+filename string
-        std::size_t tracked_botDirPos = tracked_file.find_last_of("/");
-        std::string tracked_filename = tracked_file.substr(tracked_botDirPos+1, tracked_file.length());
-        std::string saveroot = "region_selected_hists_x_a" + std::to_string(Tri.X_a())  + "_x_b_" + std::to_string(Tri.X_b()) + "_x_c_"
-                                + std::to_string(Tri.X_c()) + "_y_a_" + std::to_string(Tri.Y_a()) + "_y_b_" + std::to_string(Tri.Y_b())
-                                + "_y_c_" + std::to_string(Tri.Y_c()) + "_" + tracked_filename;
-        TFile *rootfile = new TFile(saveroot.c_str(),"RECREATE");
-
-        rootfile->cd();
-        for (int i = 0; i < 15; ++i) {
-            RegionHists.at(i)->Write();
-            DirectHists.at(i)->Write();
-            ReflectedHists.at(i)->Write();
-        }
-        rootfile->Write();
-        rootfile->Close();
-
+        hists_lists.Read_File(tracked_file);
     } else if (data_type == "raw") {
-        //~~~ create histograms and graphs ~~~//
-
-        // Tracking root file hists
-        TH2F *hAllPaths;
-        tracked_hists_file->GetObject("hPmtResTimeVsCosTheta",hAllPaths);
-
-        // New hists to clone to
-        TH2F *hRegionSelectedAllPaths = (TH2F*)hAllPaths->Clone();
-        hRegionSelectedAllPaths->SetName("hRegionSelectedAllPaths");
-        TH2F *hDirectCutAllPaths = (TH2F*)hAllPaths->Clone();
-        hDirectCutAllPaths->SetName("hDirectCutAllPaths");
-        TH2F *hReflectedCutAllPaths = (TH2F*)hAllPaths->Clone();
-        hReflectedCutAllPaths->SetName("hReflectedCutAllPaths");
-
-        //~~~ Apply region cuts by looping through bins ~~~//
-
-        //direct beam spot, max +/- 10 ns, -0.9 cos theta (straight through)
-        double min_angle_direct_beam_spot = -0.9;
-        //reflected beam spot, max +/- 10 ns, 0.95 cos theta (straight through)
-        double min_angle_reflected_beam_spot = 0.95;
-
-        int nBinsX = hAllPaths->GetXaxis()->GetNbins();
-        int nBinsY = hAllPaths->GetYaxis()->GetNbins();
-        double xBinCenter;
-        double yBinCenter;
-        bool direct_Xcut;
-        bool reflected_Xcut;
-        for (int x=0; x<nBinsX+1; x++) {
-            xBinCenter = hAllPaths->GetXaxis()->GetBinCenter(x);
-            if (xBinCenter >= min_angle_direct_beam_spot) {direct_Xcut = true;} else {direct_Xcut = false;}
-            if (xBinCenter >= min_angle_reflected_beam_spot) {reflected_Xcut = true;} else {reflected_Xcut = false;}
-            for (int y=0; y<nBinsY+1; y++) {
-                yBinCenter = hAllPaths->GetYaxis()->GetBinCenter(y);
-
-                // Check if bin is within triangle region
-                if (!(Tri.check_point_inside_triangle(xBinCenter, yBinCenter))) {
-                    hRegionSelectedAllPaths->SetBinContent(x, y, 0);
-                }
-                // Check if bin is in direct beam spot
-                if (direct_Xcut) {
-                    if (yBinCenter <= min_time_direct_beam_spot or yBinCenter >= max_time_direct_beam_spot) {
-                        hDirectCutAllPaths->SetBinContent(x, y, 0);
-                    }
-                }
-                // Check if bin is in direct beam spot
-                if (reflected_Xcut) {
-                    if (yBinCenter <= min_time_reflected_beam_spot or yBinCenter >= max_time_reflected_beam_spot) {
-                        hReflectedCutAllPaths->SetBinContent(x, y, 0);
-                    }
-                }
-            }
-        }
-
-        //write to file
-        // get file name from path+filename string
-        std::size_t tracked_botDirPos = tracked_file.find_last_of("/");
-        std::string tracked_filename = tracked_file.substr(tracked_botDirPos+1, tracked_file.length());
-        std::string saveroot = "region_selected_hists_x_a_" + std::to_string(Tri.X_a())  + "_x_b_" + std::to_string(Tri.X_b())
-                                + "_x_c_" + std::to_string(Tri.X_c()) + "_y_a_" + std::to_string(Tri.Y_a()) + "_y_b_" + std::to_string(Tri.Y_b())
-                                + "_y_c_" + std::to_string(Tri.Y_c()) + "_" + tracked_filename;
-        TFile *rootfile = new TFile(saveroot.c_str(),"RECREATE");
-
-        rootfile->cd();
-        hRegionSelectedAllPaths->Write();
-        hDirectCutAllPaths->Write();
-        hReflectedCutAllPaths->Write();
-        rootfile->Write();
-        rootfile->Close();
-
+        hists_lists.Read_File(tracked_file, {"hPmtResTimeVsCosTheta"});
     } else {
         std::cout << "Wrong data type. Should be MC or raw" << std::endl;
         throw;
     }
+        
+    //~~~ Apply region cuts by looping through bins ~~~//
+
+    //direct beam spot, max +/- 10 ns, -0.9 cos theta (straight through)
+    double min_angle_direct_beam_spot = -0.9;
+    //reflected beam spot, max +/- 10 ns, 0.95 cos theta (straight through)
+    double min_angle_reflected_beam_spot = 0.95;
+
+    int nBinsX = hists_lists.Tracking_Hists().at(0)->GetXaxis()->GetNbins();
+    int nBinsY = hists_lists.Tracking_Hists().at(0)->GetYaxis()->GetNbins();
+    double xBinCenter;
+    double yBinCenter;
+    bool direct_Xcut;
+    bool reflected_Xcut;
+    for (int x=0; x<nBinsX+1; x++) {
+        xBinCenter = hists_lists.Tracking_Hists().at(0)->GetXaxis()->GetBinCenter(x);
+        if (xBinCenter >= min_angle_direct_beam_spot) {direct_Xcut = true;} else {direct_Xcut = false;}
+        if (xBinCenter >= min_angle_reflected_beam_spot) {reflected_Xcut = true;} else {reflected_Xcut = false;}
+        for (int y=0; y<nBinsY+1; y++) {
+            yBinCenter = hists_lists.Tracking_Hists().at(0)->GetYaxis()->GetBinCenter(y);
+            // Check if bin is within triangle region
+            if (!(Tri.check_point_inside_triangle(xBinCenter, yBinCenter))) {
+                for (int i = 0; i < 15; ++i) {
+                    hists_lists.Region_Hists().at(i)->SetBinContent(x, y, 0);
+                }
+            }
+            // Check if bin is in direct beam spot
+            if (direct_Xcut) {
+                if (yBinCenter <= min_time_direct_beam_spot or yBinCenter >= max_time_direct_beam_spot) {
+                    for (int i = 0; i < 15; ++i) {
+                        hists_lists.Direct_Hists().at(i)->SetBinContent(x, y, 0);
+                    }
+                }
+            }
+            // Check if bin is in direct beam spot
+            if (reflected_Xcut) {
+                if (yBinCenter <= min_time_reflected_beam_spot or yBinCenter >= max_time_reflected_beam_spot) {
+                    for (int i = 0; i < 15; ++i) {
+                        hists_lists.Reflected_Hists().at(i)->SetBinContent(x, y, 0);
+                    }
+                }
+            }
+        }
+    }
+
+    //write to file
+    // get file name from path+filename string
+    std::size_t tracked_botDirPos = tracked_file.find_last_of("/");
+    std::string tracked_filename = tracked_file.substr(tracked_botDirPos+1, tracked_file.length());
+    std::string saveroot = "region_selected_hists_x_a" + std::to_string(Tri.X_a())  + "_x_b_" + std::to_string(Tri.X_b()) + "_x_c_"
+                            + std::to_string(Tri.X_c()) + "_y_a_" + std::to_string(Tri.Y_a()) + "_y_b_" + std::to_string(Tri.Y_b())
+                            + "_y_c_" + std::to_string(Tri.Y_c()) + "_" + tracked_filename;
+    TFile *rootfile = new TFile(saveroot.c_str(),"RECREATE");
+
+    rootfile->cd();
+    hists_lists.Write();
+    rootfile->Write();
+    rootfile->Close();
 
     return 0;
 }

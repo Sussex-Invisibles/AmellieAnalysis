@@ -87,15 +87,36 @@ double& triangle::operator [] (int i) {
 
 /**
  * @brief Construct a new Hist List:: Hist List object.
- * Creates vector of 2D Hists in root file.
+ * Default constructor
+ * 
+ */
+HistList::HistList() {length = 0;}
+
+/**
+ * @brief Construct a new Hist List:: Hist List object.
+ * Creates vector of 2D Tracking Hists in root file, and clones them to
+ * 3 new vectors of 2D hists with modified names.
  * 
  * @param tracking_file Root file containing hists.
  * @param name_list List of histogram names the user wishes to read in. Default list defined
  * in header file. (FIXME: can add option to just read in all 2D hists)
  */
 HistList::HistList(std::string tracking_file, std::vector<std::string> name_list) {
+    Read_File(tracking_file, name_list);
+}
+
+/**
+ * @brief Basically constructs a new HistList object.
+ * Creates vector of 2D Tracking Hists in root file, and clones them to
+ * 3 new vectors of 2D hists with modified names.
+ * 
+ * @param tracking_file Root file containing hists.
+ * @param name_list List of histogram names the user wishes to read in. Default list defined
+ * in header file. (FIXME: can add option to just read in all 2D hists)
+ */
+void HistList::Read_File(std::string tracking_file, std::vector<std::string> name_list) {
     // Read in root file
-    TFile* fin = new TFile(tracking_file.c_str()) ;
+    TFile* fin = new TFile(tracking_file.c_str());
     if (!fin->IsOpen()) {
         std::cout << "Cannot open input file " << tracking_file << std::endl;
         exit(1);
@@ -142,3 +163,15 @@ std::vector<TH2F*>& HistList::Tracking_Hists() {return tracking_hists;}
 std::vector<TH2F*>& HistList::Region_Hists() {return region_hists;}
 std::vector<TH2F*>& HistList::Direct_Hists() {return direct_hists;}
 std::vector<TH2F*>& HistList::Reflected_Hists() {return reflected_hists;}
+
+/**
+ * @brief Write all  new (Region, Direct, Reflected) hists to file
+ * 
+ */
+void HistList::Write() {
+    for (unsigned int i = 0; i < length; ++i) {
+        region_hists.at(i)->Write();
+        direct_hists.at(i)->Write();
+        reflected_hists.at(i)->Write();
+    }
+}
