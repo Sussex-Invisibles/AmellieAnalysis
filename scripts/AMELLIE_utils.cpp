@@ -91,7 +91,7 @@ double& triangle::operator [] (int i) {
  * 
  * @param tracking_file Root file containing hists.
  * @param name_list List of histogram names the user wishes to read in. Default list defined
- * in header file.
+ * in header file. (FIXME: can add option to just read in all 2D hists)
  */
 HistList::HistList(std::string tracking_file, std::vector<std::string> name_list) {
     // Read in root file
@@ -107,7 +107,7 @@ HistList::HistList(std::string tracking_file, std::vector<std::string> name_list
     TIter next(list) ;
     TKey* key;
     TObject* obj;
-    int i = 0;
+    unsigned int i = 0;
     std::string name;
 
     while((key = (TKey*)next())){
@@ -116,13 +116,29 @@ HistList::HistList(std::string tracking_file, std::vector<std::string> name_list
             // Check if histogram is in list of desired histograms
             name = (std::string)(((TH2F*)obj)->GetName());
             if ((std::count(name_list.begin(), name_list.end(), name))) {
-                Hists.push_back((TH2F*)obj);
-                Hists_names.push_back(name);
-                std::cout << name << std::endl;
+                // Add tracking histograms to list
+                tracking_hists.push_back((TH2F*)obj);
+
+                // Clone tracking hists to other lists
+                name.erase(0,1); // removes first character ("h" in this case)
+                region_hists.push_back((TH2F*)obj->Clone());
+                region_hists.at(i)->SetName(((std::string)"hRegion" + name).c_str());
+                direct_hists.push_back((TH2F*)obj->Clone());
+                direct_hists.at(i)->SetName(((std::string)"hDirect" + name).c_str());
+                reflected_hists.push_back((TH2F*)obj->Clone());
+                reflected_hists.at(i)->SetName(((std::string)"hReflected" + name).c_str());
+
                 ++i;
             }
             
         }
     }
-
+    length = i;
 }
+
+// return suitable histograms / histogram names
+unsigned int HistList::len() {return length;}
+std::vector<TH2F*>& HistList::Tracking_Hists() {return tracking_hists;}
+std::vector<TH2F*>& HistList::Region_Hists() {return region_hists;}
+std::vector<TH2F*>& HistList::Direct_Hists() {return direct_hists;}
+std::vector<TH2F*>& HistList::Reflected_Hists() {return reflected_hists;}

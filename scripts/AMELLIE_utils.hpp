@@ -43,8 +43,11 @@ class triangle {
 
 class HistList {
     private:
-        std::vector<TH2F*> Hists;
-        std::vector<std::string> Hists_names;
+        unsigned int length;
+        std::vector<TH2F*> tracking_hists;
+        std::vector<TH2F*> region_hists;
+        std::vector<TH2F*> direct_hists;
+        std::vector<TH2F*> reflected_hists;
 
     public:
     // constructor
@@ -56,15 +59,11 @@ class HistList {
                 "hAVPipesResTimeVsCosTheta", "hAcrylicScatterResTimeVsCosTheta", "OtherScatterResTimeVsCosTheta"});
 
     // return suitable histograms
-    std::vector<TH2F*> Tracking_Hists();
-    std::vector<TH2F*> Region_Hists();
-    std::vector<TH2F*> Direct_Hists();
-    std::vector<TH2F*> Reflected_Hists();
-
-/* ~~~~~~~~~ operator overload ~~~~~~~~~ */
-
-        // access tracking hist elements easier
-        TH2F& operator [] (int i);
+    unsigned int len();
+    std::vector<TH2F*>& Tracking_Hists();
+    std::vector<TH2F*>& Region_Hists();
+    std::vector<TH2F*>& Direct_Hists();
+    std::vector<TH2F*>& Reflected_Hists();
 };
 
 //end header guard
