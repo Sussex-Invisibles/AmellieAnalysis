@@ -15,6 +15,13 @@
 #include <TList.h>
 #include <TVectorD.h>
 
+/**
+ * @brief Class to keep track of vertices of a defined triangle on a 2D plane.
+ * A member function can thus be used to automatically check whether a point lies
+ * inside the triangle.
+ * Vertices can be easily accessed and modified.
+ * 
+ */
 class triangle {
     private:
         double points[6]; //x_a, x_b, x_c, y_a, y_b, y_c
@@ -40,7 +47,12 @@ class triangle {
         double& operator [] (int i);
 };
 
-
+/**
+ * @brief Class to read in desired 2D hists of tracking root file and clone 3 more
+ * copies of these for the region, direct and reflected histograms. All fours lists
+ * are in the HistList object and can be easily accessed and modified.
+ * 
+ */
 class HistList {
     private:
         unsigned int length;
