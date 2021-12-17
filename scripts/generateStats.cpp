@@ -107,15 +107,15 @@ int generate_stats(std::string region_selected_file, std::string full_file, std:
         std::cout << "Step 5" << std::endl;
 
         full_hists_file->GetObject("hPmtResTimeVsCosTheta",fullHist);  // <---------------
-        region_hists_file->GetObject("hRegionSelectedReEmittedPaths",regionHistReemitted);
-        region_hists_file->GetObject("hDirectCutReEmittedPaths",directHistReemitted);
-        region_hists_file->GetObject("hReflectedCutReEmittedPaths",reflectedHistReemitted);
-        region_hists_file->GetObject("hRegionCutSingleScatterPaths",regionHistScattered);
-        region_hists_file->GetObject("hDirectCutSingleScatterPaths",directHistScattered);
-        region_hists_file->GetObject("hReflectedCutSingleScatterPaths",reflectedHistScattered);
-        region_hists_file->GetObject("hRegionSelectedAllPaths",regionHistAll);  // <--------------------
-        region_hists_file->GetObject("hDirectCutAllPaths",directHistAll);  // <---------------------
-        region_hists_file->GetObject("hReflectedCutAllPaths",reflectedHistAll);
+        region_hists_file->GetObject("hRegionPmtResTimeVsCosTheta",regionHistAll);  // <--------------------
+        region_hists_file->GetObject("hDirectPmtResTimeVsCosTheta",directHistAll);  // <---------------------
+        region_hists_file->GetObject("hReflectedPmtResTimeVsCosTheta",reflectedHistAll);
+        region_hists_file->GetObject("hRegionReemissionResTimeVsCosTheta",regionHistReemitted);
+        region_hists_file->GetObject("hDirectReemissionResTimeVsCosTheta",directHistReemitted);
+        region_hists_file->GetObject("hReflectedReemissionResTimeVsCosTheta",reflectedHistReemitted);
+        region_hists_file->GetObject("hRegionSingleScatterResTimeVsCosTheta",regionHistScattered);
+        region_hists_file->GetObject("hDirectSingleScatterResTimeVsCosTheta",directHistScattered);
+        region_hists_file->GetObject("hReflectedSingleScatterResTimeVsCosTheta",reflectedHistScattered);
 
         std::cout << "Step 6" << std::endl;
 
@@ -183,9 +183,9 @@ int generate_stats(std::string region_selected_file, std::string full_file, std:
         TH2F *reflectedHistAll;
 
         full_hists_file->GetObject("hPmtResTimeVsCosTheta",fullHist);  // <---------------
-        region_hists_file->GetObject("hRegionSelectedAllPaths",regionHistAll);  // <--------------------
-        region_hists_file->GetObject("hDirectCutAllPaths",directHistAll);  // <---------------------
-        region_hists_file->GetObject("hReflectedCutAllPaths",reflectedHistAll);
+        region_hists_file->GetObject("hRegionPmtResTimeVsCosTheta",regionHistAll);  // <--------------------
+        region_hists_file->GetObject("hDirectPmtResTimeVsCosTheta",directHistAll);  // <---------------------
+        region_hists_file->GetObject("hReflectedPmtResTimeVsCosTheta",reflectedHistAll);
 
         //first stat is signal / signal + background in region
 
