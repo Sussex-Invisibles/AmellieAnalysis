@@ -44,7 +44,7 @@ double& triangle::Y_c() {return points[5];}
  */
 bool triangle::check_point_inside_triangle(const double point_x, const double point_y, const bool lim_count) {
     if (Area2 == 0.0) {
-        std::cout << "Triangle area is zero." << std::endl;
+        // std::cout << "Triangle area is zero." << std::endl;
         if (point_x == points[0] and point_y == points[3]) {
             return lim_count;  // still might be on the point of the triangle
         } else {
