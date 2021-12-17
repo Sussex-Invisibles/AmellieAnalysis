@@ -31,6 +31,8 @@ double& triangle::Y_a() {return points[3];}
 double& triangle::Y_b() {return points[4];}
 double& triangle::Y_c() {return points[5];}
 
+double triangle::Area() {return 0.5 * Area2;}
+
 /**
  * @brief Checks if point is inside triangle by using the sum of triangles method:
  * if the sum of the area of the three triangles formed by the point and two vertices of the triangle add up to

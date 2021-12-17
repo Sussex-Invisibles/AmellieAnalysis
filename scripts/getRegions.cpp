@@ -251,6 +251,7 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, std::string fibre
     
     // Write hists to file
     rootfile->cd();
+    (TH2F*)regionSelectedHists.Tracking_Hists().at(1)->Write();
     regionSelectedHists.Write();
     
     std::string temp_name;
