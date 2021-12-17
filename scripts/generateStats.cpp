@@ -72,8 +72,12 @@ int generate_stats(std::string region_selected_file, std::string full_file, std:
         return 1;
     }
 
+    std::cout << "Step 1" << std::endl;
+
     TFile *region_hists_file;
     TFile *full_hists_file;
+
+    std::cout << "Step 2" << std::endl;
 
     try{
         region_hists_file = TFile::Open(region_selected_file.c_str());
@@ -84,7 +88,11 @@ int generate_stats(std::string region_selected_file, std::string full_file, std:
         return 1;
     }
 
+    std::cout << "Step 3" << std::endl;
+
     if (data_type == "MC") {
+        std::cout << "Step 4" << std::endl;
+
         TH2F *fullHist;  // <---------------
         TH2F *regionHistReemitted;
         TH2F *directHistReemitted;
@@ -95,6 +103,8 @@ int generate_stats(std::string region_selected_file, std::string full_file, std:
         TH2F *regionHistAll;  // <---------------
         TH2F *directHistAll;  // <---------------
         TH2F *reflectedHistAll;
+
+        std::cout << "Step 5" << std::endl;
 
         full_hists_file->GetObject("hPmtResTimeVsCosTheta",fullHist);  // <---------------
         region_hists_file->GetObject("hRegionSelectedReEmittedPaths",regionHistReemitted);
@@ -107,6 +117,8 @@ int generate_stats(std::string region_selected_file, std::string full_file, std:
         region_hists_file->GetObject("hDirectCutAllPaths",directHistAll);  // <---------------------
         region_hists_file->GetObject("hReflectedCutAllPaths",reflectedHistAll);
 
+        std::cout << "Step 6" << std::endl;
+
         //first stat is signal / signal + background in region
 
         double sumFullHist = 0;  // <-------------
@@ -118,6 +130,8 @@ int generate_stats(std::string region_selected_file, std::string full_file, std:
 
         double sumFullHistReflected = 0;
         double sumSignalHistReflected = 0;
+
+        std::cout << "Step 7" << std::endl;
 
         for(int i=0;i<fullHist->GetXaxis()->GetNbins();i++){  // <-------------
             for(int j=0;j<fullHist->GetYaxis()->GetNbins();j++){  // <-------------
