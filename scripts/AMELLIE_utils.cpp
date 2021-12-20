@@ -127,8 +127,7 @@ void HistList::Read_File(std::string tracking_file, std::vector<std::string> nam
     // Iterate through list of objects in root file
     TList* list = fin->GetListOfKeys() ;
     if (!list) {std::cout << "No keys found in file\n" << std::endl; exit(1);}
-    TIter next(list) ;
-    TKey* key;
+    TIter next(list);
     TObject* obj;
     unsigned int j = 0;
     std::string name;
@@ -136,6 +135,7 @@ void HistList::Read_File(std::string tracking_file, std::vector<std::string> nam
     // Go through list of histograms in order of name list, to add them
     // to a list of hists in the correct order
     for (unsigned int i = 0; i < name_list.size(); ++i) {
+        TKey* key;
         while((key = (TKey*)next())){
             obj = key->ReadObj() ;
             if(obj->InheritsFrom(TH2::Class())){
