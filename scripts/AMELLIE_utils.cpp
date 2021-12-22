@@ -131,10 +131,12 @@ void HistList::Read_File(std::string tracking_file, std::vector<std::string> nam
     TIter next(list);
     TObject* obj;
     TKey* key;
-    unsigned int j = 0;
-    bool found;
+    int j = 0;
     std::string name;
-    unsigned int order[name_list.size()];
+    int order[name_list.size()];
+    for (unsigned int i = 0; i < length; ++i) {
+        order[i] = -1;
+    }
     std::vector<TH2F*> temp_HistList;
 
     // Go through list of histograms and add them to temp list if they are included in name list
@@ -143,37 +145,36 @@ void HistList::Read_File(std::string tracking_file, std::vector<std::string> nam
         if(obj->InheritsFrom(TH2::Class())){
             // Check which histogram in file matches name
             name = (std::string)(((TH2F*)obj)->GetName());
-            found = false;
             for (unsigned int i = 0; i < length; ++i) {
                 if (name == name_list.at(i)) {
                     // Add tracking histograms to temporary list
                     temp_HistList.push_back((TH2F*)obj);
                     order[i] = j;
                     ++j;
-                    found = true;
                     break;
                 }
-            }
-            if (!found) {
-                std::cout << "Histogram '" << name_list.at(i) << "' not found." << std::endl;
-                exit(1);
             }
         }
     }
 
     // Reorder histograms, and clone new ones in that order
     for (unsigned int i = 0; i < length; ++i) {
-        // Add tracking histograms to list
-        tracking_hists.push_back(temp_HistList.at(order[i]));
+        if (order[i] == -1) {
+            std::cout << "Histogram '" << name_list.at(i) << "' not found." << std::endl;
+            exit(1);
+        } else {
+            // Add tracking histograms to list
+            tracking_hists.push_back(temp_HistList.at(order[i]));
 
-        // Clone tracking hists to other lists
-        name = name_list.at(i).erase(0,1); // removes first character ("h" in this case)
-        region_hists.push_back((TH2F*)(tracking_hists.at(i))->Clone());
-        region_hists.at(i)->SetName(((std::string)"hRegion" + name).c_str());
-        direct_hists.push_back((TH2F*)(tracking_hists.at(i))->Clone());
-        direct_hists.at(i)->SetName(((std::string)"hDirect" + name).c_str());
-        reflected_hists.push_back((TH2F*)(tracking_hists.at(i))->Clone());
-        reflected_hists.at(i)->SetName(((std::string)"hReflected" + name).c_str());
+            // Clone tracking hists to other lists
+            name = name_list.at(i).erase(0,1); // removes first character ("h" in this case)
+            region_hists.push_back((TH2F*)(tracking_hists.at(i))->Clone());
+            region_hists.at(i)->SetName(((std::string)"hRegion" + name).c_str());
+            direct_hists.push_back((TH2F*)(tracking_hists.at(i))->Clone());
+            direct_hists.at(i)->SetName(((std::string)"hDirect" + name).c_str());
+            reflected_hists.push_back((TH2F*)(tracking_hists.at(i))->Clone());
+            reflected_hists.at(i)->SetName(((std::string)"hReflected" + name).c_str());
+        }
     }
 }
 
