@@ -25,26 +25,14 @@ HistList GetRegionSelectedHists(std::vector<double> finalPoints, HistList hists_
 std::vector<double> CheckPoints(std::vector<double> points, std::vector<double> fixedPoints, int numVar);
 
 int main(int argc, char** argv){
-
-    std::cout << "Step 1" << std::endl;
-
     std::string file = argv[1];
-    std::cout << "Step 1.1" << std::endl;
     int nbins = std::stoi(argv[2]);
-    std::cout << "Step 1.2" << std::endl;
     std::string fibre = argv[3];
-    std::cout << "Step 1.3" << std::endl;
     bool verbose = std::stoi(argv[4]);
-    std::cout << "Step 1.4" << std::endl;
     bool debug = std::stoi(argv[5]);
-    std::cout << "Step 1.5" << std::endl;
     bool extraInfo = std::stoi(argv[6]);
-    std::cout << "Step 1.6" << std::endl;
     std::string signal = argv[7];
-    std::cout << "Step 1.7" << std::endl;
     auto t1 = std::chrono::high_resolution_clock::now();
-
-    std::cout << "Step 2" << std::endl;
 
     int status = OptimiseDivideAndConquer(file, nbins, fibre, verbose, debug, extraInfo, signal); 
     auto t2 = std::chrono::high_resolution_clock::now();
@@ -80,8 +68,6 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, std::string fibre
         return 1;
     }
 
-    std::cout << "Step 3" << std::endl;
-
     //create histograms and graphs
     HistList hists_lists = HistList(inputFile);
 
@@ -108,8 +94,6 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, std::string fibre
     hPointxy.push_back(hPointx_c); hPointxy.push_back(hPointy_a);
     hPointxy.push_back(hPointy_b); hPointxy.push_back(hPointy_c);
 
-    std::cout << "Step 4" << std::endl;
-
     //set up constants
     std::string point_names[6] = {"x_a", "x_b", "x_c", "y_a", "y_b", "y_c"};
     double y_min = hists_lists.Tracking_Hists().at(0)->GetYaxis()->GetXmin();
@@ -121,12 +105,8 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, std::string fibre
         point_tolerances.push_back((point_maxs[i] - point_mins[i]) / nbins);
     }
 
-    std::cout << "Step 5" << std::endl;
-
     double xBinWidth = hists_lists.Tracking_Hists().at(0)->GetXaxis()->GetBinCenter(2) - hists_lists.Tracking_Hists().at(0)->GetXaxis()->GetBinCenter(1);
     double yBinWidth = hists_lists.Tracking_Hists().at(0)->GetYaxis()->GetBinCenter(2) - hists_lists.Tracking_Hists().at(0)->GetYaxis()->GetBinCenter(1);
-
-    std::cout << "Step 6" << std::endl;
 
     int j;
     for (int i = 0; i < 3; ++i) {
@@ -140,8 +120,6 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, std::string fibre
             std::cout << point_names[j] << "_tolerance is set to bin width, nbins: " << (point_maxs[j] - point_mins[j]) / yBinWidth << std::endl;
         }
     }
-
-    std::cout << "Step 7" << std::endl;
 
     if(debug) std::cout << "x_a_tolerance: " << point_tolerances.at(0) << ", x_b_tolerance: " << point_tolerances.at(1) << std::endl;
 
