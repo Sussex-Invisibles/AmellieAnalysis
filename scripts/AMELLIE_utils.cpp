@@ -132,6 +132,7 @@ void HistList::Read_File(std::string tracking_file, std::vector<std::string> nam
     TObject* obj;
     TKey* key;
     unsigned int j = 0;
+    bool found;
     std::string name;
     unsigned int order[name_list.size()];
     std::vector<TH2F*> temp_HistList;
@@ -142,17 +143,20 @@ void HistList::Read_File(std::string tracking_file, std::vector<std::string> nam
         if(obj->InheritsFrom(TH2::Class())){
             // Check which histogram in file matches name
             name = (std::string)(((TH2F*)obj)->GetName());
+            found = false;
             for (unsigned int i = 0; i < length; ++i) {
                 if (name == name_list.at(i)) {
                     // Add tracking histograms to temporary list
                     temp_HistList.push_back((TH2F*)obj);
                     order[i] = j;
                     ++j;
+                    found = true;
                     break;
-                } else if (i == length - 1) {
-                    std::cout << "Histogram '" << name_list.at(i) << "' not found." << std::endl;
-                    exit(1);
                 }
+            }
+            if (!found) {
+                std::cout << "Histogram '" << name_list.at(i) << "' not found." << std::endl;
+                exit(1);
             }
         }
     }
