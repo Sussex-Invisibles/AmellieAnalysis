@@ -130,9 +130,9 @@ void HistList::Read_File(std::string tracking_file, std::vector<std::string> nam
     if (!list) {std::cout << "No keys found in file\n" << std::endl; exit(1);}
     TIter next(list);
     TObject* obj;
+    TKey* key;
     unsigned int j = 0;
     std::string name;
-
     unsigned int order[name_list.size()];
     std::vector<TH2F*> temp_HistList;
 
