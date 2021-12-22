@@ -164,11 +164,11 @@ void HistList::Read_File(std::string tracking_file, std::vector<std::string> nam
 
         // Clone tracking hists to other lists
         name = name_list.at(i).erase(0,1); // removes first character ("h" in this case)
-        region_hists.push_back(tracking_hists.at(i)->Clone());
+        region_hists.push_back((TH2F*)(tracking_hists.at(i))->Clone());
         region_hists.at(i)->SetName(((std::string)"hRegion" + name).c_str());
-        direct_hists.push_back(tracking_hists.at(i)->Clone());
+        direct_hists.push_back((TH2F*)(tracking_hists.at(i))->Clone());
         direct_hists.at(i)->SetName(((std::string)"hDirect" + name).c_str());
-        reflected_hists.push_back(tracking_hists.at(i)->Clone());
+        reflected_hists.push_back((TH2F*)(tracking_hists.at(i))->Clone());
         reflected_hists.at(i)->SetName(((std::string)"hReflected" + name).c_str());
     }
 }
