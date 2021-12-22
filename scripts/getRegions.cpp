@@ -166,7 +166,7 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, std::string fibre
             while(std::abs(temp_diffs[i]) > point_tolerances.at(i)){
                 if(first_runs[i]){
                     points[i] = {point_mins[i], (point_maxs[i] + point_mins[i])/2., point_maxs[i]}; //l, c, r
-                    points[i] = CheckPoints(points[i], fixedPoints, 0);
+                    points[i] = CheckPoints(points[i], fixedPoints, i);
                     first_runs[i] = false;
                     if(debug) std::cout << "Set up first " << point_names[i] << "_run points: " << points[i].at(0)
                                         << ", " << points[i].at(1) << ", " << points[i].at(2) << std::endl;
