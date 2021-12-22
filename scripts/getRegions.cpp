@@ -29,12 +29,19 @@ int main(int argc, char** argv){
     std::cout << "Step 1" << std::endl;
 
     std::string file = argv[1];
+    std::cout << "Step 1.1" << std::endl;
     int nbins = std::stoi(argv[2]);
+    std::cout << "Step 1.2" << std::endl;
     std::string fibre = argv[3];
+    std::cout << "Step 1.3" << std::endl;
     bool verbose = std::stoi(argv[4]);
+    std::cout << "Step 1.4" << std::endl;
     bool debug = std::stoi(argv[5]);
+    std::cout << "Step 1.5" << std::endl;
     bool extraInfo = std::stoi(argv[6]);
+    std::cout << "Step 1.6" << std::endl;
     std::string signal = argv[7];
+    std::cout << "Step 1.7" << std::endl;
     auto t1 = std::chrono::high_resolution_clock::now();
 
     std::cout << "Step 2" << std::endl;
