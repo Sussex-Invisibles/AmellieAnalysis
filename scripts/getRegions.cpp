@@ -151,8 +151,9 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, std::string fibre
     for (int i = 0; i < 6; ++i) {
         points[i] = {point_mins[i], (point_maxs[i] + point_mins[i])/2., point_maxs[i]};
     }
-    
-    while((points_diffs > point_tolerances and !firstRun) or firstRun){
+
+    bool loop_condition = true; // If any point difference is still larger than its associated tolerance, keep looping. See end of while loop.
+    while(loop_condition or firstRun){
         // Set/Reset variables
         for (int i = 0; i < 6; ++i) {
             first_runs[i] = true;
@@ -214,6 +215,14 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, std::string fibre
             for (int i = 0; i < 6; ++i) {
                 hDiffxy.at(i)->SetPoint(numMainLoopIterations, numMainLoopIterations, points_diffs.at(i));
                 hPointxy.at(i)->SetPoint(numMainLoopIterations, numMainLoopIterations, fixedPoints.at(i));
+            }
+        }
+        // If any point difference is still larger than its associated tolerance, keep looping.
+        loop_condition = false;
+        for (int i = 0; i < 6; ++i) {
+            if points_diffs.at(i) > point_tolerances.at(i) {
+                loop_condition = true;
+                break;
             }
         }
         numMainLoopIterations++;
