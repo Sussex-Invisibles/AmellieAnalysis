@@ -156,6 +156,7 @@ int generate_stats(std::string region_selected_file, std::string full_file, std:
                 }
             }
         }
+        std::cout << "Step 8" << std::endl;
 
         // open txt file and write values, FOMs can be made and plotted later!
 
@@ -175,6 +176,8 @@ int generate_stats(std::string region_selected_file, std::string full_file, std:
         outputFile << std::to_string(sumFullHistReflected) + "\n";
         outputFile << std::to_string(sumSignalHistReflected) + "\n";
         outputFile.close();
+
+        std::cout << "Step 9" << std::endl;
 
     } else if (data_type == "raw") {
         TH2F *fullHist;  // <---------------
