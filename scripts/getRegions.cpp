@@ -26,10 +26,10 @@ std::vector<double> CheckPoints(std::vector<double> points, std::vector<double> 
 int main(int argc, char** argv){
     std::string file = argv[1];
     int nbins = std::stoi(argv[2]);
-    bool verbose = std::stoi(argv[3]);
-    bool debug = std::stoi(argv[4]);
-    bool extraInfo = std::stoi(argv[5]);
-    std::string signal = argv[6];
+    bool verbose = std::stoi(argv[4]);
+    bool debug = std::stoi(argv[5]);
+    bool extraInfo = std::stoi(argv[6]);
+    std::string signal = argv[7];
     auto t1 = std::chrono::high_resolution_clock::now();
     int status = OptimiseDivideAndConquer(file, nbins, verbose, debug, extraInfo, signal); 
     auto t2 = std::chrono::high_resolution_clock::now();
