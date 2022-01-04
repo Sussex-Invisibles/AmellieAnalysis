@@ -220,7 +220,7 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, std::string fibre
         // If any point difference is still larger than its associated tolerance, keep looping.
         loop_condition = false;
         for (int i = 0; i < 6; ++i) {
-            if points_diffs.at(i) > point_tolerances.at(i) {
+            if (points_diffs.at(i) > point_tolerances.at(i)) {
                 loop_condition = true;
                 break;
             }
