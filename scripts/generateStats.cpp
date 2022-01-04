@@ -135,24 +135,35 @@ int generate_stats(std::string region_selected_file, std::string full_file, std:
 
         for(int i=0;i<fullHist->GetXaxis()->GetNbins();i++){  // <-------------
             for(int j=0;j<fullHist->GetYaxis()->GetNbins();j++){  // <-------------
+                std::cout << "Step 7.1" << std::endl;
                 sumFullHist += fullHist->GetBinContent(i,j);  // <-------------
+                std::cout << "Step 7.2" << std::endl;
                 sumFullHistDirect += directHistAll->GetBinContent(i,j);  // <--------------
+                std::cout << "Step 7.3" << std::endl;
                 sumFullHistReflected += reflectedHistAll->GetBinContent(i,j);
+                std::cout << "Step 7.4" << std::endl;
                 sumFullHistRegion += regionHistAll->GetBinContent(i,j);  // <--------------
+                std::cout << "Step 7.5" << std::endl;
                 if(signal == "reemitted"){
+                    std::cout << "Step 7.6" << std::endl;
                     sumSignalHistRegion += regionHistReemitted->GetBinContent(i,j);
                     sumSignalHistDirect += directHistReemitted->GetBinContent(i,j);
                     sumSignalHistReflected += reflectedHistReemitted->GetBinContent(i,j);
+                    std::cout << "Step 7.7" << std::endl;
                 }
                 if(signal == "scattered"){
+                    std::cout << "Step 7.8" << std::endl;
                     sumSignalHistRegion += regionHistScattered->GetBinContent(i,j);
                     sumSignalHistDirect += directHistScattered->GetBinContent(i,j);
                     sumSignalHistReflected += reflectedHistScattered->GetBinContent(i,j);
+                    std::cout << "Step 7.9" << std::endl;
                 }
                 if(signal == "attenuated"){
+                    std::cout << "Step 7.9.1" << std::endl;
                     sumSignalHistRegion += regionHistScattered->GetBinContent(i,j) + regionHistReemitted->GetBinContent(i,j);
                     sumSignalHistDirect += directHistScattered->GetBinContent(i,j) + directHistReemitted->GetBinContent(i,j);
                     sumSignalHistReflected += reflectedHistScattered->GetBinContent(i,j) + reflectedHistReemitted->GetBinContent(i,j);
+                    std::cout << "Step 7.9.2" << std::endl;
                 }
             }
         }
