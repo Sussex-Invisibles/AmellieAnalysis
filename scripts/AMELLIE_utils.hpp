@@ -41,7 +41,7 @@ class triangle {
 
         double Area();
 
-        bool check_point_inside_triangle(const double point_x, const double point_y, const bool lim_count=true);
+        bool check_point_inside_triangle(const double point_x, const double point_y);
 
     /* ~~~~~~~~~ operator overload ~~~~~~~~~ */
 
