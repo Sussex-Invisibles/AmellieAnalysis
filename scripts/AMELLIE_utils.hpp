@@ -7,6 +7,7 @@
 #include <fstream>
 #include <assert.h>
 #include <algorithm>
+#include <cmath> 
 #include <TFile.h>
 #include <TH1.h>
 #include <TH2.h>

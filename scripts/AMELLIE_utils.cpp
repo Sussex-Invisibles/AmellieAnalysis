@@ -17,7 +17,7 @@ triangle::triangle(double x_a, double x_b, double x_c, double y_a, double y_b, d
     points[0] = x_a; points[1] = x_b; points[2] = x_c;
     points[3] = y_a; points[4] = y_b; points[5] = y_c;
     // Twice the area of the triangle (twice to save on computation later)
-    Area2 = abs(points[0] * (points[4] - points[5]) + points[1] * (points[5] - points[3])
+    Area2 = fabs(points[0] * (points[4] - points[5]) + points[1] * (points[5] - points[3])
                 + points[2] * (points[3] - points[4]));
 }
 
@@ -51,15 +51,15 @@ bool triangle::check_point_inside_triangle(const double point_x, const double po
     }
 
     // Calculate (twice) the area of each triangle formed by the point, and check if it is zero successively
-    double A_a = abs(point_x * (points[4] - points[5]) + points[1] * (points[5] - point_y)
+    double A_a = fabs(point_x * (points[4] - points[5]) + points[1] * (points[5] - point_y)
                     + points[2] * (point_y - points[4]));
     if (A_a == 0.0) {return false;} // if area is zero, point is on edge of triangle.
 
-    double A_b = abs(points[0] * (point_y - points[5]) + point_x * (points[5] - points[3])
+    double A_b = fabs(points[0] * (point_y - points[5]) + point_x * (points[5] - points[3])
                     + points[2] * (points[3] - point_y));
     if (A_b == 0.0) {return false;} // if area is zero, point is on edge of triangle.
 
-    double A_c = abs(points[0] * (points[4] - point_y) + points[1] * (point_y - points[3])
+    double A_c = fabs(points[0] * (points[4] - point_y) + points[1] * (point_y - points[3])
                     + point_x * (points[3] - points[4]));
     if (A_c == 0.0) {return false;} // if area is zero, point is on edge of triangle.
 
