@@ -587,439 +587,64 @@ std::vector<double> GetThreePoints(double bestPoint, double worstPoint, std::vec
     return newPoints;
 }
 
+/**
+ * @brief Replace the associated point in the trianle (normally given by fixedPoints) with each point (of 3) in points,
+ * draw a triangle with each such configuration, and count the number of different types on events that fall inside/outside
+ * of the triangle. The FOM for each is a ratio of numbers of events: signal inside / sqrt(total inside), where signal is
+ * defined below, and total means any event type.
+ * 
+ * @param points (z_i_min, z_i_mid, z_i_max), for z=x,y, and i in {a, b, c}
+ * @param fixedPoints  (x_a_min, x_b_max, x_c_max, y_a_min, y_b_max, y_c_min)
+ * @param numVar Denotes which point is being used/replaced (0=x_a, 1=x_b, 2=x_c, 3=y_a, 4=y_b, 5=y_c)
+ * @param allPathsHist Histogram for all light paths
+ * @param reEmittedHist Histogram for reemitted light paths
+ * @param scatteredHist Histogram for scattered light paths
+ * @param signal = scattered, reemitted or attenuated. (attenuated = scattered + reemitted). Note that in the code countReEmitted(1,2,3)
+ * refers to whichever one of these was selected.
+ * @return std::vector<double> 
+ */
 std::vector<double> GetFOMs(std::vector<double> points, std::vector<double> fixedPoints, int numVar, TH2F *allPathsHist, TH2F *reEmittedHist, TH2F *scatteredHist, std::string signal){
 
     //FIXME: Pass in vector of hists?
 
-    double countReEmitted1 = 0;
-    double countTotal1 = 0;
-    double countReEmitted2 = 0;
-    double countTotal2 = 0;
-    double countReEmitted3 = 0;
-    double countTotal3 = 0;
+    double countReEmitted[3] = {0, 0, 0};
+    double countTotal[3] = {0, 0, 0};
 
-    //check that values are allowed
-    double point1 = points.at(0);
-    double point2 = points.at(1);
-    double point3 = points.at(2);
-
-    /*
-    grad = y2-y1 / x2-x1
-    const = y1 - m*x1
-    */
+    // Create triangle with fixed points
+    triangle Tri = triangle(fixedPoints.at(0), fixedPoints.at(1), fixedPoints.at(2), fixedPoints.at(3),
+                            fixedPoints.at(4), fixedPoints.at(5));
 
     for(int x=1; x<reEmittedHist->GetNbinsX()+1; x++){ //loop over histogram bins
         double xBinCenter = reEmittedHist->GetXaxis()->GetBinCenter(x);
         for(int y=1; y<reEmittedHist->GetNbinsY()+1; y++){
             double yBinCenter = reEmittedHist->GetYaxis()->GetBinCenter(y);
-            if(numVar == 0){
-                double upperGrad1 = (fixedPoints.at(4) - fixedPoints.at(3)) / (fixedPoints.at(1) - point1);
-                double upperIntercept1 = fixedPoints.at(4) - (upperGrad1*fixedPoints.at(1));
-                double upperGrad2 = (fixedPoints.at(4) - fixedPoints.at(3)) / (fixedPoints.at(1) - point2);
-                double upperIntercept2 = fixedPoints.at(4) - (upperGrad2*fixedPoints.at(1));
-                double upperGrad3 = (fixedPoints.at(4) - fixedPoints.at(3)) / (fixedPoints.at(1) - point3);
-                double upperIntercept3 = fixedPoints.at(4) - (upperGrad3*fixedPoints.at(1));
-                double bottomGrad1 = (fixedPoints.at(5) - fixedPoints.at(3)) / (fixedPoints.at(2) - point1);
-                double bottomIntercept1 = fixedPoints.at(5) - (upperGrad1*fixedPoints.at(2));
-                double bottomGrad2 = (fixedPoints.at(5) - fixedPoints.at(3)) / (fixedPoints.at(2) - point2);
-                double bottomIntercept2 = fixedPoints.at(5) - (upperGrad2*fixedPoints.at(2));
-                double bottomGrad3 = (fixedPoints.at(5) - fixedPoints.at(3)) / (fixedPoints.at(2) - point3);
-                double bottomIntercept3 = fixedPoints.at(5) - (upperGrad3*fixedPoints.at(2));
-                double rightHandGrad;
-                if(fixedPoints.at(1) != fixedPoints.at(2)){
-                    rightHandGrad = (fixedPoints.at(4) - fixedPoints.at(5)) / (fixedPoints.at(1) - fixedPoints.at(2));
-                }
-                else{
-                    rightHandGrad = 0;
-                }
-                double rightHandIntercept = fixedPoints.at(4) - (rightHandGrad*fixedPoints.at(1));
-                if(yBinCenter > ((bottomGrad1*xBinCenter) + bottomIntercept1) and yBinCenter < ((upperGrad1*xBinCenter) + upperIntercept1) and xBinCenter >= point1 and ((yBinCenter <= ((rightHandGrad*xBinCenter) + rightHandIntercept) and rightHandGrad < 0) or (yBinCenter >= ((rightHandGrad*xBinCenter) + rightHandIntercept) and rightHandGrad > 0) or (rightHandGrad == 0))){
+            // Replace the appropriate point in the triangle with each point in points and see if the bin falls in the triangle.
+            for (int i = 0; i < 3; ++i){
+                Tri[numVar] = points.at(i);
+                if(Tri.check_point_inside_triangle(xBinCenter, yBinCenter)){
                     if(signal == "reemitted"){
-                        countReEmitted1 = countReEmitted1 + reEmittedHist->GetBinContent(x,y);
+                        countReEmitted[i] += reEmittedHist->GetBinContent(x,y);
                     }
                     else if(signal == "scattered"){
-                        countReEmitted1 = countReEmitted1 + scatteredHist->GetBinContent(x,y);
+                        countReEmitted[i] += scatteredHist->GetBinContent(x,y);
                     }
                     else if(signal == "attenuated"){
-                        countReEmitted1 = countReEmitted1 + scatteredHist->GetBinContent(x,y) + reEmittedHist->GetBinContent(x,y);
+                        countReEmitted[i] += scatteredHist->GetBinContent(x,y) + reEmittedHist->GetBinContent(x,y);
                     }
-                    countTotal1 = countTotal1 + allPathsHist->GetBinContent(x,y);
-                }
-                if(yBinCenter > ((bottomGrad2*xBinCenter) + bottomIntercept2) and yBinCenter < ((upperGrad2*xBinCenter) + upperIntercept2) and xBinCenter >= point2 and ((yBinCenter <= ((rightHandGrad*xBinCenter) + rightHandIntercept) and rightHandGrad < 0) or (yBinCenter >= ((rightHandGrad*xBinCenter) + rightHandIntercept) and rightHandGrad > 0) or (rightHandGrad == 0))){
-                    if(signal == "reemitted"){
-                        countReEmitted2 = countReEmitted2 + reEmittedHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "scattered"){
-                        countReEmitted2 = countReEmitted2 + scatteredHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "attenuated"){
-                        countReEmitted2 = countReEmitted2 + scatteredHist->GetBinContent(x,y) + reEmittedHist->GetBinContent(x,y);
-                    }
-                    countTotal2 = countTotal2 + allPathsHist->GetBinContent(x,y);
-                }
-                if(yBinCenter > ((bottomGrad3*xBinCenter) + bottomIntercept3) and yBinCenter < ((upperGrad2*xBinCenter) + upperIntercept2) and xBinCenter >= point3 and ((yBinCenter <= ((rightHandGrad*xBinCenter) + rightHandIntercept) and rightHandGrad < 0) or (yBinCenter >= ((rightHandGrad*xBinCenter) + rightHandIntercept) and rightHandGrad > 0) or (rightHandGrad == 0))){
-                    if(signal == "reemitted"){
-                        countReEmitted3 = countReEmitted3 + reEmittedHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "scattered"){
-                        countReEmitted3 = countReEmitted3 + scatteredHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "attenuated"){
-                        countReEmitted3 = countReEmitted3 + scatteredHist->GetBinContent(x,y) + reEmittedHist->GetBinContent(x,y);
-                    }
-                    countTotal3 = countTotal3 + allPathsHist->GetBinContent(x,y);                                
-                }
-            }
-            if(numVar == 1){
-                double upperGrad1 = (fixedPoints.at(4) - fixedPoints.at(3)) / (point1 - fixedPoints.at(0));
-                double upperIntercept1 = fixedPoints.at(4) - (upperGrad1*point1);
-                double upperGrad2 = (fixedPoints.at(4) - fixedPoints.at(3)) / (point2 - fixedPoints.at(0));
-                double upperIntercept2 = fixedPoints.at(4) - (upperGrad2*point2);
-                double upperGrad3 = (fixedPoints.at(4) - fixedPoints.at(3)) / (point3 - fixedPoints.at(0));
-                double upperIntercept3 = fixedPoints.at(4) - (upperGrad3*point3);
-                double bottomGrad = (fixedPoints.at(5) - fixedPoints.at(3)) / (fixedPoints.at(2) - fixedPoints.at(0));
-                double bottomIntercept = fixedPoints.at(5) - (upperGrad1*fixedPoints.at(2));
-                double rightHandGrad1;
-                double rightHandGrad2;
-                double rightHandGrad3;
-                if(point1 != fixedPoints.at(2)){
-                    rightHandGrad1 = (fixedPoints.at(4) - fixedPoints.at(5)) / (point1 - fixedPoints.at(2));
-                }
-                else{
-                    rightHandGrad1 = 0;
-                }
-                if(point2 != fixedPoints.at(2)){
-                    rightHandGrad2 = (fixedPoints.at(4) - fixedPoints.at(5)) / (point2 - fixedPoints.at(2));
-                }
-                else{
-                    rightHandGrad2 = 0;
-                }
-                if(point3 != fixedPoints.at(2)){
-                    rightHandGrad3 = (fixedPoints.at(4) - fixedPoints.at(5)) / (point3 - fixedPoints.at(2));
-                }
-                else{
-                    rightHandGrad3 = 0;
-                }
-                double rightHandIntercept1 = fixedPoints.at(5) - (rightHandGrad1*fixedPoints.at(2));
-                double rightHandIntercept2 = fixedPoints.at(5) - (rightHandGrad2*fixedPoints.at(2));
-                double rightHandIntercept3 = fixedPoints.at(5) - (rightHandGrad3*fixedPoints.at(2));
-                if(yBinCenter > ((bottomGrad*xBinCenter) + bottomIntercept) and yBinCenter < ((upperGrad1*xBinCenter) + upperIntercept1) and xBinCenter >= fixedPoints.at(0) and ((yBinCenter <= ((rightHandGrad1*xBinCenter) + rightHandIntercept1) and rightHandGrad1 < 0) or (yBinCenter >= ((rightHandGrad1*xBinCenter) + rightHandIntercept1) and rightHandGrad1 > 0) or (rightHandGrad1 == 0))){
-                    if(signal == "reemitted"){
-                        countReEmitted1 = countReEmitted1 + reEmittedHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "scattered"){
-                        countReEmitted1 = countReEmitted1 + scatteredHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "attenuated"){
-                        countReEmitted1 = countReEmitted1 + scatteredHist->GetBinContent(x,y) + reEmittedHist->GetBinContent(x,y);
-                    }
-                    countTotal1 = countTotal1 + allPathsHist->GetBinContent(x,y);
-                }
-                if(yBinCenter > ((bottomGrad*xBinCenter) + bottomIntercept) and yBinCenter < ((upperGrad2*xBinCenter) + upperIntercept2) and xBinCenter >= fixedPoints.at(0) and ((yBinCenter <= ((rightHandGrad2*xBinCenter) + rightHandIntercept2) and rightHandGrad2 < 0) or (yBinCenter >= ((rightHandGrad2*xBinCenter) + rightHandIntercept2) and rightHandGrad2 > 0) or (rightHandGrad2 == 0))){
-                    if(signal == "reemitted"){
-                        countReEmitted2 = countReEmitted2 + reEmittedHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "scattered"){
-                        countReEmitted2 = countReEmitted2 + scatteredHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "attenuated"){
-                        countReEmitted2 = countReEmitted2 + scatteredHist->GetBinContent(x,y) + reEmittedHist->GetBinContent(x,y);
-                    }
-                    countTotal2 = countTotal2 + allPathsHist->GetBinContent(x,y);
-                }
-                if(yBinCenter > ((bottomGrad*xBinCenter) + bottomIntercept) and yBinCenter < ((upperGrad3*xBinCenter) + upperIntercept3) and xBinCenter >= fixedPoints.at(0) and ((yBinCenter <= ((rightHandGrad3*xBinCenter) + rightHandIntercept3) and rightHandGrad3 < 0) or (yBinCenter >= ((rightHandGrad3*xBinCenter) + rightHandIntercept3) and rightHandGrad3 > 0) or (rightHandGrad3 == 0))){
-                    if(signal == "reemitted"){
-                        countReEmitted3 = countReEmitted3 + reEmittedHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "scattered"){
-                        countReEmitted3 = countReEmitted3 + scatteredHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "attenuated"){
-                        countReEmitted3 = countReEmitted3 + scatteredHist->GetBinContent(x,y) + reEmittedHist->GetBinContent(x,y);
-                    }
-                    countTotal3 = countTotal3 + allPathsHist->GetBinContent(x,y);                                
-                }
-            }
-            if(numVar == 2){
-                double upperGrad = (fixedPoints.at(4) - fixedPoints.at(3)) / (fixedPoints.at(1) - fixedPoints.at(0));
-                double upperIntercept = fixedPoints.at(4) - (upperGrad*fixedPoints.at(1));
-                double bottomGrad1 = (fixedPoints.at(5) - fixedPoints.at(3)) / (point1 - fixedPoints.at(0));
-                double bottomIntercept1 = fixedPoints.at(5) - (bottomGrad1*point1);
-                double bottomGrad2 = (fixedPoints.at(5) - fixedPoints.at(3)) / (point2 - fixedPoints.at(0));
-                double bottomIntercept2 = fixedPoints.at(5) - (bottomGrad2*point2);
-                double bottomGrad3 = (fixedPoints.at(5) - fixedPoints.at(3)) / (point3 - fixedPoints.at(0));
-                double bottomIntercept3 = fixedPoints.at(5) - (bottomGrad3*point3);
-                double rightHandGrad1;
-                double rightHandGrad2;
-                double rightHandGrad3;
-                if(point1 != fixedPoints.at(1)){
-                    rightHandGrad1 = (fixedPoints.at(4) - fixedPoints.at(5)) / (fixedPoints.at(1) - point1);
-                }
-                else{
-                    rightHandGrad1 = 0;
-                }
-                if(point2 != fixedPoints.at(1)){
-                    rightHandGrad2 = (fixedPoints.at(4) - fixedPoints.at(5)) / (fixedPoints.at(1) - point2);
-                }
-                else{
-                    rightHandGrad2 = 0;
-                }
-                if(point3 != fixedPoints.at(1)){
-                    rightHandGrad3 = (fixedPoints.at(4) - fixedPoints.at(5)) / (fixedPoints.at(1) - point3);
-                }
-                else{
-                    rightHandGrad3 = 0;
-                }
-                double rightHandIntercept1 = fixedPoints.at(4) - (rightHandGrad1*fixedPoints.at(1));
-                double rightHandIntercept2 = fixedPoints.at(4) - (rightHandGrad2*fixedPoints.at(1));
-                double rightHandIntercept3 = fixedPoints.at(4) - (rightHandGrad3*fixedPoints.at(1));
-                if(yBinCenter > ((bottomGrad1*xBinCenter) + bottomIntercept1) and yBinCenter < ((upperGrad*xBinCenter) + upperIntercept) and xBinCenter >= fixedPoints.at(0) and ((yBinCenter <= ((rightHandGrad1*xBinCenter) + rightHandIntercept1) and rightHandGrad1 < 0) or (yBinCenter >= ((rightHandGrad1*xBinCenter) + rightHandIntercept1) and rightHandGrad1 > 0) or (rightHandGrad1 == 0))){
-                    if(signal == "reemitted"){
-                        countReEmitted1 = countReEmitted1 + reEmittedHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "scattered"){
-                        countReEmitted1 = countReEmitted1 + scatteredHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "attenuated"){
-                        countReEmitted1 = countReEmitted1 + scatteredHist->GetBinContent(x,y) + reEmittedHist->GetBinContent(x,y);
-                    }
-                    countTotal1 = countTotal1 + allPathsHist->GetBinContent(x,y);
-                }
-                if(yBinCenter > ((bottomGrad2*xBinCenter) + bottomIntercept2) and yBinCenter < ((upperGrad*xBinCenter) + upperIntercept) and xBinCenter >= fixedPoints.at(0) and ((yBinCenter <= ((rightHandGrad2*xBinCenter) + rightHandIntercept2) and rightHandGrad2 < 0) or (yBinCenter >= ((rightHandGrad2*xBinCenter) + rightHandIntercept2) and rightHandGrad2 > 0) or (rightHandGrad2 == 0))){
-                    if(signal == "reemitted"){
-                        countReEmitted2 = countReEmitted2 + reEmittedHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "scattered"){
-                        countReEmitted2 = countReEmitted2 + scatteredHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "attenuated"){
-                        countReEmitted2 = countReEmitted2 + scatteredHist->GetBinContent(x,y) + reEmittedHist->GetBinContent(x,y);
-                    }
-                    countTotal2 = countTotal2 + allPathsHist->GetBinContent(x,y);
-                }
-                if(yBinCenter > ((bottomGrad3*xBinCenter) + bottomIntercept3) and yBinCenter < ((upperGrad*xBinCenter) + upperIntercept) and xBinCenter >= fixedPoints.at(0) and ((yBinCenter <= ((rightHandGrad3*xBinCenter) + rightHandIntercept3) and rightHandGrad3 < 0) or (yBinCenter >= ((rightHandGrad3*xBinCenter) + rightHandIntercept3) and rightHandGrad3 > 0) or (rightHandGrad3 == 0))){
-                    if(signal == "reemitted"){
-                        countReEmitted3 = countReEmitted3 + reEmittedHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "scattered"){
-                        countReEmitted3 = countReEmitted3 + scatteredHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "attenuated"){
-                        countReEmitted3 = countReEmitted3 + scatteredHist->GetBinContent(x,y) + reEmittedHist->GetBinContent(x,y);
-                    }
-                    countTotal3 = countTotal3 + allPathsHist->GetBinContent(x,y);                                
-                }
-            }
-            if(numVar == 3){
-                double bottomGrad1 = (fixedPoints.at(5) - point1) / (fixedPoints.at(2) - fixedPoints.at(0));
-                double bottomIntercept1 = fixedPoints.at(5) - (bottomGrad1*fixedPoints.at(2));
-                double bottomGrad2 = (fixedPoints.at(5) - point2) / (fixedPoints.at(2) - fixedPoints.at(0));
-                double bottomIntercept2 = fixedPoints.at(5) - (bottomGrad2*fixedPoints.at(2));
-                double bottomGrad3 = (fixedPoints.at(5) - point3) / (fixedPoints.at(2) - fixedPoints.at(0));
-                double bottomIntercept3 = fixedPoints.at(5) - (bottomGrad3*fixedPoints.at(2));
-                double upperGrad1 = (fixedPoints.at(4) - point1) / (fixedPoints.at(1) - fixedPoints.at(0));
-                double upperIntercept1 = fixedPoints.at(4) - (upperGrad1*fixedPoints.at(1));
-                double upperGrad2 = (fixedPoints.at(4) - point2) / (fixedPoints.at(1) - fixedPoints.at(0));
-                double upperIntercept2 = fixedPoints.at(4) - (upperGrad2*fixedPoints.at(1));
-                double upperGrad3 = (fixedPoints.at(4) - point3) / (fixedPoints.at(1) - fixedPoints.at(0));
-                double upperIntercept3 = fixedPoints.at(4) - (upperGrad3*fixedPoints.at(1));
-                double rightHandGrad;
-                if(fixedPoints.at(1) != fixedPoints.at(2)){
-                    rightHandGrad = (fixedPoints.at(4) - fixedPoints.at(5)) / (fixedPoints.at(1) - fixedPoints.at(2));
-                }
-                else{
-                    rightHandGrad = 0;
-                }
-                double rightHandIntercept = fixedPoints.at(4) - (rightHandGrad*fixedPoints.at(1));
-                if(yBinCenter > ((bottomGrad1*xBinCenter) + bottomIntercept1) and yBinCenter < ((upperGrad1*xBinCenter) + upperIntercept1) and xBinCenter >= fixedPoints.at(0) and ((yBinCenter <= ((rightHandGrad*xBinCenter) + rightHandIntercept) and rightHandGrad < 0) or (yBinCenter >= ((rightHandGrad*xBinCenter) + rightHandIntercept) and rightHandGrad > 0) or (rightHandGrad == 0))){
-                    if(signal == "reemitted"){
-                        countReEmitted1 = countReEmitted1 + reEmittedHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "scattered"){
-                        countReEmitted1 = countReEmitted1 + scatteredHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "attenuated"){
-                        countReEmitted1 = countReEmitted1 + scatteredHist->GetBinContent(x,y) + reEmittedHist->GetBinContent(x,y);
-                    }
-                    countTotal1 = countTotal1 + allPathsHist->GetBinContent(x,y);
-                }
-                if(yBinCenter > ((bottomGrad2*xBinCenter) + bottomIntercept2) and yBinCenter < ((upperGrad2*xBinCenter) + upperIntercept2) and xBinCenter >= fixedPoints.at(0) and ((yBinCenter <= ((rightHandGrad*xBinCenter) + rightHandIntercept) and rightHandGrad < 0) or (yBinCenter >= ((rightHandGrad*xBinCenter) + rightHandIntercept) and rightHandGrad > 0) or (rightHandGrad == 0))){
-                    if(signal == "reemitted"){
-                        countReEmitted2 = countReEmitted2 + reEmittedHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "scattered"){
-                        countReEmitted2 = countReEmitted2 + scatteredHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "attenuated"){
-                        countReEmitted2 = countReEmitted2 + scatteredHist->GetBinContent(x,y) + reEmittedHist->GetBinContent(x,y);
-                    }
-                    countTotal2 = countTotal2 + allPathsHist->GetBinContent(x,y);
-                }
-                if(yBinCenter > ((bottomGrad3*xBinCenter) + bottomIntercept3) and yBinCenter < ((upperGrad3*xBinCenter) + upperIntercept3) and xBinCenter >= fixedPoints.at(0) and ((yBinCenter <= ((rightHandGrad*xBinCenter) + rightHandIntercept) and rightHandGrad < 0) or (yBinCenter >= ((rightHandGrad*xBinCenter) + rightHandIntercept) and rightHandGrad > 0) or (rightHandGrad == 0))){
-                    if(signal == "reemitted"){
-                        countReEmitted3 = countReEmitted3 + reEmittedHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "scattered"){
-                        countReEmitted3 = countReEmitted3 + scatteredHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "attenuated"){
-                        countReEmitted3 = countReEmitted3 + scatteredHist->GetBinContent(x,y) + reEmittedHist->GetBinContent(x,y);
-                    }
-                    countTotal3 = countTotal3 + allPathsHist->GetBinContent(x,y);                                
-                }
-            }
-            if(numVar == 4){
-                double bottomGrad = (fixedPoints.at(5) - fixedPoints.at(3)) / (fixedPoints.at(2) - fixedPoints.at(0));
-                double bottomIntercept = fixedPoints.at(5) - (bottomGrad*fixedPoints.at(2));
-                double upperGrad1 = (point1 - fixedPoints.at(3)) / (fixedPoints.at(1) - fixedPoints.at(0));
-                double upperIntercept1 = point1 - (upperGrad1*fixedPoints.at(1));
-                double upperGrad2 = (point2 - fixedPoints.at(3)) / (fixedPoints.at(1) - fixedPoints.at(0));
-                double upperIntercept2 = point2 - (upperGrad2*fixedPoints.at(1));
-                double upperGrad3 = (point3 - fixedPoints.at(3)) / (fixedPoints.at(1) - fixedPoints.at(0));
-                double upperIntercept3 = point3 - (upperGrad3*fixedPoints.at(1));
-                double rightHandGrad1;
-                double rightHandGrad2;
-                double rightHandGrad3;
-                if(fixedPoints.at(2) != fixedPoints.at(1)){
-                    rightHandGrad1 = (point1 - fixedPoints.at(5)) / (fixedPoints.at(1) - fixedPoints.at(2));
-                }
-                else{
-                    rightHandGrad1 = 0;
-                }
-                if(fixedPoints.at(2) != fixedPoints.at(1)){
-                    rightHandGrad2 = (point2 - fixedPoints.at(5)) / (fixedPoints.at(1) - fixedPoints.at(2));
-                }
-                else{
-                    rightHandGrad2 = 0;
-                }
-                if(fixedPoints.at(2) != fixedPoints.at(1)){
-                    rightHandGrad3 = (point3 - fixedPoints.at(5)) / (fixedPoints.at(1) - fixedPoints.at(2));
-                }
-                else{
-                    rightHandGrad3 = 0;
-                }
-                double rightHandIntercept1 = fixedPoints.at(5) - (rightHandGrad1*fixedPoints.at(2));
-                double rightHandIntercept2 = fixedPoints.at(5) - (rightHandGrad2*fixedPoints.at(2));
-                double rightHandIntercept3 = fixedPoints.at(5) - (rightHandGrad3*fixedPoints.at(2));
-                if(yBinCenter >= ((bottomGrad*xBinCenter) + bottomIntercept) and yBinCenter <= ((upperGrad1*xBinCenter) + upperIntercept1) and xBinCenter >= fixedPoints.at(0) and ((yBinCenter <= ((rightHandGrad1*xBinCenter) + rightHandIntercept1) and rightHandGrad1 < 0) or (yBinCenter >= ((rightHandGrad1*xBinCenter) + rightHandIntercept1) and rightHandGrad1 > 0) or (rightHandGrad1 == 0))){
-                    if(signal == "reemitted"){
-                        countReEmitted1 = countReEmitted1 + reEmittedHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "scattered"){
-                        countReEmitted1 = countReEmitted1 + scatteredHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "attenuated"){
-                        countReEmitted1 = countReEmitted1 + scatteredHist->GetBinContent(x,y) + reEmittedHist->GetBinContent(x,y);
-                    }
-                    countTotal1 = countTotal1 + allPathsHist->GetBinContent(x,y);
-                }
-                if(yBinCenter >= ((bottomGrad*xBinCenter) + bottomIntercept) and yBinCenter <= ((upperGrad2*xBinCenter) + upperIntercept2) and xBinCenter >= fixedPoints.at(0) and ((yBinCenter <= ((rightHandGrad2*xBinCenter) + rightHandIntercept2) and rightHandGrad2 < 0) or (yBinCenter >= ((rightHandGrad2*xBinCenter) + rightHandIntercept2) and rightHandGrad2 > 0) or (rightHandGrad2 == 0))){
-                    if(signal == "reemitted"){
-                        countReEmitted2 = countReEmitted2 + reEmittedHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "scattered"){
-                        countReEmitted2 = countReEmitted2 + scatteredHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "attenuated"){
-                        countReEmitted2 = countReEmitted2 + scatteredHist->GetBinContent(x,y) + reEmittedHist->GetBinContent(x,y);
-                    }
-                    countTotal2 = countTotal2 + allPathsHist->GetBinContent(x,y);
-                }
-                if(yBinCenter >= ((bottomGrad*xBinCenter) + bottomIntercept) and yBinCenter <= ((upperGrad3*xBinCenter) + upperIntercept3) and xBinCenter >= fixedPoints.at(0) and ((yBinCenter <= ((rightHandGrad3*xBinCenter) + rightHandIntercept3) and rightHandGrad3 < 0) or (yBinCenter >= ((rightHandGrad3*xBinCenter) + rightHandIntercept3) and rightHandGrad3 > 0) or (rightHandGrad3 == 0))){
-                    if(signal == "reemitted"){
-                        countReEmitted3 = countReEmitted3 + reEmittedHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "scattered"){
-                        countReEmitted3 = countReEmitted3 + scatteredHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "attenuated"){
-                        countReEmitted3 = countReEmitted3 + scatteredHist->GetBinContent(x,y) + reEmittedHist->GetBinContent(x,y);
-                    }
-                    countTotal3 = countTotal3 + allPathsHist->GetBinContent(x,y);                                
-                }
-            }
-            if(numVar == 5){
-                double upperGrad = (fixedPoints.at(4) - fixedPoints.at(3)) / (fixedPoints.at(1) - fixedPoints.at(0));
-                double upperIntercept = fixedPoints.at(4) - (upperGrad*fixedPoints.at(1));
-                double bottomGrad1 = (point1 - fixedPoints.at(3)) / (fixedPoints.at(2) - fixedPoints.at(0));
-                double bottomIntercept1 = point1 - (bottomGrad1*fixedPoints.at(2));
-                double bottomGrad2 = (point2 - fixedPoints.at(3)) / (fixedPoints.at(2) - fixedPoints.at(0));
-                double bottomIntercept2 = point2 - (bottomGrad2*fixedPoints.at(2));
-                double bottomGrad3 = (point3 - fixedPoints.at(3)) / (fixedPoints.at(2) - fixedPoints.at(0));
-                double bottomIntercept3 = point3 - (bottomGrad3*fixedPoints.at(2));
-                double rightHandGrad1;
-                double rightHandGrad2;
-                double rightHandGrad3;
-                if(fixedPoints.at(2) != fixedPoints.at(1)){
-                    rightHandGrad1 = (fixedPoints.at(4) - point1) / (fixedPoints.at(1) - fixedPoints.at(2));
-                }
-                else{
-                    rightHandGrad1 = 0;
-                }
-                if(fixedPoints.at(2) != fixedPoints.at(1)){
-                    rightHandGrad2 = (fixedPoints.at(4) - point2) / (fixedPoints.at(1) - fixedPoints.at(2));
-                }
-                else{
-                    rightHandGrad2 = 0;
-                }
-                if(fixedPoints.at(2) != fixedPoints.at(1)){
-                    rightHandGrad3 = (fixedPoints.at(4) - point3) / (fixedPoints.at(1) - fixedPoints.at(2));
-                }
-                else{
-                    rightHandGrad3 = 0;
-                }
-                double rightHandIntercept1 = fixedPoints.at(4) - (rightHandGrad1*fixedPoints.at(1));
-                double rightHandIntercept2 = fixedPoints.at(4) - (rightHandGrad2*fixedPoints.at(1));
-                double rightHandIntercept3 = fixedPoints.at(4) - (rightHandGrad3*fixedPoints.at(1));
-                if(yBinCenter > ((bottomGrad1*xBinCenter) + bottomIntercept1) and yBinCenter < ((upperGrad*xBinCenter) + upperIntercept) and xBinCenter >= fixedPoints.at(0) and ((yBinCenter <= ((rightHandGrad1*xBinCenter) + rightHandIntercept1) and rightHandGrad1 < 0) or (yBinCenter >= ((rightHandGrad1*xBinCenter) + rightHandIntercept1) and rightHandGrad1 > 0) or (rightHandGrad1 == 0))){
-                    if(signal == "reemitted"){
-                        countReEmitted1 = countReEmitted1 + reEmittedHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "scattered"){
-                        countReEmitted1 = countReEmitted1 + scatteredHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "attenuated"){
-                        countReEmitted1 = countReEmitted1 + scatteredHist->GetBinContent(x,y) + reEmittedHist->GetBinContent(x,y);
-                    }
-                    countTotal1 = countTotal1 + allPathsHist->GetBinContent(x,y);
-                }
-                if(yBinCenter > ((bottomGrad2*xBinCenter) + bottomIntercept2) and yBinCenter < ((upperGrad*xBinCenter) + upperIntercept) and xBinCenter >= fixedPoints.at(0) and ((yBinCenter <= ((rightHandGrad2*xBinCenter) + rightHandIntercept2) and rightHandGrad2 < 0) or (yBinCenter >= ((rightHandGrad2*xBinCenter) + rightHandIntercept2) and rightHandGrad2 > 0) or (rightHandGrad2 == 0))){
-                    if(signal == "reemitted"){
-                        countReEmitted2 = countReEmitted2 + reEmittedHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "scattered"){
-                        countReEmitted2 = countReEmitted2 + scatteredHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "attenuated"){
-                        countReEmitted2 = countReEmitted2 + scatteredHist->GetBinContent(x,y) + reEmittedHist->GetBinContent(x,y);
-                    }
-                    countTotal2 = countTotal2 + allPathsHist->GetBinContent(x,y);
-                }
-                if(yBinCenter > ((bottomGrad3*xBinCenter) + bottomIntercept3) and yBinCenter < ((upperGrad*xBinCenter) + upperIntercept) and xBinCenter >= fixedPoints.at(0) and ((yBinCenter <= ((rightHandGrad3*xBinCenter) + rightHandIntercept3) and rightHandGrad3 < 0) or (yBinCenter >= ((rightHandGrad3*xBinCenter) + rightHandIntercept3) and rightHandGrad3 > 0) or (rightHandGrad3 == 0))){
-                    if(signal == "reemitted"){
-                        countReEmitted3 = countReEmitted3 + reEmittedHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "scattered"){
-                        countReEmitted3 = countReEmitted3 + scatteredHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "attenuated"){
-                        countReEmitted3 = countReEmitted3 + scatteredHist->GetBinContent(x,y) + reEmittedHist->GetBinContent(x,y);
-                    }
-                    countTotal3 = countTotal3 + allPathsHist->GetBinContent(x,y);                                
+                    countTotal[i] += allPathsHist->GetBinContent(x,y);
                 }
             }
         }
     }
 
-    double signal_ratio1 = 0;
-    double signal_ratio2 = 0;
-    double signal_ratio3 = 0;
-    if(countReEmitted1 > 0 and countTotal1 > 0) signal_ratio1 = countReEmitted1 / std::sqrt(countTotal1);
-    if(countReEmitted2 > 0 and countTotal2 > 0) signal_ratio2 = countReEmitted2 / std::sqrt(countTotal2);
-    if(countReEmitted3 > 0 and countTotal3 > 0) signal_ratio3 = countReEmitted3 / std::sqrt(countTotal3);
+    double signal_ratios[3] = {0, 0, 0};
+    for (int i = 0; i < 3; ++i){
+        if(countReEmitted[i] > 0 and countTotal[i] > 0) {
+            signal_ratios[i] = countReEmitted[i] / std::sqrt(countTotal[i]);
+        }
+    }
 
-    std::vector<double> outputFOMs = {signal_ratio1, signal_ratio2, signal_ratio3};
-
+    std::vector<double> outputFOMs = {signal_ratios[0], signal_ratios[1], signal_ratios[2]};
     return outputFOMs;
 }
 
@@ -1190,6 +815,10 @@ std::vector<TH2F*> GetRegionSelectedHists(std::vector<double> finalPoints, TH2F 
     std::cout << "Min reflected time: " << reflected_min_time << std::endl;
     std::cout << "Max reflected time: " << reflected_max_time << std::endl;
 
+    // Create triangle with final points, to check if bin centers are within it in the following loop
+    triangle Tri = triangle(finalPoints.at(0), finalPoints.at(1), finalPoints.at(2), finalPoints.at(3),
+                            finalPoints.at(4), finalPoints.at(5));
+
     for(int x=1; x<hReEmittedPaths->GetNbinsX()+1; x++){ //loop over histogram bins
         double xBinCenter = hReEmittedPaths->GetXaxis()->GetBinCenter(x);
         for(int y=1; y<hReEmittedPaths->GetNbinsY()+1; y++){ //loop over histogram bins
@@ -1200,7 +829,7 @@ std::vector<TH2F*> GetRegionSelectedHists(std::vector<double> finalPoints, TH2F 
             double bottomIntercept = finalPoints.at(5) - (bottomGrad*finalPoints.at(2));
             double rightHandGrad = (finalPoints.at(4) - finalPoints.at(5)) / (finalPoints.at(1) - finalPoints.at(2));
             double rightHandIntercept = finalPoints.at(4) - (rightHandGrad*finalPoints.at(1));
-            if(yBinCenter < ((bottomGrad*xBinCenter) + bottomIntercept) or yBinCenter > ((upperGrad*xBinCenter) + upperIntercept) or xBinCenter < finalPoints.at(0) or (rightHandGrad < 0 and yBinCenter > (rightHandGrad*xBinCenter) + rightHandIntercept) or (rightHandGrad > 0 and yBinCenter < (rightHandGrad*xBinCenter) + rightHandIntercept) or (rightHandGrad == 0 and xBinCenter > finalPoints.at(2))){
+            if(!(Tri.check_point_inside_triangle(xBinCenter, yBinCenter))){
                 hRegionSelectedReEmittedPaths->SetBinContent(x,y,0);
                 hRegionSelectedAllPaths->SetBinContent(x,y,0);
                 hRegionSelectedNoisePaths->SetBinContent(x,y,0);
