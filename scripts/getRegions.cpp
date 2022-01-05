@@ -252,7 +252,7 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, bool verbose, boo
         while(std::abs(x_a_temp_diff) > x_a_tolerance){
             if(first_x_a_run){
                 points_x_a = {x_a_min, (x_a_max + x_a_min)/2., x_a_max}; //l, c, r
-                points_x_a = CheckPoints(points_x_a, fixedPoints, 0);
+                //points_x_a = CheckPoints(points_x_a, fixedPoints, 0);
                 first_x_a_run = false;
                 if(debug) std::cout << "Set up first x_a_run points: " << points_x_a.at(0) << ", " << points_x_a.at(1) << ", " << points_x_a.at(2) << std::endl;
             }
@@ -263,7 +263,7 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, bool verbose, boo
             if(debug) std::cout << "Got best FOMs" << std::endl;
             
             points_x_a = GetThreePoints(bestworstFOMPoints_x_a.at(0), bestworstFOMPoints_x_a.at(1), points_x_a);
-            points_x_a = CheckPoints(points_x_a, fixedPoints, 0);
+            //points_x_a = CheckPoints(points_x_a, fixedPoints, 0);
             if(debug) std::cout << "Got new points: " << points_x_a.at(0) << ", " << points_x_a.at(1) << ", " << points_x_a.at(2) << std::endl;
             
             x_a_temp_diff = std::abs(points_x_a.at(1) - prevBestFOMPoint_x_a);
@@ -281,7 +281,7 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, bool verbose, boo
         while(std::abs(x_b_temp_diff) > x_b_tolerance){
             if(first_x_b_run){
                 points_x_b = {x_b_min, (x_b_max + x_b_min)/2., x_b_max}; //l, c, r
-                points_x_b = CheckPoints(points_x_b, fixedPoints, 1);
+                //points_x_b = CheckPoints(points_x_b, fixedPoints, 1);
                 first_x_b_run = false;
                 if(debug) std::cout << "First x_bc_run points: " << points_x_b.at(0) << ", " << points_x_b.at(1) << ", " << points_x_b.at(2) << std::endl;
             }
@@ -292,7 +292,7 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, bool verbose, boo
             if(debug) std::cout << "Got best FOMs" << std::endl;
             
             points_x_b = GetThreePoints(bestworstFOMPoints_x_b.at(0), bestworstFOMPoints_x_b.at(1), points_x_b);
-            points_x_b = CheckPoints(points_x_b, fixedPoints, 1);
+            //points_x_b = CheckPoints(points_x_b, fixedPoints, 1);
             if(debug) std::cout << "Got new points: " << points_x_b.at(0) << ", " << points_x_b.at(1) << ", " << points_x_b.at(2) << std::endl;
             
             x_b_temp_diff = std::abs(points_x_b.at(1) - prevBestFOMPoint_x_b);
@@ -309,7 +309,7 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, bool verbose, boo
         while(std::abs(x_c_temp_diff) > x_c_tolerance){
             if(first_x_c_run){
                 points_x_c = {x_c_min, (x_c_max + x_c_min)/2., x_c_max}; //l, c, r
-                points_x_c = CheckPoints(points_x_c, fixedPoints, 2);
+                //points_x_c = CheckPoints(points_x_c, fixedPoints, 2);
                 first_x_c_run = false;
                 if(debug) std::cout << "First x_c_run points: " << points_x_c.at(0) << ", " << points_x_c.at(1) << ", " << points_x_c.at(2) << std::endl;
             }
@@ -320,7 +320,7 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, bool verbose, boo
             if(debug) std::cout << "Got best FOMs" << std::endl;
             
             points_x_c = GetThreePoints(bestworstFOMPoints_x_c.at(0), bestworstFOMPoints_x_c.at(1), points_x_c);
-            points_x_c = CheckPoints(points_x_c, fixedPoints, 2);
+            //points_x_c = CheckPoints(points_x_c, fixedPoints, 2);
             if(debug) std::cout << "Got new points: " << points_x_c.at(0) << ", " << points_x_c.at(1) << ", " << points_x_c.at(2) << std::endl;
             
             x_c_temp_diff = std::abs(points_x_c.at(1) - prevBestFOMPoint_x_c);
@@ -338,7 +338,7 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, bool verbose, boo
             if(first_y_a_run){
                 if(debug) std::cout << "Setting up first y_a_run" << std::endl;
                 points_y_a = {y_a_min, (y_a_max + y_a_min)/2., y_a_max}; //l, c, r
-                points_y_a = CheckPoints(points_y_a, fixedPoints, 3);
+                //points_y_a = CheckPoints(points_y_a, fixedPoints, 3);
                 first_y_a_run = false;
                 if(debug) std::cout << "Set up first y_a_run points: " << points_y_a.at(0) << ", " << points_y_a.at(1) << ", " << points_y_a.at(2) << std::endl;
             }
@@ -349,7 +349,7 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, bool verbose, boo
             if(debug) std::cout << "Got best FOMs" << std::endl;
             
             points_y_a = GetThreePoints(bestworstFOMPoints_y_a.at(0), bestworstFOMPoints_y_a.at(1), points_y_a);
-            points_y_a = CheckPoints(points_y_a, fixedPoints, 3);
+            //points_y_a = CheckPoints(points_y_a, fixedPoints, 3);
             if(debug) std::cout << "Got new points: " << points_y_a.at(0) << ", " << points_y_a.at(1) << ", " << points_y_a.at(2) << std::endl;
             
             y_a_temp_diff = std::abs(points_y_a.at(1) - prevBestFOMPoint_y_a);
@@ -367,7 +367,7 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, bool verbose, boo
             if(first_y_b_run){
                 if(debug) std::cout << "Setting up first y_b_run" << std::endl;
                 points_y_b = {y_b_min, (y_b_max + y_b_min)/2., y_b_max}; //l, c, r
-                points_y_b = CheckPoints(points_y_b, fixedPoints, 4);
+                //points_y_b = CheckPoints(points_y_b, fixedPoints, 4);
                 first_y_b_run = false;
                 if(debug) std::cout << "Set up first y_b_run points: " << points_y_b.at(0) << ", " << points_y_b.at(1) << ", " << points_y_b.at(2) << std::endl;
             }
@@ -378,7 +378,7 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, bool verbose, boo
             if(debug) std::cout << "Got best FOMs" << std::endl;
             
             points_y_b = GetThreePoints(bestworstFOMPoints_y_b.at(0), bestworstFOMPoints_y_b.at(1), points_y_b);
-            points_y_b = CheckPoints(points_y_b, fixedPoints, 4);
+            //points_y_b = CheckPoints(points_y_b, fixedPoints, 4);
             if(debug) std::cout << "Got new points: " << points_y_b.at(0) << ", " << points_y_b.at(1) << ", " << points_y_b.at(2) << std::endl;
             
             y_b_temp_diff = std::abs(points_y_b.at(1) - prevBestFOMPoint_y_b);
@@ -396,7 +396,7 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, bool verbose, boo
             if(first_y_c_run){
                 if(debug) std::cout << "Setting up first y_c_run" << std::endl;
                 points_y_c = {y_c_min, (y_c_max + y_c_min)/2., y_c_max}; //l, c, r
-                points_y_c = CheckPoints(points_y_c, fixedPoints, 5);
+                //points_y_c = CheckPoints(points_y_c, fixedPoints, 5);
                 first_y_c_run = false;
                 if(debug) std::cout << "Set up first y_c_run points: " << points_y_c.at(0) << ", " << points_y_c.at(1) << ", " << points_y_c.at(2) << std::endl;
             }
@@ -407,7 +407,7 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, bool verbose, boo
             if(debug) std::cout << "Got best FOMs" << std::endl;
             
             points_y_c = GetThreePoints(bestworstFOMPoints_y_c.at(0), bestworstFOMPoints_y_c.at(1), points_y_c);
-            points_y_c = CheckPoints(points_y_c, fixedPoints, 5);
+            //points_y_c = CheckPoints(points_y_c, fixedPoints, 5);
             if(debug) std::cout << "Got new points: " << points_y_c.at(0) << ", " << points_y_c.at(1) << ", " << points_y_c.at(2) << std::endl;
             
             y_c_temp_diff = std::abs(points_y_c.at(1) - prevBestFOMPoint_y_c);
