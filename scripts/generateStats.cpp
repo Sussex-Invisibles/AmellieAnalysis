@@ -285,7 +285,7 @@ int make_region_cut(std::string tracked_file, triangle Tri,
     for (int x=0; x<nBinsX+1; x++) {
         xBinCenter = hists_lists.Tracking_Hists().at(0)->GetXaxis()->GetBinCenter(x);
         if (xBinCenter >= min_angle_direct_beam_spot) {direct_Xcut = true;} else {direct_Xcut = false;}
-        if (xBinCenter >= min_angle_reflected_beam_spot) {reflected_Xcut = true;} else {reflected_Xcut = false;}
+        if (xBinCenter <= min_angle_reflected_beam_spot) {reflected_Xcut = true;} else {reflected_Xcut = false;}
         for (int y=0; y<nBinsY+1; y++) {
             yBinCenter = hists_lists.Tracking_Hists().at(0)->GetYaxis()->GetBinCenter(y);
             // Check if bin is within triangle region
