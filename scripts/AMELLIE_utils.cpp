@@ -46,22 +46,31 @@ double triangle::Area() {return 0.5 * Area2;}
  */
 bool triangle::check_point_inside_triangle(const double point_x, const double point_y) {
     if (Area2 == 0.0) {
-        // std::cout << "Triangle area is zero." << std::endl;
+        std::cout << "Triangle area is zero." << std::endl;
         return false;
     }
 
     // Calculate (twice) the area of each triangle formed by the point, and check if it is zero successively
     double A_a = abs(point_x * (points[4] - points[5]) + points[1] * (points[5] - point_y)
                     + points[2] * (point_y - points[4]));
-    if (A_a == 0.0) {return false;} // if area is zero, point is on edge of triangle.
+    if (A_a == 0.0) {
+        std::cout << "A_a is zero." << std::endl;
+        return false;
+    } // if area is zero, point is on edge of triangle.
 
     double A_b = abs(points[0] * (point_y - points[5]) + point_x * (points[5] - points[3])
                     + points[2] * (points[3] - point_y));
-    if (A_b == 0.0) {return false;} // if area is zero, point is on edge of triangle.
+    if (A_b == 0.0) {
+        std::cout << "A_b is zero." << std::endl;
+        return false;
+    } // if area is zero, point is on edge of triangle.
 
     double A_c = abs(points[0] * (points[4] - point_y) + points[1] * (point_y - points[3])
                     + point_x * (points[3] - points[4]));
-    if (A_c == 0.0) {return false;} // if area is zero, point is on edge of triangle.
+    if (A_c == 0.0) {
+        std::cout << "A_c is zero." << std::endl;
+        return false;
+    } // if area is zero, point is on edge of triangle.
 
     // Check sum of areas of point triangles adds up to original triangle aread (tolerance of 0.1%).
     // If they equal, the point is inside triangle. If the sum is larger, the point is outside.
