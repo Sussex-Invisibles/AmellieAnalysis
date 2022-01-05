@@ -283,7 +283,7 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, bool verbose, boo
                 points_x_b = {x_b_min, (x_b_max + x_b_min)/2., x_b_max}; //l, c, r
                 //points_x_b = CheckPoints(points_x_b, fixedPoints, 1);
                 first_x_b_run = false;
-                if(debug) std::cout << "First x_bc_run points: " << points_x_b.at(0) << ", " << points_x_b.at(1) << ", " << points_x_b.at(2) << std::endl;
+                if(debug) std::cout << "First x_b_run points: " << points_x_b.at(0) << ", " << points_x_b.at(1) << ", " << points_x_b.at(2) << std::endl;
             }
             std::vector<double> FOMs_x_b = GetFOMs(points_x_b, fixedPoints, 1, hAllPaths, hReEmittedPaths, hSingleScatterPaths, signal_param);
             if(debug) std::cout << "Got FOMs: " << FOMs_x_b.at(0) << ", " << FOMs_x_b.at(1) << ", " << FOMs_x_b.at(2) << std::endl;
@@ -614,13 +614,15 @@ std::vector<double> GetFOMs(std::vector<double> points, std::vector<double> fixe
     triangle Tri = triangle(fixedPoints.at(0), fixedPoints.at(1), fixedPoints.at(2), fixedPoints.at(3),
                             fixedPoints.at(4), fixedPoints.at(5));
 
-    for(int x=1; x<reEmittedHist->GetNbinsX()+1; x++){ //loop over histogram bins
-        double xBinCenter = reEmittedHist->GetXaxis()->GetBinCenter(x);
-        for(int y=1; y<reEmittedHist->GetNbinsY()+1; y++){
-            double yBinCenter = reEmittedHist->GetYaxis()->GetBinCenter(y);
-            // Replace the appropriate point in the triangle with each point in points and see if the bin falls in the triangle.
-            for (int i = 0; i < 3; ++i){
-                Tri[numVar] = points.at(i);
+    // Replace the appropriate point in the triangle with each point in points and see if the bin falls in the triangle.
+    for (int i = 0; i < 3; ++i){
+        Tri[numVar] = points.at(i);
+        std::cout << "Triangle = " << Tri[0] << ", " << Tri[1] << ", " << Tri[2] << ", "
+                    << Tri[3] << ", " << Tri[4] << ", " << Tri[5] << ", " << std::endl;
+        for(int x=1; x<reEmittedHist->GetNbinsX()+1; x++){ //loop over histogram bins
+            double xBinCenter = reEmittedHist->GetXaxis()->GetBinCenter(x);
+            for(int y=1; y<reEmittedHist->GetNbinsY()+1; y++){
+                double yBinCenter = reEmittedHist->GetYaxis()->GetBinCenter(y);
                 if(Tri.check_point_inside_triangle(xBinCenter, yBinCenter)){
                     if(signal == "reemitted"){
                         countReEmitted[i] += reEmittedHist->GetBinContent(x,y);
@@ -635,6 +637,7 @@ std::vector<double> GetFOMs(std::vector<double> points, std::vector<double> fixe
                 }
             }
         }
+        std::cout << "counts_" << i << " = " << countReEmitted[i] << std::endl;
     }
 
     double signal_ratios[3] = {0, 0, 0};
