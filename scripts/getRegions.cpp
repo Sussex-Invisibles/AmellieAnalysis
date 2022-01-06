@@ -619,9 +619,9 @@ std::vector<double> GetFOMs(std::vector<double> points, std::vector<double> fixe
         Tri[numVar] = points.at(i);
         std::cout << "Triangle = " << Tri[0] << ", " << Tri[1] << ", " << Tri[2] << ", "
                     << Tri[3] << ", " << Tri[4] << ", " << Tri[5] << ", " << std::endl;
-        for(int x=1; x<reEmittedHist->GetNbinsX()+1; x++){ //loop over histogram bins
+        for(int x=0; x<reEmittedHist->GetNbins()+1; x++){ //loop over histogram bins
             double xBinCenter = reEmittedHist->GetXaxis()->GetBinCenter(x);
-            for(int y=1; y<reEmittedHist->GetNbinsY()+1; y++){
+            for(int y=0; y<reEmittedHist->GetNbins()+1; y++){
                 double yBinCenter = reEmittedHist->GetYaxis()->GetBinCenter(y);
                 if(Tri.check_point_inside_triangle(xBinCenter, yBinCenter)){
                     if(signal == "reemitted"){
