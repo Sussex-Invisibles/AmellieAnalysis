@@ -650,15 +650,14 @@ std::vector<double> GetFOMs(std::vector<double> points, std::vector<double> fixe
                 if(Tri.check_point_inside_triangle(xBinCenter, yBinCenter)){
                     std::cout << "inside!" << std::endl;
                     if(signal == "reemitted"){
-                        countReEmitted[i] += reEmittedHist->GetBinContent(x,y);
+                        std::cout << "reemitted!" << std::endl;
                     }
                     else if(signal == "scattered"){
-                        countReEmitted[i] += scatteredHist->GetBinContent(x,y);
+                        std::cout << "scattered!" << std::endl;
                     }
                     else if(signal == "attenuated"){
-                        countReEmitted[i] += scatteredHist->GetBinContent(x,y) + reEmittedHist->GetBinContent(x,y);
+                        std::cout << "attenuated!" << std::endl;
                     }
-                    countTotal[i] += allPathsHist->GetBinContent(x,y);
                 }
             }
         }
