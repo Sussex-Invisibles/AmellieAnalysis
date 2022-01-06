@@ -64,7 +64,7 @@ bool triangle::check_point_inside_triangle(const double point_x, const double po
     if (A_c == 0.0) {return false;} // if area is zero, point is on edge of triangle.
 
     // Check sum of areas of point triangles adds up to original triangle aread (tolerance of 0.1%).
-    // If they equal, the point is inside triangle. If the sum is larger, the point is outside.
+    // If they are equal, the point is inside the triangle. If the sum is larger, the point is outside.
     double frac_diff = ((A_a + A_b + A_c) / Area2) - 1.0;
     if (frac_diff <= 0.001) {
         return true;
