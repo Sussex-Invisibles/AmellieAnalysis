@@ -615,13 +615,15 @@ std::vector<double> GetFOMs(std::vector<double> points, std::vector<double> fixe
                             fixedPoints.at(4), fixedPoints.at(5));
 
     // Replace the appropriate point in the triangle with each point in points and see if the bin falls in the triangle.
+    int nBinsX = reEmittedHist->GetXaxis()->GetNbins();
+    int nBinsY = reEmittedHist->GetYaxis()->GetNbins();
     for (int i = 0; i < 3; ++i){
         Tri[numVar] = points.at(i);
         std::cout << "Triangle = " << Tri[0] << ", " << Tri[1] << ", " << Tri[2] << ", "
                     << Tri[3] << ", " << Tri[4] << ", " << Tri[5] << ", " << std::endl;
-        for(int x=0; x<reEmittedHist->GetNbins()+1; x++){ //loop over histogram bins
+        for(int x=0; x<nBinsX+1; x++){ //loop over histogram bins
             double xBinCenter = reEmittedHist->GetXaxis()->GetBinCenter(x);
-            for(int y=0; y<reEmittedHist->GetNbins()+1; y++){
+            for(int y=0; y<nBinsY+1; y++){
                 double yBinCenter = reEmittedHist->GetYaxis()->GetBinCenter(y);
                 if(Tri.check_point_inside_triangle(xBinCenter, yBinCenter)){
                     if(signal == "reemitted"){
