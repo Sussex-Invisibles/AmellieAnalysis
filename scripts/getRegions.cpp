@@ -640,6 +640,29 @@ std::vector<double> GetFOMs(std::vector<double> points, std::vector<double> fixe
             }
         }
         std::cout << "counts_" << i << " = " << countReEmitted[i] << std::endl;
+        if (countReEmitted[i] == 0) {
+            std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+            for(int x=0; x<nBinsX+1; x++){ //loop over histogram bins
+            double xBinCenter = reEmittedHist->GetXaxis()->GetBinCenter(x);
+            for(int y=0; y<nBinsY+1; y++){
+                double yBinCenter = reEmittedHist->GetYaxis()->GetBinCenter(y);
+                std::cout << "x = " << xBinCenter << ", y = " << yBinCenter << std::endl;
+                if(Tri.check_point_inside_triangle(xBinCenter, yBinCenter)){
+                    std::cout << "inside!" << std::endl;
+                    if(signal == "reemitted"){
+                        countReEmitted[i] += reEmittedHist->GetBinContent(x,y);
+                    }
+                    else if(signal == "scattered"){
+                        countReEmitted[i] += scatteredHist->GetBinContent(x,y);
+                    }
+                    else if(signal == "attenuated"){
+                        countReEmitted[i] += scatteredHist->GetBinContent(x,y) + reEmittedHist->GetBinContent(x,y);
+                    }
+                    countTotal[i] += allPathsHist->GetBinContent(x,y);
+                }
+            }
+        }
+        }
     }
 
     double signal_ratios[3] = {0, 0, 0};
