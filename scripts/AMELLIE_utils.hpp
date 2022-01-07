@@ -44,9 +44,6 @@ class triangle {
 
         bool check_point_inside_triangle(const double point_x, const double point_y);
 
-        // destructor
-        ~triangle() {delete[] points;}
-
     /* ~~~~~~~~~ operator overload ~~~~~~~~~ */
 
         // access elements easier
