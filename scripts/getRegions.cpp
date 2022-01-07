@@ -641,34 +641,34 @@ std::vector<double> GetFOMs(std::vector<double> points, std::vector<double> fixe
         }
         std::cout << "counts_" << i << " = " << countReEmitted[i] << std::endl;
     }
-    if (countReEmitted[0] == 0 and countReEmitted[1] == 0 and countReEmitted[2] == 0) {
-        std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
-        for (int i = 0; i < 3; ++i){
-            Tri[numVar] = points.at(i);
-            std::cout << "Triangle = " << Tri[0] << ", " << Tri[1] << ", " << Tri[2] << ", "
-                        << Tri[3] << ", " << Tri[4] << ", " << Tri[5] << ", " << std::endl;
-            for(int x=0; x<nBinsX+1; x++){ //loop over histogram bins
-                double xBinCenter = reEmittedHist->GetXaxis()->GetBinCenter(x);
-                for(int y=0; y<nBinsY+1; y++){
-                    double yBinCenter = reEmittedHist->GetYaxis()->GetBinCenter(y);
-                    std::cout << "x = " << xBinCenter << ", y = " << yBinCenter << std::endl;
-                    if(Tri.check_point_inside_triangle(xBinCenter, yBinCenter)){
-                        std::cout << "inside!" << std::endl;
-                        if(signal == "reemitted"){
-                            std::cout << "reemitted!" << std::endl;
-                        }
-                        else if(signal == "scattered"){
-                            std::cout << "scattered!" << std::endl;
-                        }
-                        else if(signal == "attenuated"){
-                            std::cout << "attenuated!" << std::endl;
-                        }
-                    }
-                }
-            }
-        }
-        std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
-    }
+    // if (countReEmitted[0] == 0 and countReEmitted[1] == 0 and countReEmitted[2] == 0) {
+    //     std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+    //     for (int i = 0; i < 3; ++i){
+    //         Tri[numVar] = points.at(i);
+    //         std::cout << "Triangle = " << Tri[0] << ", " << Tri[1] << ", " << Tri[2] << ", "
+    //                     << Tri[3] << ", " << Tri[4] << ", " << Tri[5] << ", " << std::endl;
+    //         for(int x=0; x<nBinsX+1; x++){ //loop over histogram bins
+    //             double xBinCenter = reEmittedHist->GetXaxis()->GetBinCenter(x);
+    //             for(int y=0; y<nBinsY+1; y++){
+    //                 double yBinCenter = reEmittedHist->GetYaxis()->GetBinCenter(y);
+    //                 std::cout << "x = " << xBinCenter << ", y = " << yBinCenter << std::endl;
+    //                 if(Tri.check_point_inside_triangle(xBinCenter, yBinCenter)){
+    //                     std::cout << "inside!" << std::endl;
+    //                     if(signal == "reemitted"){
+    //                         std::cout << "reemitted!" << std::endl;
+    //                     }
+    //                     else if(signal == "scattered"){
+    //                         std::cout << "scattered!" << std::endl;
+    //                     }
+    //                     else if(signal == "attenuated"){
+    //                         std::cout << "attenuated!" << std::endl;
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //     }
+    //     std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+    // }
 
     double signal_ratios[3] = {0, 0, 0};
     for (int i = 0; i < 3; ++i){
