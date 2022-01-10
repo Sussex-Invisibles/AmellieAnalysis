@@ -212,6 +212,8 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, bool verbose, boo
     double y_b_prev_best_point_main;
     double y_c_prev_best_point_main;
 
+    int loop_num = 0;
+
     while(((x_a_diff > x_a_tolerance or x_b_diff > x_b_tolerance or x_c_diff > x_c_tolerance or y_a_diff > y_a_tolerance or y_b_diff > y_b_tolerance or y_c_diff > y_c_tolerance) and !firstRun) or firstRun){
         bool first_x_a_run = true;
         bool first_x_b_run = true;
@@ -248,7 +250,6 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, bool verbose, boo
         double y_c_temp_diff = 9999999999;
 
         if(debug) std::cout << "In main while loop with x_a_temp_diff: " << std::abs(x_a_temp_diff) << std::endl;
-        int loop_num = 0;
 
         while(std::abs(x_a_temp_diff) > x_a_tolerance){
             if(first_x_a_run){
