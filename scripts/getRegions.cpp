@@ -623,8 +623,8 @@ std::vector<double> GetFOMs(std::vector<double> points, std::vector<double> fixe
                             fixedPoints.at(4), fixedPoints.at(5));
 
     // Replace the appropriate point in the triangle with each point in points and see if the bin falls in the triangle.
-    int nBinsX = reEmittedHist->GetXaxis()->GetNbins();
-    int nBinsY = reEmittedHist->GetYaxis()->GetNbins();
+    int nBinsX = allPathsHist->GetXaxis()->GetNbins();
+    int nBinsY = allPathsHist->GetYaxis()->GetNbins();
     std::cout << "loop_num = " << loop_num << std::endl;
     std::cout << "nBinsX = " << nBinsX << ", nBinsY = " << nBinsY << std::endl;
     for (int i = 0; i < 3; ++i){
@@ -632,9 +632,9 @@ std::vector<double> GetFOMs(std::vector<double> points, std::vector<double> fixe
         std::cout << "Triangle = " << Tri[0] << ", " << Tri[1] << ", " << Tri[2] << ", "
                     << Tri[3] << ", " << Tri[4] << ", " << Tri[5] << ", " << std::endl;
         for(int x=0; x<nBinsX+1; x++){ //loop over histogram bins
-            double xBinCenter = reEmittedHist->GetXaxis()->GetBinCenter(x);
+            double xBinCenter = allPathsHist->GetXaxis()->GetBinCenter(x);
             for(int y=0; y<nBinsY+1; y++){
-                double yBinCenter = reEmittedHist->GetYaxis()->GetBinCenter(y);
+                double yBinCenter = allPathsHist->GetYaxis()->GetBinCenter(y);
                 if (loop_num >= 98) {
                     std::cout << "x_num = " << x << ", y_num = " << y << std::endl; 
                 }
