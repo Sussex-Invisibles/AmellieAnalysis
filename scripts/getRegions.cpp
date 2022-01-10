@@ -248,6 +248,7 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, bool verbose, boo
         double y_c_temp_diff = 9999999999;
 
         if(debug) std::cout << "In main while loop with x_a_temp_diff: " << std::abs(x_a_temp_diff) << std::endl;
+        int loop_num = 0;
 
         while(std::abs(x_a_temp_diff) > x_a_tolerance){
             if(first_x_a_run){
