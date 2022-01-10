@@ -18,7 +18,7 @@ Create plots of the phase space showing the relationship between different param
 int CalculateRegions(std::string inputFile, int nbins);
 int OptimiseDivideAndConquer(std::string inputFile, int nbins, bool verbose, bool debug, bool extraInfo, std::string signal_param);
 std::vector<double> GetThreePoints(double bestPoint, double worstPoint, std::vector<double> originalPoints);
-std::vector<double> GetFOMs(std::vector<double> points, std::vector<double> fixedPoints, int numVar, TH2F *allPathsHist, TH2F *reEmittedHist, TH2F *scatteredHist, std::string signal);
+std::vector<double> GetFOMs(std::vector<double> points, std::vector<double> fixedPoints, int numVar, TH2F *allPathsHist, TH2F *reEmittedHist, TH2F *scatteredHist, std::string signal, int loop_num);
 std::vector<double> GetBestFOM(std::vector<double> FOMs, std::vector<double> points);
 std::vector<TH2F*> GetRegionSelectedHists(std::vector<double> finalPoints, TH2F *hReEmittedPaths, TH2F *hAllPaths, TH2F *hNoisePaths, TH2F *hSingleScatterPaths, TH2F *hOtherPaths, TH2F *hNoEffectPaths, TH2F *hNearReflectPaths, TH2F *hRopesPaths, TH2F *hPMTReflectionPaths, TH2F *hExtWaterScatterPaths, TH2F *hInnerAvReflectPaths, TH2F *hMultipleEffectPaths, TH2F *hAVPipesPaths, TH2F *hAcrylicPaths, TH2F *hOtherScatterPaths);
 std::vector<double> CheckPoints(std::vector<double> points, std::vector<double> fixedPoints, int numVar);
@@ -256,7 +256,8 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, bool verbose, boo
                 first_x_a_run = false;
                 if(debug) std::cout << "Set up first x_a_run points: " << points_x_a.at(0) << ", " << points_x_a.at(1) << ", " << points_x_a.at(2) << std::endl;
             }
-            std::vector<double> FOMs_x_a = GetFOMs(points_x_a, fixedPoints, 0, hAllPaths, hReEmittedPaths, hSingleScatterPaths, signal_param);
+            std::vector<double> FOMs_x_a = GetFOMs(points_x_a, fixedPoints, 0, hAllPaths, hReEmittedPaths, hSingleScatterPaths, signal_param, loop_num);
+            ++loop_num;
             if(debug) std::cout << "Got FOMs " << FOMs_x_a.at(0) << ", " << FOMs_x_a.at(1) << ", " << FOMs_x_a.at(2) << std::endl;
             
             bestworstFOMPoints_x_a = GetBestFOM(FOMs_x_a, points_x_a);
@@ -285,7 +286,8 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, bool verbose, boo
                 first_x_b_run = false;
                 if(debug) std::cout << "First x_b_run points: " << points_x_b.at(0) << ", " << points_x_b.at(1) << ", " << points_x_b.at(2) << std::endl;
             }
-            std::vector<double> FOMs_x_b = GetFOMs(points_x_b, fixedPoints, 1, hAllPaths, hReEmittedPaths, hSingleScatterPaths, signal_param);
+            std::vector<double> FOMs_x_b = GetFOMs(points_x_b, fixedPoints, 1, hAllPaths, hReEmittedPaths, hSingleScatterPaths, signal_param, loop_num);
+            ++loop_num;
             if(debug) std::cout << "Got FOMs: " << FOMs_x_b.at(0) << ", " << FOMs_x_b.at(1) << ", " << FOMs_x_b.at(2) << std::endl;
             
             bestworstFOMPoints_x_b = GetBestFOM(FOMs_x_b, points_x_b);
@@ -313,7 +315,8 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, bool verbose, boo
                 first_x_c_run = false;
                 if(debug) std::cout << "First x_c_run points: " << points_x_c.at(0) << ", " << points_x_c.at(1) << ", " << points_x_c.at(2) << std::endl;
             }
-            std::vector<double> FOMs_x_c = GetFOMs(points_x_c, fixedPoints, 2, hAllPaths, hReEmittedPaths, hSingleScatterPaths, signal_param);
+            std::vector<double> FOMs_x_c = GetFOMs(points_x_c, fixedPoints, 2, hAllPaths, hReEmittedPaths, hSingleScatterPaths, signal_param, loop_num);
+            ++loop_num;
             if(debug) std::cout << "Got FOMs: " << FOMs_x_c.at(0) << ", " << FOMs_x_c.at(1) << ", " << FOMs_x_c.at(2) << std::endl;
             
             bestworstFOMPoints_x_c = GetBestFOM(FOMs_x_c, points_x_c);
@@ -342,7 +345,8 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, bool verbose, boo
                 first_y_a_run = false;
                 if(debug) std::cout << "Set up first y_a_run points: " << points_y_a.at(0) << ", " << points_y_a.at(1) << ", " << points_y_a.at(2) << std::endl;
             }
-            std::vector<double> FOMs_y_a = GetFOMs(points_y_a, fixedPoints, 3, hAllPaths, hReEmittedPaths, hSingleScatterPaths, signal_param);
+            std::vector<double> FOMs_y_a = GetFOMs(points_y_a, fixedPoints, 3, hAllPaths, hReEmittedPaths, hSingleScatterPaths, signal_param, loop_num);
+            ++loop_num;
             if(debug) std::cout << "Got FOMs " << FOMs_y_a.at(0) << ", " << FOMs_y_a.at(1) << ", " << FOMs_y_a.at(2) << std::endl;
             
             bestworstFOMPoints_y_a = GetBestFOM(FOMs_y_a, points_y_a);
@@ -371,7 +375,8 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, bool verbose, boo
                 first_y_b_run = false;
                 if(debug) std::cout << "Set up first y_b_run points: " << points_y_b.at(0) << ", " << points_y_b.at(1) << ", " << points_y_b.at(2) << std::endl;
             }
-            std::vector<double> FOMs_y_b = GetFOMs(points_y_b, fixedPoints, 4, hAllPaths, hReEmittedPaths, hSingleScatterPaths, signal_param);
+            std::vector<double> FOMs_y_b = GetFOMs(points_y_b, fixedPoints, 4, hAllPaths, hReEmittedPaths, hSingleScatterPaths, signal_param, loop_num);
+            ++loop_num;
             if(debug) std::cout << "Got FOMs " << FOMs_y_b.at(0) << ", " << FOMs_y_b.at(1) << ", " << FOMs_y_b.at(2) << std::endl;
             
             bestworstFOMPoints_y_b = GetBestFOM(FOMs_y_b, points_y_b);
@@ -400,7 +405,8 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, bool verbose, boo
                 first_y_c_run = false;
                 if(debug) std::cout << "Set up first y_c_run points: " << points_y_c.at(0) << ", " << points_y_c.at(1) << ", " << points_y_c.at(2) << std::endl;
             }
-            std::vector<double> FOMs_y_c = GetFOMs(points_y_c, fixedPoints, 5, hAllPaths, hReEmittedPaths, hSingleScatterPaths, signal_param);
+            std::vector<double> FOMs_y_c = GetFOMs(points_y_c, fixedPoints, 5, hAllPaths, hReEmittedPaths, hSingleScatterPaths, signal_param, loop_num);
+            ++loop_num;
             if(debug) std::cout << "Got FOMs " << FOMs_y_c.at(0) << ", " << FOMs_y_c.at(1) << ", " << FOMs_y_c.at(2) << std::endl;
             
             bestworstFOMPoints_y_c = GetBestFOM(FOMs_y_c, points_y_c);
@@ -603,7 +609,7 @@ std::vector<double> GetThreePoints(double bestPoint, double worstPoint, std::vec
  * refers to whichever one of these was selected.
  * @return std::vector<double> 
  */
-std::vector<double> GetFOMs(std::vector<double> points, std::vector<double> fixedPoints, int numVar, TH2F *allPathsHist, TH2F *reEmittedHist, TH2F *scatteredHist, std::string signal){
+std::vector<double> GetFOMs(std::vector<double> points, std::vector<double> fixedPoints, int numVar, TH2F *allPathsHist, TH2F *reEmittedHist, TH2F *scatteredHist, std::string signal, int loop_num){
 
     //FIXME: Pass in vector of hists?
 
@@ -617,6 +623,7 @@ std::vector<double> GetFOMs(std::vector<double> points, std::vector<double> fixe
     // Replace the appropriate point in the triangle with each point in points and see if the bin falls in the triangle.
     int nBinsX = reEmittedHist->GetXaxis()->GetNbins();
     int nBinsY = reEmittedHist->GetYaxis()->GetNbins();
+    std::cout << "nBinsX = " << nBinsX << ", nBinsY = " << nBinsY << std::endl;
     for (int i = 0; i < 3; ++i){
         Tri[numVar] = points.at(i);
         std::cout << "Triangle = " << Tri[0] << ", " << Tri[1] << ", " << Tri[2] << ", "
@@ -625,6 +632,9 @@ std::vector<double> GetFOMs(std::vector<double> points, std::vector<double> fixe
             double xBinCenter = reEmittedHist->GetXaxis()->GetBinCenter(x);
             for(int y=0; y<nBinsY+1; y++){
                 double yBinCenter = reEmittedHist->GetYaxis()->GetBinCenter(y);
+                if (loop_num >= 99) {
+                    std::cout << "x_num = " << x << ", y_num = " << y << std::endl; 
+                }
                 if(Tri.check_point_inside_triangle(xBinCenter, yBinCenter)){
                     if(signal == "reemitted"){
                         countReEmitted[i] += reEmittedHist->GetBinContent(x,y);

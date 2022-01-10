@@ -91,6 +91,14 @@ class HistList {
 
     // Write all histograms to fiel
     void Write();
+
+    // Destructor function
+    ~HistList() {
+        delete tracking_hists;
+        delete region_hists;
+        delete direct_hists;
+        delete reflected_hists;
+    }
 };
 
 //end header guard
