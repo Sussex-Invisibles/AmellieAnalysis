@@ -633,7 +633,7 @@ std::vector<double> GetFOMs(std::vector<double> points, std::vector<double> fixe
             double xBinCenter = reEmittedHist->GetXaxis()->GetBinCenter(x);
             for(int y=0; y<nBinsY+1; y++){
                 double yBinCenter = reEmittedHist->GetYaxis()->GetBinCenter(y);
-                if (loop_num >= 99) {
+                if (loop_num >= 98) {
                     std::cout << "x_num = " << x << ", y_num = " << y << std::endl; 
                 }
                 if(Tri.check_point_inside_triangle(xBinCenter, yBinCenter)){
