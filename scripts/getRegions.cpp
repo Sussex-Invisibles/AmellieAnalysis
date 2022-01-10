@@ -624,6 +624,7 @@ std::vector<double> GetFOMs(std::vector<double> points, std::vector<double> fixe
     // Replace the appropriate point in the triangle with each point in points and see if the bin falls in the triangle.
     int nBinsX = reEmittedHist->GetXaxis()->GetNbins();
     int nBinsY = reEmittedHist->GetYaxis()->GetNbins();
+    std::cout << "loop_num = " << loop_num << std::endl;
     std::cout << "nBinsX = " << nBinsX << ", nBinsY = " << nBinsY << std::endl;
     for (int i = 0; i < 3; ++i){
         Tri[numVar] = points.at(i);
