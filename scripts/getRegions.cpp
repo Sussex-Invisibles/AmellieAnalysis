@@ -17,6 +17,8 @@ Create plots of the phase space showing the relationship between different param
 
 int CalculateRegions(std::string inputFile, int nbins);
 int OptimiseDivideAndConquer(std::string inputFile, int nbins, bool verbose, bool debug, bool extraInfo, std::string signal_param);
+std::vector<std::vector<std::vector<double>>> GetAllHistBinCoords(TH2F *Hist);
+std::vector<std::vector<double>> GetAllHistBinValues(std::vector<std::vector<std::vector<double>>> coords, TH2F *Hist);
 std::vector<double> GetThreePoints(double bestPoint, double worstPoint, std::vector<double> originalPoints);
 std::vector<double> GetFOMs(std::vector<double> points, std::vector<double> fixedPoints, int numVar, TH2F *allPathsHist, TH2F *reEmittedHist, TH2F *scatteredHist, std::string signal, int loop_num);
 std::vector<double> GetBestFOM(std::vector<double> FOMs, std::vector<double> points);
@@ -213,6 +215,12 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, bool verbose, boo
     double y_c_prev_best_point_main;
 
     int loop_num = 0;
+
+    // Get needed hist bin coords and values
+    std::vector<std::vector<std::vector<double>>> coords =  GetAllHistBinCoords(hAllPaths);
+    std::vector<std::vector<double>> values_hAllPaths = GetAllHistBinValues(coords, hAllPaths);
+    std::vector<std::vector<double>> values_hReEmittedPaths = GetAllHistBinValues(coords, hReEmittedPaths);
+    std::vector<std::vector<double>> values_hAllPaths = GetAllHistBinValues(coords, hSingleScatterPaths);
 
     while(((x_a_diff > x_a_tolerance or x_b_diff > x_b_tolerance or x_c_diff > x_c_tolerance or y_a_diff > y_a_tolerance or y_b_diff > y_b_tolerance or y_c_diff > y_c_tolerance) and !firstRun) or firstRun){
         bool first_x_a_run = true;
@@ -572,6 +580,48 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, bool verbose, boo
     return 0;
 }
 
+/**
+ * @brief Get all the bin centre coordinates of a histogram
+ * 
+ * @param Hist 
+ * @return std::vector<double> 
+ */
+std::vector<std::vector<std::vector<double>>> GetAllHistBinCoords(TH2F *Hist) {
+    std::vector<std::vector<std::vector<double>>> coords;
+
+    int nBinsX = Hist->GetXaxis()->GetNbins();
+    int nBinsY = Hist->GetYaxis()->GetNbins();
+    for(int x=1; x<nBinsX+1; x++){
+        std::vector<std::vector<double>> coords_y;
+        for(int y=1; y<nBinsY+1; y++){
+            coords_y.push_back({Hist->GetXaxis()->GetBinCenter(x), Hist->GetYaxis()->GetBinCenter(y)});
+        }
+        coords.push_back(coords_y);
+    }
+    return coords;
+}
+
+/**
+ * @brief Get all the bin values of a histogram
+ * 
+ * @param Hist
+ * @return std::vector<double> 
+ */
+std::vector<std::vector<double>> GetAllHistBinValues(std::vector<std::vector<std::vector<double>>> coords, TH2F *Hist) {
+    std::vector<std::vector<std::vector<double>> values;
+
+    int nBinsX = coords.size();
+    int nBinsY = coords.at(0).size();
+    for(int x=1; x<nBinsX+1; x++){
+        std::vector<double> values_y;
+        for(int y=1; y<nBinsY+1; y++){
+            values_y.push_back(Hist->GetBinContent(x, y));
+        }
+        values.push_back(values_y);
+    }
+    return values;
+}
+
 std::vector<double> GetThreePoints(double bestPoint, double worstPoint, std::vector<double> originalPoints){
     std::vector<double> newPoints;
     if(worstPoint == originalPoints.at(0)){ //left point worst
@@ -623,8 +673,8 @@ std::vector<double> GetFOMs(std::vector<double> points, std::vector<double> fixe
                             fixedPoints.at(4), fixedPoints.at(5));
 
     // Replace the appropriate point in the triangle with each point in points and see if the bin falls in the triangle.
-    int nBinsX = scatteredHist->GetXaxis()->GetNbins();
-    int nBinsY = scatteredHist->GetYaxis()->GetNbins();
+    int nBinsX = reEmittedHist->GetXaxis()->GetNbins();
+    int nBinsY = reEmittedHist->GetYaxis()->GetNbins();
     std::cout << "loop_num = " << loop_num << std::endl;
     std::cout << "nBinsX = " << nBinsX << ", nBinsY = " << nBinsY << std::endl;
     for (int i = 0; i < 3; ++i){
@@ -632,9 +682,9 @@ std::vector<double> GetFOMs(std::vector<double> points, std::vector<double> fixe
         std::cout << "Triangle = " << Tri[0] << ", " << Tri[1] << ", " << Tri[2] << ", "
                     << Tri[3] << ", " << Tri[4] << ", " << Tri[5] << ", " << std::endl;
         for(int x=0; x<nBinsX+1; x++){ //loop over histogram bins
-            double xBinCenter = scatteredHist->GetXaxis()->GetBinCenter(x);
+            double xBinCenter = reEmittedHist->GetXaxis()->GetBinCenter(x);
             for(int y=0; y<nBinsY+1; y++){
-                double yBinCenter = scatteredHist->GetYaxis()->GetBinCenter(y);
+                double yBinCenter = reEmittedHist->GetYaxis()->GetBinCenter(y);
                 if (loop_num >= 98) {
                     std::cout << "x_num = " << x << ", y_num = " << y << std::endl;
                     std::cout << "x = " << xBinCenter << ", y = " << yBinCenter << std::endl;
