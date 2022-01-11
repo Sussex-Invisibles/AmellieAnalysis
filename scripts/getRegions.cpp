@@ -608,7 +608,7 @@ std::vector<std::vector<std::vector<double>>> GetAllHistBinCoords(TH2F *Hist) {
  * @return std::vector<double> 
  */
 std::vector<std::vector<double>> GetAllHistBinValues(std::vector<std::vector<std::vector<double>>> coords, TH2F *Hist) {
-    std::vector<std::vector<std::vector<double>> values;
+    std::vector<std::vector<double>> values;
 
     int nBinsX = coords.size();
     int nBinsY = coords.at(0).size();
