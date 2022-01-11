@@ -56,42 +56,42 @@ class triangle {
  * are in the HistList object and can be easily accessed and modified.
  * 
  */
-class HistList {
-    private:
-        unsigned int length;
-        std::vector<TH2F*> tracking_hists;
-        std::vector<TH2F*> region_hists;
-        std::vector<TH2F*> direct_hists;
-        std::vector<TH2F*> reflected_hists;
+// class HistList {
+//     private:
+//         unsigned int length;
+//         std::vector<TH2F*> tracking_hists;
+//         std::vector<TH2F*> region_hists;
+//         std::vector<TH2F*> direct_hists;
+//         std::vector<TH2F*> reflected_hists;
 
-    public:
-    // constructors
-    HistList();
-    HistList(std::string tracking_file, std::vector<std::string> name_list
-                = {"hReemissionResTimeVsCosTheta", "hPmtResTimeVsCosTheta", "hNoiseResTimeVsCosTheta", 
-                "hSingleScatterResTimeVsCosTheta", "hOtherEffectResTimeVsCosTheta", "hNoEffectResTimeVsCosTheta", 
-                "hNearReflectResTimeVsCosTheta", "hRopesResTimeVsCosTheta", "hPMTReflectionResTimeVsCosTheta", 
-                "hExtWaterScatterResTimeVsCosTheta", "hInnerAvReflectionResTimeVsCosTheta", "hMultipleEffectResTimeVsCosTheta",
-                "hAVPipesResTimeVsCosTheta", "hAcrylicScatterResTimeVsCosTheta", "OtherScatterResTimeVsCosTheta"});
+//     public:
+//     // constructors
+//     HistList();
+//     HistList(std::string tracking_file, std::vector<std::string> name_list
+//                 = {"hReemissionResTimeVsCosTheta", "hPmtResTimeVsCosTheta", "hNoiseResTimeVsCosTheta", 
+//                 "hSingleScatterResTimeVsCosTheta", "hOtherEffectResTimeVsCosTheta", "hNoEffectResTimeVsCosTheta", 
+//                 "hNearReflectResTimeVsCosTheta", "hRopesResTimeVsCosTheta", "hPMTReflectionResTimeVsCosTheta", 
+//                 "hExtWaterScatterResTimeVsCosTheta", "hInnerAvReflectionResTimeVsCosTheta", "hMultipleEffectResTimeVsCosTheta",
+//                 "hAVPipesResTimeVsCosTheta", "hAcrylicScatterResTimeVsCosTheta", "OtherScatterResTimeVsCosTheta"});
 
-    // read_file (does the same as previous constructor)
-    void Read_File(std::string tracking_file, std::vector<std::string> name_list
-                = {"hReemissionResTimeVsCosTheta", "hPmtResTimeVsCosTheta", "hNoiseResTimeVsCosTheta", 
-                "hSingleScatterResTimeVsCosTheta", "hOtherEffectResTimeVsCosTheta", "hNoEffectResTimeVsCosTheta", 
-                "hNearReflectResTimeVsCosTheta", "hRopesResTimeVsCosTheta", "hPMTReflectionResTimeVsCosTheta", 
-                "hExtWaterScatterResTimeVsCosTheta", "hInnerAvReflectionResTimeVsCosTheta", "hMultipleEffectResTimeVsCosTheta",
-                "hAVPipesResTimeVsCosTheta", "hAcrylicScatterResTimeVsCosTheta", "OtherScatterResTimeVsCosTheta"});
+//     // read_file (does the same as previous constructor)
+//     void Read_File(std::string tracking_file, std::vector<std::string> name_list
+//                 = {"hReemissionResTimeVsCosTheta", "hPmtResTimeVsCosTheta", "hNoiseResTimeVsCosTheta", 
+//                 "hSingleScatterResTimeVsCosTheta", "hOtherEffectResTimeVsCosTheta", "hNoEffectResTimeVsCosTheta", 
+//                 "hNearReflectResTimeVsCosTheta", "hRopesResTimeVsCosTheta", "hPMTReflectionResTimeVsCosTheta", 
+//                 "hExtWaterScatterResTimeVsCosTheta", "hInnerAvReflectionResTimeVsCosTheta", "hMultipleEffectResTimeVsCosTheta",
+//                 "hAVPipesResTimeVsCosTheta", "hAcrylicScatterResTimeVsCosTheta", "OtherScatterResTimeVsCosTheta"});
 
-    // return suitable histograms
-    unsigned int len();
-    std::vector<TH2F*>& Tracking_Hists();
-    std::vector<TH2F*>& Region_Hists();
-    std::vector<TH2F*>& Direct_Hists();
-    std::vector<TH2F*>& Reflected_Hists();
+//     // return suitable histograms
+//     unsigned int len();
+//     std::vector<TH2F*>& Tracking_Hists();
+//     std::vector<TH2F*>& Region_Hists();
+//     std::vector<TH2F*>& Direct_Hists();
+//     std::vector<TH2F*>& Reflected_Hists();
 
-    // Write all histograms to fiel
-    void Write();
-};
+//     // Write all histograms to fiel
+//     void Write();
+// };
 
 //end header guard
 #endif
