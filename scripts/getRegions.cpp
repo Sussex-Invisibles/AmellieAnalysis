@@ -705,6 +705,7 @@ std::vector<double> GetFOMs(std::vector<double> points, std::vector<double> fixe
             }
         }
         std::cout << "counts_" << i << " = " << countReEmitted[i] << std::endl;
+        std::cout << "counts_total_" << i << " = " << countTotal[i] << std::endl;
     }
     // if (countReEmitted[0] == 0 and countReEmitted[1] == 0 and countReEmitted[2] == 0) {
     //     std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
