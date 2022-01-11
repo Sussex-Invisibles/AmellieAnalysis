@@ -220,8 +220,8 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, bool verbose, boo
     // Get needed hist bin coords and values
     std::vector<std::vector<std::vector<double>>> coords =  GetAllHistBinCoords(hAllPaths);
     std::vector<std::vector<double>> values_hAllPaths = GetAllHistBinValues(coords, hAllPaths);
-    std::vector<std::vector<double>> values_hReEmittedPaths = GetAllHistBinValues(coords, hReEmittedPaths);
-    std::vector<std::vector<double>> values_hSingleScatterPaths = GetAllHistBinValues(coords, hSingleScatterPaths);
+    std::vector<std::vector<double>> values_ReEmittedHist = GetAllHistBinValues(coords, hReEmittedPaths);
+    std::vector<std::vector<double>> values_scatteredHist = GetAllHistBinValues(coords, hSingleScatterPaths);
 
     while(((x_a_diff > x_a_tolerance or x_b_diff > x_b_tolerance or x_c_diff > x_c_tolerance or y_a_diff > y_a_tolerance or y_b_diff > y_b_tolerance or y_c_diff > y_c_tolerance) and !firstRun) or firstRun){
         bool first_x_a_run = true;
