@@ -83,112 +83,112 @@ double& triangle::operator [] (int i) {
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ HISTLIST ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-// /**
-//  * @brief Construct a new Hist List:: Hist List object.
-//  * Default constructor
-//  * 
-//  */
-// HistList::HistList() {length = 0;}
+/**
+ * @brief Construct a new Hist List:: Hist List object.
+ * Default constructor
+ * 
+ */
+HistList::HistList() {length = 0;}
 
-// /**
-//  * @brief Construct a new Hist List:: Hist List object.
-//  * Creates vector of 2D Tracking Hists in root file, and clones them to
-//  * 3 new vectors of 2D hists with modified names.
-//  * 
-//  * @param tracking_file Root file containing hists.
-//  * @param name_list List of histogram names the user wishes to read in. Default list defined
-//  * in header file. (FIXME: can add option to just read in all 2D hists)
-//  */
-// HistList::HistList(std::string tracking_file, std::vector<std::string> name_list) {
-//     Read_File(tracking_file, name_list);
-// }
+/**
+ * @brief Construct a new Hist List:: Hist List object.
+ * Creates vector of 2D Tracking Hists in root file, and clones them to
+ * 3 new vectors of 2D hists with modified names.
+ * 
+ * @param tracking_file Root file containing hists.
+ * @param name_list List of histogram names the user wishes to read in. Default list defined
+ * in header file. (FIXME: can add option to just read in all 2D hists)
+ */
+HistList::HistList(std::string tracking_file, std::vector<std::string> name_list) {
+    Read_File(tracking_file, name_list);
+}
 
-// /**
-//  * @brief Basically constructs a new HistList object.
-//  * Creates vector of 2D Tracking Hists in root file, and clones them to
-//  * 3 new vectors of 2D hists with modified names.
-//  * 
-//  * @param tracking_file Root file containing hists.
-//  * @param name_list List of histogram names the user wishes to read in. Default list defined
-//  * in header file. (FIXME: can add option to just read in all 2D hists)
-//  */
-// void HistList::Read_File(std::string tracking_file, std::vector<std::string> name_list) {
-//     // Read in root file
-//     TFile* fin = new TFile(tracking_file.c_str());
-//     if (!fin->IsOpen()) {
-//         std::cout << "Cannot open input file " << tracking_file << std::endl;
-//         exit(1);
-//     }
-//     length = name_list.size();
+/**
+ * @brief Basically constructs a new HistList object.
+ * Creates vector of 2D Tracking Hists in root file, and clones them to
+ * 3 new vectors of 2D hists with modified names.
+ * 
+ * @param tracking_file Root file containing hists.
+ * @param name_list List of histogram names the user wishes to read in. Default list defined
+ * in header file. (FIXME: can add option to just read in all 2D hists)
+ */
+void HistList::Read_File(std::string tracking_file, std::vector<std::string> name_list) {
+    // Read in root file
+    TFile* fin = new TFile(tracking_file.c_str());
+    if (!fin->IsOpen()) {
+        std::cout << "Cannot open input file " << tracking_file << std::endl;
+        exit(1);
+    }
+    length = name_list.size();
     
-//     // Iterate through list of objects in root file
-//     TList* list = fin->GetListOfKeys() ;
-//     if (!list) {std::cout << "No keys found in file\n" << std::endl; exit(1);}
-//     TIter next(list);
-//     TObject* obj;
-//     TKey* key;
-//     int j = 0;
-//     std::string name;
-//     int order[name_list.size()];
-//     for (unsigned int i = 0; i < length; ++i) {
-//         order[i] = -1;
-//     }
-//     std::vector<TH2F*> temp_HistList;
+    // Iterate through list of objects in root file
+    TList* list = fin->GetListOfKeys() ;
+    if (!list) {std::cout << "No keys found in file\n" << std::endl; exit(1);}
+    TIter next(list);
+    TObject* obj;
+    TKey* key;
+    int j = 0;
+    std::string name;
+    int order[name_list.size()];
+    for (unsigned int i = 0; i < length; ++i) {
+        order[i] = -1;
+    }
+    std::vector<TH2F*> temp_HistList;
 
-//     // Go through list of histograms and add them to temp list if they are included in name list
-//     while((key = (TKey*)next())){
-//         obj = key->ReadObj() ;
-//         if(obj->InheritsFrom(TH2::Class())){
-//             // Check which histogram in file matches name
-//             name = (std::string)(((TH2F*)obj)->GetName());
-//             for (unsigned int i = 0; i < length; ++i) {
-//                 if (name == name_list.at(i)) {
-//                     // Add tracking histograms to temporary list
-//                     temp_HistList.push_back((TH2F*)obj);
-//                     order[i] = j;
-//                     ++j;
-//                     break;
-//                 }
-//             }
-//         }
-//     }
+    // Go through list of histograms and add them to temp list if they are included in name list
+    while((key = (TKey*)next())){
+        obj = key->ReadObj() ;
+        if(obj->InheritsFrom(TH2::Class())){
+            // Check which histogram in file matches name
+            name = (std::string)(((TH2F*)obj)->GetName());
+            for (unsigned int i = 0; i < length; ++i) {
+                if (name == name_list.at(i)) {
+                    // Add tracking histograms to temporary list
+                    temp_HistList.push_back((TH2F*)obj);
+                    order[i] = j;
+                    ++j;
+                    break;
+                }
+            }
+        }
+    }
 
-//     // Reorder histograms, and clone new ones in that order
-//     for (unsigned int i = 0; i < length; ++i) {
-//         if (order[i] == -1) {
-//             std::cout << "Histogram '" << name_list.at(i) << "' not found." << std::endl;
-//             exit(1);
-//         } else {
-//             // Add tracking histograms to list
-//             tracking_hists.push_back(temp_HistList.at(order[i]));
+    // Reorder histograms, and clone new ones in that order
+    for (unsigned int i = 0; i < length; ++i) {
+        if (order[i] == -1) {
+            std::cout << "Histogram '" << name_list.at(i) << "' not found." << std::endl;
+            exit(1);
+        } else {
+            // Add tracking histograms to list
+            tracking_hists.push_back(temp_HistList.at(order[i]));
 
-//             // Clone tracking hists to other lists
-//             name = name_list.at(i).erase(0,1); // removes first character ("h" in this case)
-//             region_hists.push_back((TH2F*)(tracking_hists.at(i))->Clone());
-//             region_hists.at(i)->SetName(((std::string)"hRegion" + name).c_str());
-//             direct_hists.push_back((TH2F*)(tracking_hists.at(i))->Clone());
-//             direct_hists.at(i)->SetName(((std::string)"hDirect" + name).c_str());
-//             reflected_hists.push_back((TH2F*)(tracking_hists.at(i))->Clone());
-//             reflected_hists.at(i)->SetName(((std::string)"hReflected" + name).c_str());
-//         }
-//     }
-// }
+            // Clone tracking hists to other lists
+            name = name_list.at(i).erase(0,1); // removes first character ("h" in this case)
+            region_hists.push_back((TH2F*)(tracking_hists.at(i))->Clone());
+            region_hists.at(i)->SetName(((std::string)"hRegion" + name).c_str());
+            direct_hists.push_back((TH2F*)(tracking_hists.at(i))->Clone());
+            direct_hists.at(i)->SetName(((std::string)"hDirect" + name).c_str());
+            reflected_hists.push_back((TH2F*)(tracking_hists.at(i))->Clone());
+            reflected_hists.at(i)->SetName(((std::string)"hReflected" + name).c_str());
+        }
+    }
+}
 
-// // return suitable histograms / histogram names
-// unsigned int HistList::len() {return length;}
-// std::vector<TH2F*>& HistList::Tracking_Hists() {return tracking_hists;}
-// std::vector<TH2F*>& HistList::Region_Hists() {return region_hists;}
-// std::vector<TH2F*>& HistList::Direct_Hists() {return direct_hists;}
-// std::vector<TH2F*>& HistList::Reflected_Hists() {return reflected_hists;}
+// return suitable histograms / histogram names
+unsigned int HistList::len() {return length;}
+std::vector<TH2F*>& HistList::Tracking_Hists() {return tracking_hists;}
+std::vector<TH2F*>& HistList::Region_Hists() {return region_hists;}
+std::vector<TH2F*>& HistList::Direct_Hists() {return direct_hists;}
+std::vector<TH2F*>& HistList::Reflected_Hists() {return reflected_hists;}
 
-// /**
-//  * @brief Write all  new (Region, Direct, Reflected) hists to file
-//  * 
-//  */
-// void HistList::Write() {
-//     for (unsigned int i = 0; i < length; ++i) {
-//         region_hists.at(i)->Write();
-//         direct_hists.at(i)->Write();
-//         reflected_hists.at(i)->Write();
-//     }
-// }
+/**
+ * @brief Write all  new (Region, Direct, Reflected) hists to file
+ * 
+ */
+void HistList::Write() {
+    for (unsigned int i = 0; i < length; ++i) {
+        region_hists.at(i)->Write();
+        direct_hists.at(i)->Write();
+        reflected_hists.at(i)->Write();
+    }
+}
