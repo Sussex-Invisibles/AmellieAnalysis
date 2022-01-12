@@ -44,7 +44,7 @@ double triangle::Area() {return 0.5 * Area2;}
  * @return true 
  * @return false 
  */
-bool triangle::check_point_inside_triangle(const double point_x, const double point_y) {
+bool triangle::check_point_inside_triangle(const double point_x, const double point_y, const bool print) {
     if (Area2 == 0.0) {
         // std::cout << "Triangle area is zero." << std::endl;
         return false;
@@ -66,6 +66,13 @@ bool triangle::check_point_inside_triangle(const double point_x, const double po
     // Check sum of areas of point triangles adds up to original triangle aread (tolerance of 0.1%).
     // If they are equal, the point is inside the triangle. If the sum is larger, the point is outside.
     double frac_diff = ((A_a + A_b + A_c) / Area2) - 1.0;
+    if (print) {
+        std::cout << "2*Area = " << Area2 << std::endl;
+        std::cout << "2*Area_a = " << A_a << std::endl;
+        std::cout << "2*Area_b = " << A_b << std::endl;
+        std::cout << "2*Area_c = " << A_c << std::endl;
+        std::cout << "frac_diff = " << frac_diff << std::endl;
+    }
     if (frac_diff <= 0.001) {
         return true;
     } else {

@@ -680,6 +680,7 @@ std::vector<double> GetFOMs(std::vector<double> points, std::vector<double> fixe
     int nBinsY = coords.at(0).size();
     std::cout << "loop_num = " << loop_num << std::endl;
     std::cout << "nBinsX = " << nBinsX << ", nBinsY = " << nBinsY << std::endl;
+    bool print = false;
     for (int i = 0; i < 3; ++i){
         Tri[numVar] = points.at(i);
         std::cout << "Triangle = " << Tri[0] << ", " << Tri[1] << ", " << Tri[2] << ", "
@@ -689,8 +690,9 @@ std::vector<double> GetFOMs(std::vector<double> points, std::vector<double> fixe
                 if (loop_num >= 98) {
                     std::cout << "x_num = " << x << ", y_num = " << y << std::endl;
                     std::cout << "x = " << coords.at(x).at(y).at(0) << ", y = " << coords.at(x).at(y).at(1) << std::endl;
+                    print = true;
                 }
-                if(Tri.check_point_inside_triangle(coords.at(x).at(y).at(0), coords.at(x).at(y).at(1))){
+                if(Tri.check_point_inside_triangle(coords.at(x).at(y).at(0), coords.at(x).at(y).at(1), print)){
                     if(signal == "reemitted"){
                         countReEmitted[i] += values_reEmittedHist.at(x).at(y);
                     }
