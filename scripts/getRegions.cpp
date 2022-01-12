@@ -38,7 +38,7 @@ int main(int argc, char** argv){
 }
 
 /**
- * @brief Finds Triangular region with best (highest) FOM (attenuated / total) via a divide and conquer method
+ * @brief Finds Triangular region with best (highest) FOM (attenuated / sqrt(total)) via a divide and conquer method
  * Start with p=(min, mid, max) for each point (x and y coordinates), as well as initial fixed points that are the largest
  * right-angle triangle to start with. Find FOM for triangle by replacing each point with each option in p (one at a time),
  * while keeping the other fixed points temprarily fixed. Then replace the associated fixed point with whichever of min or
@@ -389,7 +389,7 @@ TCanvas* DrawRegionLims(std::vector<double> fixedPoints, HistList hists_lists, s
 /**
  * @brief Replace the associated point in the trianle (normally given by fixedPoints) with each point (of 3) in points,
  * draw a triangle with each such configuration, and count the number of different types on events that fall inside/outside
- * of the triangle. The FOM for each is a ratio of numbers of events: signal inside / total inside, where signal is
+ * of the triangle. The FOM for each is a ratio of numbers of events: signal inside / sqrt(total inside), where signal is
  * defined below, and total means any event type.
  * 
  * @param points (z_i_min, z_i_mid, z_i_max), for z=x,y, and i in {a, b, c}
@@ -439,7 +439,7 @@ std::vector<double> GetFOMs(std::vector<double> points, std::vector<double> fixe
     double signal_ratios[3] = {0, 0, 0};
     for (int i = 0; i < 3; ++i){
         if(countReEmitted[i] > 0 and countTotal[i] > 0) {
-            signal_ratios[i] = countReEmitted[i] / countTotal[i];
+            signal_ratios[i] = countReEmitted[i] / std::sqrt(countTotal[i]);
         }
     }
 
