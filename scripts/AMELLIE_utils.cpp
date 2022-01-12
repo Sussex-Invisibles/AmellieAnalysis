@@ -16,9 +16,9 @@
 triangle::triangle(double x_a, double x_b, double x_c, double y_a, double y_b, double y_c) {
     points[0] = x_a; points[1] = x_b; points[2] = x_c;
     points[3] = y_a; points[4] = y_b; points[5] = y_c;
-    // Twice the area of the triangle (twice to save on computation later)
-    Area2 = abs(points[0] * (points[4] - points[5]) + points[1] * (points[5] - points[3])
-                + points[2] * (points[3] - points[4]));
+    // // Twice the area of the triangle (twice to save on computation later)
+    // Area2 = fabs(points[0] * (points[4] - points[5]) + points[1] * (points[5] - points[3])
+    //             + points[2] * (points[3] - points[4]));
 }
 
 // member functions
@@ -31,8 +31,6 @@ double& triangle::Y_a() {return points[3];}
 double& triangle::Y_b() {return points[4];}
 double& triangle::Y_c() {return points[5];}
 
-double triangle::Area() {return 0.5 * Area2;}
-
 /**
  * @brief Checks if point is inside triangle by using the sum of triangles method:
  * if the sum of the area of the three triangles formed by the point and two vertices of the triangle add up to
@@ -44,32 +42,41 @@ double triangle::Area() {return 0.5 * Area2;}
  * @return true 
  * @return false 
  */
-bool triangle::check_point_inside_triangle(const double point_x, const double point_y, const bool lim_count) {
+bool triangle::check_point_inside_triangle(const double point_x, const double point_y, const bool print) {
+    // Twice the area of the triangle (twice to save on computation later)
+    double Area2 = fabs(points[0] * (points[4] - points[5]) + points[1] * (points[5] - points[3])
+                    + points[2] * (points[3] - points[4]));
     if (Area2 == 0.0) {
         // std::cout << "Triangle area is zero." << std::endl;
-        if (point_x == points[0] and point_y == points[3]) {
-            return lim_count;  // still might be on the point of the triangle
-        } else {
-            return false;
-        }
+        return false;
     }
 
     // Calculate (twice) the area of each triangle formed by the point, and check if it is zero successively
-    double A_a = abs(point_x * (points[4] - points[5]) + points[1] * (points[5] - point_y)
+    double A_a = fabs(point_x * (points[4] - points[5]) + points[1] * (points[5] - point_y)
                     + points[2] * (point_y - points[4]));
-    if (A_a == 0.0) {return lim_count;} // if area is zero, point is on edge of triangle.
+    if (A_a == 0.0) {return false;} // if area is zero, point is on edge of triangle.
 
-    double A_b = abs(points[0] * (point_y - points[5]) + point_x * (points[5] - points[3])
+    double A_b = fabs(points[0] * (point_y - points[5]) + point_x * (points[5] - points[3])
                     + points[2] * (points[3] - point_y));
-    if (A_b == 0.0) {return lim_count;} // if area is zero, point is on edge of triangle.
+    if (A_b == 0.0) {return false;} // if area is zero, point is on edge of triangle.
 
-    double A_c = abs(points[0] * (points[4] - point_y) + points[1] * (point_y - points[3])
+    double A_c = fabs(points[0] * (points[4] - point_y) + points[1] * (point_y - points[3])
                     + point_x * (points[3] - points[4]));
-    if (A_c == 0.0) {return lim_count;} // if area is zero, point is on edge of triangle.
+    if (A_c == 0.0) {return false;} // if area is zero, point is on edge of triangle.
 
     // Check sum of areas of point triangles adds up to original triangle aread (tolerance of 0.1%).
-    // If they equal, the point is inside triangle. If the sum is larger, the point is outside.
+    // If they are equal, the point is inside the triangle. If the sum is larger, the point is outside.
     double frac_diff = ((A_a + A_b + A_c) / Area2) - 1.0;
+
+    // print info if desired
+    if (print) {
+        std::cout << "2*Area = " << Area2 << std::endl;
+        std::cout << "2*Area_a = " << A_a << std::endl;
+        std::cout << "2*Area_b = " << A_b << std::endl;
+        std::cout << "2*Area_c = " << A_c << std::endl;
+        std::cout << "frac_diff = " << frac_diff << std::endl;
+    }
+    
     if (frac_diff <= 0.001) {
         return true;
     } else {

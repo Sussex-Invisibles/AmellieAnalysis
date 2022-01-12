@@ -7,6 +7,7 @@
 #include <fstream>
 #include <assert.h>
 #include <algorithm>
+#include <cmath> 
 #include <TFile.h>
 #include <TH1.h>
 #include <TH2.h>
@@ -25,7 +26,7 @@
 class triangle {
     private:
         double points[6]; //x_a, x_b, x_c, y_a, y_b, y_c
-        double Area2;
+        //double Area2;
 
     public:
         // constructors
@@ -39,9 +40,7 @@ class triangle {
         double& Y_b();
         double& Y_c();
 
-        double Area();
-
-        bool check_point_inside_triangle(const double point_x, const double point_y, const bool lim_count=true);
+        bool check_point_inside_triangle(const double point_x, const double point_y, const bool print=false);
 
     /* ~~~~~~~~~ operator overload ~~~~~~~~~ */
 

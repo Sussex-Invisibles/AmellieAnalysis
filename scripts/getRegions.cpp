@@ -1,8 +1,3 @@
-//Compile: g++ -g -std=c++1y -o getRegions.exe getRegions.cpp `root-config --cflags --libs` -I$RATROOT/include/libpq -I$RATROOT/include -L$RATROOT/lib -lRATEvent_Linux
-/*
-Rewrite of the region selection code, after conversations with Lisa.
-Create plots of the phase space showing the relationship between different parameters [x_a, y_a, x_b_c, y_b, y_c]
-*/
 #include <TH1.h>
 #include <TH2.h>
 #include <TGraph.h>
@@ -418,13 +413,13 @@ std::vector<double> GetFOMs(std::vector<double> points, std::vector<double> fixe
     triangle Tri = triangle(fixedPoints.at(0), fixedPoints.at(1), fixedPoints.at(2), fixedPoints.at(3),
                             fixedPoints.at(4), fixedPoints.at(5));
 
-    for(int x=1; x<reEmittedHist->GetNbinsX()+1; x++){ //loop over histogram bins
-        double xBinCenter = reEmittedHist->GetXaxis()->GetBinCenter(x);
-        for(int y=1; y<reEmittedHist->GetNbinsY()+1; y++){
-            double yBinCenter = reEmittedHist->GetYaxis()->GetBinCenter(y);
-            // Replace the appropriate point in the triangle with each point in points and see if the bin falls in the triangle.
-            for (int i = 0; i < 3; ++i){
-                Tri[numVar] = points.at(i);
+    // Replace the appropriate point in the triangle with each point in points and see if the bin falls in the triangle.
+    for (int i = 0; i < 3; ++i){
+        Tri[numVar] = points.at(i);
+        for(int x=1; x<reEmittedHist->GetNbinsX()+1; x++){ //loop over histogram bins
+            double xBinCenter = reEmittedHist->GetXaxis()->GetBinCenter(x);
+            for(int y=1; y<reEmittedHist->GetNbinsY()+1; y++){
+                double yBinCenter = reEmittedHist->GetYaxis()->GetBinCenter(y);
                 if(Tri.check_point_inside_triangle(xBinCenter, yBinCenter)){
                     if(signal == "reemitted"){
                         countReEmitted[i] += reEmittedHist->GetBinContent(x,y);
