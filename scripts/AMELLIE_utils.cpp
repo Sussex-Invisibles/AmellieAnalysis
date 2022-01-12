@@ -85,6 +85,8 @@ bool triangle::check_point_inside_triangle(const double point_x, const double po
 double& triangle::operator [] (int i) {
     assert((i < 6 && i >= 0) && "Index out of range");
     return points[i];
+    Area2 = fabs(points[0] * (points[4] - points[5]) + points[1] * (points[5] - points[3])
+                + points[2] * (points[3] - points[4]));
 }
 
 
