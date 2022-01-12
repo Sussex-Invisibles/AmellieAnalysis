@@ -32,16 +32,6 @@ class triangle {
         // constructors
         triangle(double x_a, double x_b, double x_c, double y_a, double y_b, double y_c);
 
-        // member functions
-        double& X_a();
-        double& X_b();
-        double& X_c();
-        double& Y_a();
-        double& Y_b();
-        double& Y_c();
-
-        double Area();
-
         bool check_point_inside_triangle(const double point_x, const double point_y, const bool print=false);
 
     /* ~~~~~~~~~ operator overload ~~~~~~~~~ */
