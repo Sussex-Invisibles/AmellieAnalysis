@@ -13,7 +13,7 @@
 int CalculateRegions(std::string inputFile, int nbins);
 int OptimiseDivideAndConquer(std::string inputFile, int nbins, std::string fibre, bool verbose, bool debug, bool extraInfo, std::string signal_param);
 std::vector<double> GetThreePoints(double bestPoint, double worstPoint, std::vector<double> originalPoints);
-TCanvas* DrawRegionLims(std::vector<double> fixedPoints, HistList hists_lists, std::string fibre);
+void DrawRegionLims(std::vector<double> fixedPoints, HistList hists_lists, std::string fibre);
 std::vector<double> GetFOMs(std::vector<double> points, std::vector<double> fixedPoints, int numVar, TH2F *allPathsHist, TH2F *reEmittedHist, TH2F *scatteredHist, std::string signal);
 std::vector<double> GetBestFOM(std::vector<double> FOMs, std::vector<double> points);
 HistList GetRegionSelectedHists(std::vector<double> finalPoints, HistList hists_lists, std::string fibre, std::string saveroot_txt);
@@ -279,9 +279,7 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, std::string fibre
     }
 
     // Draw region limits on 2D hist and write to root file
-    TCanvas* c1 = DrawRegionLims(fixedPoints, hists_lists, fibre);
-    c1->Write();  
-    delete c1;
+    DrawRegionLims(fixedPoints, hists_lists, fibre);
 
     rootfile->Write();
     rootfile->Close();
@@ -330,7 +328,7 @@ std::vector<double> GetThreePoints(double bestPoint, double worstPoint, std::vec
  * @param fibre 
  * @return TCanvas* 
  */
-TCanvas* DrawRegionLims(std::vector<double> fixedPoints, HistList hists_lists, std::string fibre) {
+void DrawRegionLims(std::vector<double> fixedPoints, HistList hists_lists, std::string fibre) {
     // get points
     double x_a = fixedPoints.at(0);
     double x_b = fixedPoints.at(1);
@@ -382,7 +380,9 @@ TCanvas* DrawRegionLims(std::vector<double> fixedPoints, HistList hists_lists, s
         lines[i].SetLineColor(kBlack);
         lines[i].Draw("SAME");
     }
-    return c1;
+
+    c1->Write();  
+    delete c1;
 }
 
 
