@@ -687,11 +687,11 @@ std::vector<double> GetFOMs(std::vector<double> points, std::vector<double> fixe
                     << Tri[3] << ", " << Tri[4] << ", " << Tri[5] << ", " << std::endl;
         for(int x=0; x<nBinsX; x++){ //loop over histogram bins
             for(int y=0; y<nBinsY; y++){
-                if (loop_num >= 98) {
-                    std::cout << "x_num = " << x << ", y_num = " << y << std::endl;
-                    std::cout << "x = " << coords.at(x).at(y).at(0) << ", y = " << coords.at(x).at(y).at(1) << std::endl;
-                    print = true;
-                }
+                // if (loop_num >= 98) {
+                //     std::cout << "x_num = " << x << ", y_num = " << y << std::endl;
+                //     std::cout << "x = " << coords.at(x).at(y).at(0) << ", y = " << coords.at(x).at(y).at(1) << std::endl;
+                //     print = true;
+                // }
                 if(Tri.check_point_inside_triangle(coords.at(x).at(y).at(0), coords.at(x).at(y).at(1), print)){
                     if(signal == "reemitted"){
                         countReEmitted[i] += values_reEmittedHist.at(x).at(y);

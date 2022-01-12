@@ -16,9 +16,9 @@
 triangle::triangle(double x_a, double x_b, double x_c, double y_a, double y_b, double y_c) {
     points[0] = x_a; points[1] = x_b; points[2] = x_c;
     points[3] = y_a; points[4] = y_b; points[5] = y_c;
-    // Twice the area of the triangle (twice to save on computation later)
-    Area2 = fabs(points[0] * (points[4] - points[5]) + points[1] * (points[5] - points[3])
-                + points[2] * (points[3] - points[4]));
+    // // Twice the area of the triangle (twice to save on computation later)
+    // Area2 = fabs(points[0] * (points[4] - points[5]) + points[1] * (points[5] - points[3])
+    //             + points[2] * (points[3] - points[4]));
 }
 
 // member functions
@@ -45,6 +45,9 @@ double triangle::Area() {return 0.5 * Area2;}
  * @return false 
  */
 bool triangle::check_point_inside_triangle(const double point_x, const double point_y, const bool print) {
+    // Twice the area of the triangle (twice to save on computation later)
+    double Area2 = fabs(points[0] * (points[4] - points[5]) + points[1] * (points[5] - points[3])
+                    + points[2] * (points[3] - points[4]));
     if (Area2 == 0.0) {
         // std::cout << "Triangle area is zero." << std::endl;
         return false;
@@ -85,8 +88,6 @@ bool triangle::check_point_inside_triangle(const double point_x, const double po
 double& triangle::operator [] (int i) {
     assert((i < 6 && i >= 0) && "Index out of range");
     return points[i];
-    Area2 = fabs(points[0] * (points[4] - points[5]) + points[1] * (points[5] - points[3])
-                + points[2] * (points[3] - points[4]));
 }
 
 

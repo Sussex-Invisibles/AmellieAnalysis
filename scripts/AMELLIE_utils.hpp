@@ -26,7 +26,7 @@
 class triangle {
     private:
         double points[6]; //x_a, x_b, x_c, y_a, y_b, y_c
-        double Area2;
+        //double Area2;
 
     public:
         // constructors
