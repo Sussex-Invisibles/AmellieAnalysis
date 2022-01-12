@@ -1,4 +1,3 @@
-//Compile: g++ -g -std=c++1y -o generateStats.exe generateStats.cpp `root-config --cflags --libs` -I$RATROOT/include/libpq -I$RATROOT/include -L$RATROOT/lib -lRATEvent_Linux
 #include <iostream>
 #include <fstream>
 #include <TFile.h>
@@ -72,12 +71,8 @@ int generate_stats(std::string region_selected_file, std::string full_file, std:
         return 1;
     }
 
-    std::cout << "Step 1" << std::endl;
-
     TFile *region_hists_file;
     TFile *full_hists_file;
-
-    std::cout << "Step 2" << std::endl;
 
     try{
         region_hists_file = TFile::Open(region_selected_file.c_str());
@@ -88,27 +83,22 @@ int generate_stats(std::string region_selected_file, std::string full_file, std:
         return 1;
     }
 
-    std::cout << "Step 3" << std::endl;
-
     if (data_type == "MC") {
-        std::cout << "Step 4" << std::endl;
 
-        TH2F *fullHist;  // <---------------
+        TH2F *fullHist;
         TH2F *regionHistReemitted;
         TH2F *directHistReemitted;
         TH2F *reflectedHistReemitted;
         TH2F *regionHistScattered;
         TH2F *directHistScattered;
         TH2F *reflectedHistScattered;
-        TH2F *regionHistAll;  // <---------------
-        TH2F *directHistAll;  // <---------------
+        TH2F *regionHistAll;
+        TH2F *directHistAll;
         TH2F *reflectedHistAll;
 
-        std::cout << "Step 5" << std::endl;
-
-        full_hists_file->GetObject("hPmtResTimeVsCosTheta",fullHist);  // <---------------
-        region_hists_file->GetObject("hRegionPmtResTimeVsCosTheta",regionHistAll);  // <--------------------
-        region_hists_file->GetObject("hDirectPmtResTimeVsCosTheta",directHistAll);  // <---------------------
+        full_hists_file->GetObject("hPmtResTimeVsCosTheta",fullHist);
+        region_hists_file->GetObject("hRegionPmtResTimeVsCosTheta",regionHistAll);
+        region_hists_file->GetObject("hDirectPmtResTimeVsCosTheta",directHistAll);
         region_hists_file->GetObject("hReflectedPmtResTimeVsCosTheta",reflectedHistAll);
         region_hists_file->GetObject("hRegionReemissionResTimeVsCosTheta",regionHistReemitted);
         region_hists_file->GetObject("hDirectReemissionResTimeVsCosTheta",directHistReemitted);
@@ -117,57 +107,41 @@ int generate_stats(std::string region_selected_file, std::string full_file, std:
         region_hists_file->GetObject("hDirectSingleScatterResTimeVsCosTheta",directHistScattered);
         region_hists_file->GetObject("hReflectedSingleScatterResTimeVsCosTheta",reflectedHistScattered);
 
-        std::cout << "Step 6" << std::endl;
-
         //first stat is signal / signal + background in region
 
-        double sumFullHist = 0;  // <-------------
-        double sumFullHistRegion = 0;  // <-------------
+        double sumFullHist = 0;
+        double sumFullHistRegion = 0;
         double sumSignalHistRegion = 0;
 
-        double sumFullHistDirect = 0;  // <-------------
+        double sumFullHistDirect = 0;
         double sumSignalHistDirect = 0;
 
         double sumFullHistReflected = 0;
         double sumSignalHistReflected = 0;
 
-        std::cout << "Step 7" << std::endl;
-
-        for(int i=0;i<fullHist->GetXaxis()->GetNbins();i++){  // <-------------
-            for(int j=0;j<fullHist->GetYaxis()->GetNbins();j++){  // <-------------
-                std::cout << "Step 7.1" << std::endl;
-                sumFullHist += fullHist->GetBinContent(i,j);  // <-------------
-                std::cout << "Step 7.2" << std::endl;
-                sumFullHistDirect += directHistAll->GetBinContent(i,j);  // <--------------
-                std::cout << "Step 7.3" << std::endl;
+        for(int i=0;i<fullHist->GetXaxis()->GetNbins();i++){
+            for(int j=0;j<fullHist->GetYaxis()->GetNbins();j++){
+                sumFullHist += fullHist->GetBinContent(i,j);
+                sumFullHistDirect += directHistAll->GetBinContent(i,j);
                 sumFullHistReflected += reflectedHistAll->GetBinContent(i,j);
-                std::cout << "Step 7.4" << std::endl;
-                sumFullHistRegion += regionHistAll->GetBinContent(i,j);  // <--------------
-                std::cout << "Step 7.5" << std::endl;
+                sumFullHistRegion += regionHistAll->GetBinContent(i,j);
                 if(signal == "reemitted"){
-                    std::cout << "Step 7.6" << std::endl;
                     sumSignalHistRegion += regionHistReemitted->GetBinContent(i,j);
                     sumSignalHistDirect += directHistReemitted->GetBinContent(i,j);
                     sumSignalHistReflected += reflectedHistReemitted->GetBinContent(i,j);
-                    std::cout << "Step 7.7" << std::endl;
                 }
                 if(signal == "scattered"){
-                    std::cout << "Step 7.8" << std::endl;
                     sumSignalHistRegion += regionHistScattered->GetBinContent(i,j);
                     sumSignalHistDirect += directHistScattered->GetBinContent(i,j);
                     sumSignalHistReflected += reflectedHistScattered->GetBinContent(i,j);
-                    std::cout << "Step 7.9" << std::endl;
                 }
                 if(signal == "attenuated"){
-                    std::cout << "Step 7.9.1" << std::endl;
                     sumSignalHistRegion += regionHistScattered->GetBinContent(i,j) + regionHistReemitted->GetBinContent(i,j);
                     sumSignalHistDirect += directHistScattered->GetBinContent(i,j) + directHistReemitted->GetBinContent(i,j);
                     sumSignalHistReflected += reflectedHistScattered->GetBinContent(i,j) + reflectedHistReemitted->GetBinContent(i,j);
-                    std::cout << "Step 7.9.2" << std::endl;
                 }
             }
         }
-        std::cout << "Step 8" << std::endl;
 
         // open txt file and write values, FOMs can be made and plotted later!
 
@@ -179,16 +153,14 @@ int generate_stats(std::string region_selected_file, std::string full_file, std:
         outputFile.open(saveroot.c_str());
         outputFile << signal + "\n";
         outputFile << std::to_string(sumSignalHistRegion / sqrt(sumFullHistRegion)) + "\n";
-        outputFile << std::to_string(sumFullHist) + "\n";  // <-------------
-        outputFile << std::to_string(sumFullHistRegion) + "\n";  // <-------------
+        outputFile << std::to_string(sumFullHist) + "\n";
+        outputFile << std::to_string(sumFullHistRegion) + "\n";
         outputFile << std::to_string(sumSignalHistRegion) + "\n";
-        outputFile << std::to_string(sumFullHistDirect) + "\n";  // <-------------
+        outputFile << std::to_string(sumFullHistDirect) + "\n";
         outputFile << std::to_string(sumSignalHistDirect) + "\n";
         outputFile << std::to_string(sumFullHistReflected) + "\n";
         outputFile << std::to_string(sumSignalHistReflected) + "\n";
         outputFile.close();
-
-        std::cout << "Step 9" << std::endl;
 
     } else if (data_type == "raw") {
         TH2F *fullHist;  // <---------------
@@ -196,9 +168,9 @@ int generate_stats(std::string region_selected_file, std::string full_file, std:
         TH2F *directHistAll;  // <---------------
         TH2F *reflectedHistAll;
 
-        full_hists_file->GetObject("hPmtResTimeVsCosTheta",fullHist);  // <---------------
-        region_hists_file->GetObject("hRegionPmtResTimeVsCosTheta",regionHistAll);  // <--------------------
-        region_hists_file->GetObject("hDirectPmtResTimeVsCosTheta",directHistAll);  // <---------------------
+        full_hists_file->GetObject("hPmtResTimeVsCosTheta",fullHist);
+        region_hists_file->GetObject("hRegionPmtResTimeVsCosTheta",regionHistAll);
+        region_hists_file->GetObject("hDirectPmtResTimeVsCosTheta",directHistAll);
         region_hists_file->GetObject("hReflectedPmtResTimeVsCosTheta",reflectedHistAll);
 
         //first stat is signal / signal + background in region
@@ -208,12 +180,12 @@ int generate_stats(std::string region_selected_file, std::string full_file, std:
         double sumFullHistDirect = 0;
         double sumFullHistReflected = 0;
 
-        for(int i=0;i<fullHist->GetXaxis()->GetNbins();i++){  // <-------------
-            for(int j=0;j<fullHist->GetYaxis()->GetNbins();j++){  // <-------------
-                sumFullHist += fullHist->GetBinContent(i,j);  // <-------------
-                sumFullHistDirect += directHistAll->GetBinContent(i,j);  // <--------------
+        for(int i=0;i<fullHist->GetXaxis()->GetNbins();i++){
+            for(int j=0;j<fullHist->GetYaxis()->GetNbins();j++){
+                sumFullHist += fullHist->GetBinContent(i,j);
+                sumFullHistDirect += directHistAll->GetBinContent(i,j);
                 sumFullHistReflected += reflectedHistAll->GetBinContent(i,j);
-                sumFullHistRegion += regionHistAll->GetBinContent(i,j);  // <--------------
+                sumFullHistRegion += regionHistAll->GetBinContent(i,j);
             }
         }
 

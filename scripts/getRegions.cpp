@@ -1,8 +1,3 @@
-//Compile: g++ -g -std=c++1y -o getRegions.exe getRegions.cpp `root-config --cflags --libs` -I$RATROOT/include/libpq -I$RATROOT/include -L$RATROOT/lib -lRATEvent_Linux
-/*
-Rewrite of the region selection code, after conversations with Lisa.
-Create plots of the phase space showing the relationship between different parameters [x_a, y_a, x_b_c, y_b, y_c]
-*/
 #include <TH1.h>
 #include <TH2.h>
 #include <TGraph.h>

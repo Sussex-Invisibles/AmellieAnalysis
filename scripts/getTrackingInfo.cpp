@@ -1,5 +1,3 @@
-//Compile: g++ -g -std=c++1y -o getTrackingInfo.exe getTrackingInfo.cpp `root-config --cflags --libs` -I$RATROOT/include/libpq -I$RATROOT/include -L$RATROOT/lib -lRATEvent_Linux
-
 #include <iostream>
 #include <string>
 #include <TCanvas.h>

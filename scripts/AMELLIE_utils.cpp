@@ -31,8 +31,6 @@ double& triangle::Y_a() {return points[3];}
 double& triangle::Y_b() {return points[4];}
 double& triangle::Y_c() {return points[5];}
 
-//double triangle::Area() {return 0.5 * Area2;}
-
 /**
  * @brief Checks if point is inside triangle by using the sum of triangles method:
  * if the sum of the area of the three triangles formed by the point and two vertices of the triangle add up to
@@ -69,6 +67,8 @@ bool triangle::check_point_inside_triangle(const double point_x, const double po
     // Check sum of areas of point triangles adds up to original triangle aread (tolerance of 0.1%).
     // If they are equal, the point is inside the triangle. If the sum is larger, the point is outside.
     double frac_diff = ((A_a + A_b + A_c) / Area2) - 1.0;
+
+    // print info if desired
     if (print) {
         std::cout << "2*Area = " << Area2 << std::endl;
         std::cout << "2*Area_a = " << A_a << std::endl;
@@ -76,6 +76,7 @@ bool triangle::check_point_inside_triangle(const double point_x, const double po
         std::cout << "2*Area_c = " << A_c << std::endl;
         std::cout << "frac_diff = " << frac_diff << std::endl;
     }
+    
     if (frac_diff <= 0.001) {
         return true;
     } else {
