@@ -57,9 +57,13 @@ TVector2 TransformCoord( const TVector3& V1, const TVector3& V2, const TVector3&
 int GetPMTID(std::string input);
 
 int main(int argc, char** argv){
+    std::cout << "Step 1" << std::endl;
     std::string file = argv[1];
+    std::cout << "Step 2" << std::endl;
     std::string fibre = argv[2];
+    std::cout << "Step 3" << std::endl;
     std::string data_type = argv[3];  // MC or raw
+    std::cout << "Step 4" << std::endl;
     int returnCode = GetLightPaths(file, fibre, data_type);
     return 0;
 }
@@ -1010,16 +1014,22 @@ int GetLightPaths(std::string file, std::string fibre, std::string data_type){
     bool verbose = true;
     bool debug = false;
 
+    std::cout << "Step 5" << std::endl;
+
     // Initialise variables and histograms
     int pmtcount = 0;
     double locality = 10.0; //lpc sensitivity
     double energy = RAT::util::WavelengthToEnergy(403E-6); //FIXME: could be input argument as easy to forget
+
+    std::cout << "Step 6" << std::endl;
 
     // get file name from path+filename string
     std::size_t botDirPos = file.find_last_of("/");
     std::string filename = file.substr(botDirPos+1, file.length());
     std::string saveroot = "Tracking_ResHitCosTheta_" + filename;
     TFile *rootfile = new TFile(saveroot.c_str(),"RECREATE");
+
+    std::cout << "Step 7" << std::endl;
 
     TH2F *h2DLPCTIR = new TH2F("h2DLPCTIR", "title", 1000, -1., 1., 20, 0, 2);
     TH2F *h2DLPCStraightLinePath = new TH2F("h2DLPCStraightLinePath", "title", 1000, -1., 1., 20, 0, 2);
@@ -1030,6 +1040,8 @@ int GetLightPaths(std::string file, std::string fibre, std::string data_type){
     TH1D *h1DWAWPaths = new TH1D("h1DWAWPaths", "Water AV water path", 1000, -1., 1.);
     TH1D *h1DWaterPaths = new TH1D("h1DWaterPaths", "Water AV water path", 1000, -1., 1.);
     TH1D *h1DBelowMaxReflectionAngle = new TH1D("h1DBelowMaxReflectionAngle", "Below max angle", 1000, -1., 1.);
+
+    std::cout << "Step 8" << std::endl;
 
     if(verbose) std::cout << "Initialising RAT" << std::endl;
 
@@ -1046,6 +1058,8 @@ int GetLightPaths(std::string file, std::string fibre, std::string data_type){
     double cosTheta[NPMTS];
     TVector2 pmtPosFlat[NPMTS];
 
+    std::cout << "Step 9" << std::endl;
+
     RAT::DB *db = RAT::DB::Get();
     RAT::DBLinkPtr entry = db->GetLink("FIBRE", fibre);
     TVector3 fibrePos(entry->GetD("x"), entry->GetD("y"), entry->GetD("z")); // position of fibre [mm]
@@ -1053,6 +1067,8 @@ int GetLightPaths(std::string file, std::string fibre, std::string data_type){
     if(verbose) std::cout << "RATDB: fibre " << fibre << ", pos: (" << fibrePos.X() << "," << fibrePos.Y() << "," << fibrePos.Z() << "), dir: (" << fibreDir.X() << "," << fibreDir.Y() << "," << fibreDir.Z() << ")" << std::endl; 
 
     double maxReflectionAngle = ReflectionAngle(fibrePos);
+
+    std::cout << "Step 10" << std::endl;
 
     for (int it=0; it<NPMTS; it++){ //only need to calculate transit time for each PMT once, since fibre and pmt locations are fixed
         // Use normal or HQE PMTs only
@@ -1109,8 +1125,10 @@ int GetLightPaths(std::string file, std::string fibre, std::string data_type){
             h1DBelowMaxReflectionAngle->Fill(cosTheta_calc);
         }
     }
+    std::cout << "Step 11" << std::endl;
 
     if (data_type == "MC") {
+        std::cout << "Step 12" << std::endl;
         // Create histograms
         TH1D* hNhits = new TH1D("hNhits", "nhits", 101, 0, 100);
 
@@ -1174,6 +1192,7 @@ int GetLightPaths(std::string file, std::string fibre, std::string data_type){
         TH2F *hMultipleOtherTimeCosTheta = new TH2F("hMultipleOtherTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
         TH2F *hMultipleMoreThan2EffectResTimeCosTheta = new TH2F("hMultipleMoreThan2EffectResTimeCosTheta", "title",1000, -1., 1., 1000, -50., 250.);
 
+        std::cout << "Step 13" << std::endl;
 
         std::vector<Double_t> mctimes;
         std::vector<Double_t> evtimes;
