@@ -1213,7 +1213,7 @@ int GetLightPaths(std::string file, std::string fibre, std::string data_type){
                 std::vector<double> evPMTTimes;
 
                 for(size_t i_evpmt = 0; i_evpmt < calPMT_count; ++i_evpmt){
-                    std::cout << "i_evpmt =  " << i_evpmt << std::endl;
+                    //std::cout << "i_evpmt =  " << i_evpmt << std::endl;
                     evPMTIDs.push_back(calPMTs.GetPMT(i_evpmt).GetID());
                     evPMTTimes.push_back(calPMTs.GetPMT(i_evpmt).GetTime() - transitTime[i_evpmt] - 390 + rMCEV.GetGTTime());
                     h1DResTimeAll->Fill(calPMTs.GetPMT(i_evpmt).GetTime() - transitTime[i_evpmt] - bucketTime[i_evpmt] - 390 + rMCEV.GetGTTime());
@@ -1234,7 +1234,8 @@ int GetLightPaths(std::string file, std::string fibre, std::string data_type){
 
                     MCPMTIDs.push_back(pmtID);
 
-                    for(int z=0;z<rMCPMT.GetMCPECount();z++){ //FIXME: multiple PEs? 
+                    for(int z=0;z<rMCPMT.GetMCPECount();z++){ //FIXME: multiple PEs?
+                        std::cout << "z =  " << z << std::endl;
 
                         Double_t t = rMCPMT.GetMCPE(z).GetFrontEndTime();
                         Double_t t_res = t - transitTime[pmtID] - bucketTime[pmtID];
@@ -1412,6 +1413,7 @@ int GetLightPaths(std::string file, std::string fibre, std::string data_type){
                         }
                     }
                 }
+                std::cout << "#9" << std::endl;
 
                 //compare and add others to noise
                 for(int a=0;a<evPMTIDs.size();a++){
