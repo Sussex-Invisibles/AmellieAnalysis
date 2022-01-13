@@ -1249,10 +1249,8 @@ int GetLightPaths(std::string file, std::string fibre, std::string data_type){
                         if(rMCPMT.GetMCPhotonCount() == 0){
                             std::cout << "z3" << std::endl;
                             hNoiseResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
-                        }
-                        std::cout << "z4" << std::endl;
-
-                        else{
+                            std::cout << "z4" << std::endl;
+                        } else {
                             std::cout << "z5" << std::endl;
                             //get the photon track associated with the PE
                             const RAT::DS::MCPE &rPE = rMCPMT.GetMCPE(z);
@@ -1472,7 +1470,6 @@ int GetLightPaths(std::string file, std::string fibre, std::string data_type){
                     }
                 }
                 std::cout << "#9" << std::endl;
-
                 //compare and add others to noise
                 for(int a=0;a<evPMTIDs.size();a++){
                     if(std::find(MCPMTIDs.begin(), MCPMTIDs.end(), evPMTIDs.at(a)) == MCPMTIDs.end()){
