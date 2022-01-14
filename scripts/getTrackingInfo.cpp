@@ -1189,23 +1189,14 @@ int GetLightPaths(std::string file, std::string fibre, std::string data_type){
             if (iEntry %100 == 0 and verbose) std::cout << "Entry no " << iEntry << std::endl;
             const RAT::DS::Entry &rDS = dsreader.GetEntry(iEntry);
             const RAT::DS::MC &rMC = rDS.GetMC();
-            std::cout << "start loop for entry " << iEntry << std::endl;
             for(size_t i_ev = 0; i_ev< rDS.GetMCEVCount(); ++i_ev){
-                std::cout << "i_ev =  " << i_ev << std::endl;
                 const RAT::DS::MCEV &rMCEV = rDS.GetMCEV(i_ev);
-                std::cout << "#1" << std::endl;
                 const RAT::DS::MCHits &rMCHits = rMCEV.GetMCHits();
-                std::cout << "#2" << std::endl;
                 const RAT::DS::EV &rEV = rDS.GetEV(i_ev);
-                std::cout << "#3" << std::endl;
                 const RAT::DS::CalPMTs &calPMTs = rEV.GetCalPMTs();
-                std::cout << "#4" << std::endl;
                 size_t n_hits_MCHits = rMCHits.GetCount();
-                std::cout << "#5" << std::endl;
                 size_t calPMT_count = calPMTs.GetCount();
-                std::cout << "#6" << std::endl;
                 hNhits->Fill(n_hits_MCHits);
-                std::cout << "#7" << std::endl;
 
                 //get ev PMT ids
 
@@ -1213,18 +1204,15 @@ int GetLightPaths(std::string file, std::string fibre, std::string data_type){
                 std::vector<double> evPMTTimes;
 
                 for(size_t i_evpmt = 0; i_evpmt < calPMT_count; ++i_evpmt){
-                    //std::cout << "i_evpmt =  " << i_evpmt << std::endl;
                     evPMTIDs.push_back(calPMTs.GetPMT(i_evpmt).GetID());
                     evPMTTimes.push_back(calPMTs.GetPMT(i_evpmt).GetTime() - transitTime[i_evpmt] - 390 + rMCEV.GetGTTime());
                     h1DResTimeAll->Fill(calPMTs.GetPMT(i_evpmt).GetTime() - transitTime[i_evpmt] - bucketTime[i_evpmt] - 390 + rMCEV.GetGTTime());
                 }
-                std::cout << "#8" << std::endl;
 
                 //now do main tracking
                 std::vector<int> MCPMTIDs; 
 
                 for(size_t i_mcpmt = 0; i_mcpmt < rMC.GetMCPMTCount(); ++i_mcpmt){
-                    std::cout << "i_mcpmt =  " << i_mcpmt << std::endl;
                     const RAT::DS::MCPMT &rMCPMT = rMC.GetMCPMT(i_mcpmt);
                     if(rMCPMT.GetMCPECount() == 0) continue; //should be a photo electron produced at pmt
 
@@ -1234,242 +1222,182 @@ int GetLightPaths(std::string file, std::string fibre, std::string data_type){
 
                     MCPMTIDs.push_back(pmtID);
 
-                    for(int z=0;z<rMCPMT.GetMCPECount();z++){ //FIXME: multiple PEs?
-                        std::cout << "z =  " << z << std::endl;
-
+                    for (int z=0;z<rMCPMT.GetMCPECount();z++) { //FIXME: multiple PEs?
                         Double_t t = rMCPMT.GetMCPE(z).GetFrontEndTime();
                         Double_t t_res = t - transitTime[pmtID] - bucketTime[pmtID];
-                        std::cout << "z1" << std::endl;
 
                         hPMTResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
-                        std::cout << "z2" << std::endl;
 
                         //now, find photon process and fill relevant histogram
                         //first check is for pmts with no photons, these are noise
-                        if(rMCPMT.GetMCPhotonCount() == 0){
-                            std::cout << "z3" << std::endl;
+                        if (rMCPMT.GetMCPhotonCount() == 0) {
                             hNoiseResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
-                            std::cout << "z4" << std::endl;
                         } else {
-                            std::cout << "z5" << std::endl;
                             //get the photon track associated with the PE
                             const RAT::DS::MCPE &rPE = rMCPMT.GetMCPE(z);
-                            std::cout << "z6" << std::endl;
                             if(rPE.GetNoise() != 1 and rPE.GetAfterPulse() != 1){ //not noise or afterpulse
-                                std::cout << "z7" << std::endl;
                                 UInt_t trackID = rPE.GetPhotonTrackID();
                                 const RAT::DS::MCTrack &rPhotonTrack = rMC.GetMCTrack(trackID);
                                 int photonProcess = GetPhotonProcess(rPhotonTrack, rMC, iEntry, debug);
-                                std::cout << "z8" << std::endl;
 
                                 h1DNoEffectElectronicsTime->Fill(t - (rPhotonTrack.GetMCTrackStep(rPhotonTrack.GetMCTrackStepCount()-1).GetGlobalTime() - rPhotonTrack.GetMCTrackStep(0).GetGlobalTime())); //time from PE to front end readout
-                                std::cout << "z9" << std::endl;
 
                                 if(photonProcess == 0){
-                                    std::cout << "z10" << std::endl;
                                     hSingleScatterResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
                                 }
                                 else if(photonProcess == 1){
-                                    std::cout << "z11" << std::endl;
                                     hReemissionResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
                                 }
                                 else if(photonProcess == 2){
-                                    std::cout << "z12" << std::endl;
                                     hNoEffectResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
                                     h1DNoEffectResTime->Fill(t_res);
                                     h1DNoEffectTime->Fill(t);
                                     h1DNoEffectMCTransitTime->Fill(rPhotonTrack.GetMCTrackStep(rPhotonTrack.GetMCTrackStepCount()-1).GetGlobalTime() - rPhotonTrack.GetMCTrackStep(0).GetGlobalTime());
                                 }
                                 else if(photonProcess == 3){
-                                    std::cout << "z13" << std::endl;
                                     hMultipleEffectResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
                                     int multipleStatus = GetMultipleEffect(rPhotonTrack, rMC);
-                                    std::cout << "z14" << std::endl;
                                     if(multipleStatus == 0){
-                                        std::cout << "z15" << std::endl;
                                         hMultipleMoreThan2EffectResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
                                     }
                                     if(multipleStatus == 1){
-                                        std::cout << "z16" << std::endl;
                                         hMultipleDoubleAbsResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
                                     }
                                     if(multipleStatus == 2){
-                                        std::cout << "z17" << std::endl;
                                         hMultipleDoubleScatResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
                                     }
                                     if(multipleStatus == 3){
-                                        std::cout << "z18" << std::endl;
                                         hMultipleAbsScatScatterResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
                                     }
                                     if(multipleStatus == 4){
-                                        std::cout << "z19" << std::endl;
                                         hMultiplePMTReflectAbsAbsResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
                                     }
                                     if(multipleStatus == 5){
                                         hMultiplePMTReflectScatResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
                                     }
                                     if(multipleStatus == 6){
-                                        std::cout << "z20" << std::endl;
                                         hMultipleDoublePMTReflectResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
                                     }
                                     if(multipleStatus == 7){
-                                        std::cout << "z21" << std::endl;
                                         hMultipleDoubleInnerAVReflectResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
                                     }
                                     if(multipleStatus == 8){
-                                        std::cout << "z22" << std::endl;
                                         hMultipleInnerAVReflectAbsResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
                                     }
                                     if(multipleStatus == 9){
-                                        std::cout << "z23" << std::endl;
                                         hMultipleInnerAVReflectScatResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
                                     }
                                     if(multipleStatus == 10){
-                                        std::cout << "z24" << std::endl;
                                         hMultipleDoubleExternalScatResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
                                     }
                                     if(multipleStatus == 11){
-                                        std::cout << "z25" << std::endl;
                                         hMultipleExtenalScatAbsResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
                                     }
                                     if(multipleStatus == 12){
-                                        std::cout << "z26" << std::endl;
                                         hMultipleExternalScatInternalScatResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
                                     }
                                     if(multipleStatus == 13){
-                                        std::cout << "z27" << std::endl;
                                         hMultipleExternalScatInnerAvReflectResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
                                     }
                                     if(multipleStatus == 14){
-                                        std::cout << "z28" << std::endl;
                                         hMultipleExternalScatPMTReflectResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
                                     }
                                     if(multipleStatus == 15){
-                                        std::cout << "z29" << std::endl;
                                         hMultipleExternalScatNearReflectResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
                                     }
                                     if(multipleStatus == 16){
-                                        std::cout << "z30" << std::endl;
                                         hMultipleNearReflectPMTReflectResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
                                     }
                                     if(multipleStatus == 17){
-                                        std::cout << "z31" << std::endl;
                                         hMultiplePMTReflectRopesResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
                                     }
                                     if(multipleStatus == 18){
-                                        std::cout << "z32" << std::endl;
                                         hMultipleExternalScatRopesResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
                                     }
                                     if(multipleStatus == 19){
-                                        std::cout << "z33" << std::endl;
                                         hMultipleDoubleRopesResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
                                     }
                                     if(multipleStatus == 20){
-                                        std::cout << "z34" << std::endl;
                                         hMultipleScatterPipesResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
                                     }
                                     if(multipleStatus == 21){
-                                        std::cout << "z35" << std::endl;
                                         hMultipleDoublePipesResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
                                     }
                                     if(multipleStatus == 22){
-                                        std::cout << "z36" << std::endl;
                                         hMultipleInnerAVReflectAcrylicScatResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
                                     }
                                     if(multipleStatus == 23){
-                                        std::cout << "z37" << std::endl;
                                         hMultipleInnerAVReflectPMTReflectResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
                                     }
                                     if(multipleStatus == 24){
-                                        std::cout << "z38" << std::endl;
                                         hMultipleOuterAVReflectExternalScatResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
                                     }
                                     if(multipleStatus == 25){
-                                        std::cout << "z39" << std::endl;
                                         hMultiplePMTReflectPipesResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
                                     }
                                     if(multipleStatus == 26){
-                                        std::cout << "z40" << std::endl;
                                         hMultipleRopesAcrylicScatResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
                                     }
                                     if(multipleStatus == 27){
-                                        std::cout << "z41" << std::endl;
                                         hMultiplePMTReflectAcrylicScatResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
                                     }
                                     if(multipleStatus == 28){
-                                        std::cout << "z42" << std::endl;
                                         hMultipleScatterAcrylicScatResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
                                     }
                                     if(multipleStatus == 29){
-                                        std::cout << "z43" << std::endl;
                                         hMultipleOtherScatRopesResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
                                     }
                                     if(multipleStatus == 30){
-                                        std::cout << "z44" << std::endl;
                                         hMultipleScatterAcrylicBounceResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
                                     }
                                     if(multipleStatus == 31){
-                                        std::cout << "z45" << std::endl;
                                         hMultipleExternalScatterAcrylicBounceResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
                                     }
                                     if(multipleStatus == 32){
-                                        std::cout << "z46" << std::endl;
                                         hMultiplePMTReflectAcrylicBounceResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
                                     }
                                     if(multipleStatus == 33){
-                                        std::cout << "z47" << std::endl;
                                         hMultipleOtherTimeCosTheta->Fill(cosTheta[pmtID], t_res);
                                     }
                                 }
                                 else if(photonProcess == 4){
-                                    std::cout << "z48" << std::endl;
                                     hOtherEffectResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
                                 }
                                 else if(photonProcess == 5){
-                                    std::cout << "z49" << std::endl;
                                     hNearReflectResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
                                 }
                                 else if (photonProcess == 6){
-                                    std::cout << "z50" << std::endl;
                                     hRopesResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
                                 }
                                 else if(photonProcess == 7){
-                                    std::cout << "z51" << std::endl;
                                     hPMTReflectionResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
                                 }
                                 else if(photonProcess == 8){
-                                    std::cout << "z52" << std::endl;
                                     hExtWaterScatterResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
                                 }
                                 else if(photonProcess == 9){
-                                    std::cout << "z53" << std::endl;
                                     hInnerAvReflectionResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
                                 }
                                 else if(photonProcess == 10){
-                                    std::cout << "z54" << std::endl;
                                     hAVPipesResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
                                 }
                                 else if(photonProcess == 11){
-                                    std::cout << "z55" << std::endl;
                                     hAcrylicScatterResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
                                 }
                                 else if(photonProcess == 12){
-                                    std::cout << "z56" << std::endl;
                                     hOtherScatterResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
                                 }
                                 else if(photonProcess == 13){
-                                    std::cout << "z57" << std::endl;
                                     hPMTReflectionAVReflectionResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
                                 }
-                            std::cout << "z58" << std::endl;
-                            } else {
-                                std::cout << "z59" << std::endl;
+                            }
+                            else{
                                 hNoiseResTimeCosTheta->Fill(cosTheta[pmtID], t_res);
                             }
                         }
                     }
                 }
-                std::cout << "#9" << std::endl;
+
                 //compare and add others to noise
                 for(int a=0;a<evPMTIDs.size();a++){
                     if(std::find(MCPMTIDs.begin(), MCPMTIDs.end(), evPMTIDs.at(a)) == MCPMTIDs.end()){
