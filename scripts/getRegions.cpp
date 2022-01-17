@@ -17,7 +17,6 @@ void DrawRegionLims(std::vector<double> fixedPoints, HistList hists_lists, std::
 std::vector<double> GetFOMs(std::vector<double> points, std::vector<double> fixedPoints, int numVar, TH2F *allPathsHist, TH2F *reEmittedHist, TH2F *scatteredHist, std::string signal);
 std::vector<double> GetBestFOM(std::vector<double> FOMs, std::vector<double> points);
 HistList GetRegionSelectedHists(std::vector<double> finalPoints, HistList hists_lists, std::string fibre, std::string saveroot_txt);
-std::vector<double> CheckPoints(std::vector<double> points, std::vector<double> fixedPoints, int numVar);
 
 int main(int argc, char** argv){
     std::string file = argv[1];
@@ -162,7 +161,6 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, std::string fibre
             while(std::abs(temp_diffs[i]) > point_tolerances.at(i)){
                 if(first_runs[i]){
                     points[i] = {point_mins[i], (point_maxs[i] + point_mins[i])/2., point_maxs[i]}; //l, c, r
-                    points[i] = CheckPoints(points[i], fixedPoints, i);
                     first_runs[i] = false;
                     if(debug) std::cout << "Set up first " << point_names[i] << "_run points: " << points[i].at(0)
                                         << ", " << points[i].at(1) << ", " << points[i].at(2) << std::endl;
@@ -174,7 +172,6 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, std::string fibre
                 if(debug) std::cout << "Got best FOMs" << std::endl;
                 
                 points[i] = GetThreePoints(bestworstFOMPoints[i].at(0), bestworstFOMPoints[i].at(1), points[i]);
-                points[i] = CheckPoints(points[i], fixedPoints, i);
                 if(debug) std::cout << "Got new points: " << points[i].at(0) << ", " << points[i].at(1) << ", " << points[i].at(2) << std::endl;
                 
                 temp_diffs[i] = std::abs(points[i].at(1) - prevBestFOMPoints[i]);
@@ -581,44 +578,4 @@ HistList GetRegionSelectedHists(std::vector<double> finalPoints, HistList hists_
         }
     }
     return hists_lists;
-}
-
-
-/**
- * @brief Checks if points have broken the triangle (for ex if x_a>x_b, which would flip the order around).
- * If so replace with associated limit from fixedPoints.
- * 
- * @param points (z_i_min, z_i_mid, z_i_max), for z=x,y, and i in {a, b, c}.
- * @param fixedPoints (x_a_min, x_b_max, x_c_max, y_a_min, y_b_max, y_c_min).
- * @param numVar Denotes which point is being checked (0=x_a, 1=x_b, 2=x_c, 3=y_a, 4=y_b, 5=y_c).
- * @return std::vector<double> 
- */
-std::vector<double> CheckPoints(std::vector<double> points, std::vector<double> fixedPoints, int numVar){
-    if(numVar == 0){
-        if(points.at(0) > fixedPoints.at(1)) points.at(0) = fixedPoints.at(1);
-        if(points.at(1) > fixedPoints.at(1)) points.at(1) = fixedPoints.at(1);
-        if(points.at(2) > fixedPoints.at(1)) points.at(2) = fixedPoints.at(1);
-    }
-    if(numVar == 1){
-        if(points.at(0) < fixedPoints.at(0)) points.at(0) = fixedPoints.at(0);
-        if(points.at(1) < fixedPoints.at(0)) points.at(1) = fixedPoints.at(0);
-        if(points.at(2) < fixedPoints.at(0)) points.at(2) = fixedPoints.at(0);
-    }
-    if(numVar == 2){
-        if(points.at(0) < fixedPoints.at(0)) points.at(0) = fixedPoints.at(0);
-        if(points.at(1) < fixedPoints.at(0)) points.at(1) = fixedPoints.at(0);
-        if(points.at(2) < fixedPoints.at(0)) points.at(2) = fixedPoints.at(0);
-    }
-    if(numVar == 4){
-        if(points.at(0) < fixedPoints.at(5)) points.at(0) = fixedPoints.at(5);
-        if(points.at(1) < fixedPoints.at(5)) points.at(1) = fixedPoints.at(5);
-        if(points.at(2) < fixedPoints.at(5)) points.at(2) = fixedPoints.at(5);
-    }
-    if(numVar == 5){
-        if(points.at(0) > fixedPoints.at(4)) points.at(0) = fixedPoints.at(4);
-        if(points.at(1) > fixedPoints.at(4)) points.at(1) = fixedPoints.at(4);
-        if(points.at(2) > fixedPoints.at(4)) points.at(2) = fixedPoints.at(4);
-    }
-
-    return points;
 }
