@@ -14,10 +14,10 @@ Contributors: Charlie
 
 This script generates a ROOT file containing histograms for the photon tracking information.
 
-Requires two input arguments:
+Requires three input arguments:
 1. An AMELLIE simulation ROOT file, where the simulation saved all tracking information
-2. The fibre which was simulated
-
+2. The fibre that was fired.
+3. The string "MC" or "raw" to describe the type of root file being used.
 
 #### getRegions.cpp
 
@@ -26,10 +26,11 @@ This script takes the ROOT file generated in ```getTrackingInfo.cpp``` and selec
 Requires 6 input arguments:
 1. The ROOT file containing the tracked histograms.
 2. An integer specifying the number of bins to use in the optimisation. A larger number increases both precision and run time. The number of bins in the input histograms is the maximum by default, if you input a integer larger than that.
-3. An integer representing a verbose flag (1 for true, 0 for false).
-4. An integer representing a debug flag (1 for true, 0 for false).
-5. An integer representing an extra info flag (1 for true, 0 for false). This will generate a few more histograms describing the evolution of the optimisation.
-6. The required signal: use either ```reemitted```, ```scattered``` or ```attenuated```
+3. The fibre that was fired.
+4. An integer representing a verbose flag (1 for true, 0 for false).
+5. An integer representing a debug flag (1 for true, 0 for false).
+6. An integer representing an extra info flag (1 for true, 0 for false). This will generate a few more histograms describing the evolution of the optimisation.
+7. The required signal: use either ```reemitted```, ```scattered``` or ```attenuated```
 
 The script will output a ROOT file containing histograms for these regions.
 
@@ -42,6 +43,7 @@ If wanting to generate stats, the script requires 4 input arguments:
 2. The ROOT file containing the region histograms (such as produced by ```getRegions.cpp``` or the other function in this script.) 
 3. The ROOT file containing the tracked histograms, as produced by ```getTrackingInfo.cpp```.
 4. The required signal: use either ```reemitted```, ```scattered``` or ```attenuated```
+5. The string "MC" or "raw" to describe the type of root file being used.
 
 If wanting to apply a region selection, the script requires 12 input arguments:
 1. The string ```apply_region```
@@ -56,3 +58,4 @@ If wanting to apply a region selection, the script requires 12 input arguments:
 10. The maximum residual time for the direct beam spot box cut
 11. The minimum residual time for the reflected beam spot box cut
 12. The maximum residual time for the reflected beam spot box cut
+13. The string "MC" or "raw" to describe the type of root file being used.

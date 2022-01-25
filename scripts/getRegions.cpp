@@ -1,32 +1,34 @@
-//Compile: g++ -g -std=c++1y -o getRegions.exe getRegions.cpp `root-config --cflags --libs` -I$RATROOT/include/libpq -I$RATROOT/include -L$RATROOT/lib -lRATEvent_Linux
-/*
-Rewrite of the region selection code, after conversations with Lisa.
-Create plots of the phase space showing the relationship between different parameters [x_a, y_a, x_b_c, y_b, y_c]
-*/
 #include <TH1.h>
 #include <TH2.h>
 #include <TGraph.h>
 #include <TFile.h>
 #include <iostream>
+#include <fstream>
 #include <chrono>
+#include <vector>
+#include <TCanvas.h>
+#include <TLine.h>
+#include "AMELLIE_utils.hpp"
 
 int CalculateRegions(std::string inputFile, int nbins);
-int OptimiseDivideAndConquer(std::string inputFile, int nbins, bool verbose, bool debug, bool extraInfo, std::string signal_param);
+int OptimiseDivideAndConquer(std::string inputFile, int nbins, std::string fibre, bool verbose, bool debug, bool extraInfo, std::string signal_param);
 std::vector<double> GetThreePoints(double bestPoint, double worstPoint, std::vector<double> originalPoints);
+void DrawRegionLims(std::vector<double> fixedPoints, HistList hists_lists, std::string fibre);
 std::vector<double> GetFOMs(std::vector<double> points, std::vector<double> fixedPoints, int numVar, TH2F *allPathsHist, TH2F *reEmittedHist, TH2F *scatteredHist, std::string signal);
 std::vector<double> GetBestFOM(std::vector<double> FOMs, std::vector<double> points);
-std::vector<TH2F*> GetRegionSelectedHists(std::vector<double> finalPoints, TH2F *hReEmittedPaths, TH2F *hAllPaths, TH2F *hNoisePaths, TH2F *hSingleScatterPaths, TH2F *hOtherPaths, TH2F *hNoEffectPaths, TH2F *hNearReflectPaths, TH2F *hRopesPaths, TH2F *hPMTReflectionPaths, TH2F *hExtWaterScatterPaths, TH2F *hInnerAvReflectPaths, TH2F *hMultipleEffectPaths, TH2F *hAVPipesPaths, TH2F *hAcrylicPaths, TH2F *hOtherScatterPaths);
-std::vector<double> CheckPoints(std::vector<double> points, std::vector<double> fixedPoints, int numVar);
+HistList GetRegionSelectedHists(std::vector<double> finalPoints, HistList hists_lists, std::string fibre, std::string saveroot_txt);
 
 int main(int argc, char** argv){
     std::string file = argv[1];
     int nbins = std::stoi(argv[2]);
-    bool verbose = std::stoi(argv[3]);
-    bool debug = std::stoi(argv[4]);
-    bool extraInfo = std::stoi(argv[5]);
-    std::string signal = argv[6];
+    std::string fibre = argv[3];
+    bool verbose = std::stoi(argv[4]);
+    bool debug = std::stoi(argv[5]);
+    bool extraInfo = std::stoi(argv[6]);
+    std::string signal = argv[7];
     auto t1 = std::chrono::high_resolution_clock::now();
-    int status = OptimiseDivideAndConquer(file, nbins, verbose, debug, extraInfo, signal); 
+
+    int status = OptimiseDivideAndConquer(file, nbins, fibre, verbose, debug, extraInfo, signal); 
     auto t2 = std::chrono::high_resolution_clock::now();
 
     std::cout << "Script took " << std::chrono::duration_cast<std::chrono::microseconds>( t2 - t1 ).count() / 1E6 << " s to execute" << std::endl;
@@ -35,7 +37,7 @@ int main(int argc, char** argv){
 }
 
 /**
- * @brief Finds Triangular region with best (highest) FOM (attenuated / sqrt(total)) via an divide and conquer method
+ * @brief Finds Triangular region with best (highest) FOM (attenuated / sqrt(total)) via a divide and conquer method
  * Start with p=(min, mid, max) for each point (x and y coordinates), as well as initial fixed points that are the largest
  * right-angle triangle to start with. Find FOM for triangle by replacing each point with each option in p (one at a time),
  * while keeping the other fixed points temprarily fixed. Then replace the associated fixed point with whichever of min or
@@ -44,13 +46,14 @@ int main(int argc, char** argv){
  * 
  * @param inputFile Root file with original histograms with all the data.
  * @param nbins Number of bins (resolution) that we wish to use (max is capped at number of bins of original hists).
+ * @param fibre Fibre used to determine its angle offset and thus the direct beam spot angle.
  * @param verbose Print extra info.
  * @param debug Print extra info.
  * @param extraInfo Print extra info.
  * @param signal_param signal = reemitted, scattered or attenuated. The signal we are trying to optimise for.
  * @return int 
  */
-int OptimiseDivideAndConquer(std::string inputFile, int nbins, bool verbose, bool debug, bool extraInfo, std::string signal_param){
+int OptimiseDivideAndConquer(std::string inputFile, int nbins, std::string fibre, bool verbose, bool debug, bool extraInfo, std::string signal_param){
 
     auto timeStart = std::chrono::high_resolution_clock::now();
 
@@ -60,515 +63,221 @@ int OptimiseDivideAndConquer(std::string inputFile, int nbins, bool verbose, boo
     }
 
     //create histograms and graphs
+    HistList hists_lists = HistList(inputFile);
 
-    TH2F *hReEmittedPaths;
-    TH2F *hAllPaths;
-    TH2F *hNoisePaths;
-    TH2F *hSingleScatterPaths;
-    TH2F *hOtherPaths;
-    TH2F *hNoEffectPaths;
-    TH2F *hNearReflectPaths;
-    TH2F *hRopesPaths;
-    TH2F *hPMTReflectionPaths;
-    TH2F *hExtWaterScatterPaths;
-    TH2F *hInnerAvReflectPaths;
-    TH2F *hMultipleEffectPaths;
-    TH2F *hAVPipesPaths;
-    TH2F *hAcrylicPaths;
-    TH2F *hOtherScatterPaths;
-    TGraph *hFOMx_a = new TGraph();
-    TGraph *hFOMx_b = new TGraph();
-    TGraph *hFOMx_c = new TGraph();
-    TGraph *hFOMy_a = new TGraph();
-    TGraph *hFOMy_b = new TGraph();
-    TGraph *hFOMy_c = new TGraph();
-    TGraph *hFOMmainloop = new TGraph();
-    TGraph *hDiffx_a = new TGraph();
-    TGraph *hDiffx_b = new TGraph();
-    TGraph *hDiffx_c = new TGraph();
-    TGraph *hDiffy_a = new TGraph();
-    TGraph *hDiffy_b = new TGraph();
-    TGraph *hDiffy_c = new TGraph();
-    TGraph *hPointx_a = new TGraph();
-    TGraph *hPointx_b = new TGraph();
-    TGraph *hPointx_c = new TGraph();
-    TGraph *hPointy_a = new TGraph();
-    TGraph *hPointy_b = new TGraph();
+    TGraph *hFOMx_a = new TGraph(); TGraph *hFOMx_b = new TGraph();
+    TGraph *hFOMx_c = new TGraph(); TGraph *hFOMy_a = new TGraph();
+    TGraph *hFOMy_b = new TGraph(); TGraph *hFOMy_c = new TGraph();
+    TGraph *hFOMmainloop = new TGraph(); TGraph *hDiffx_a = new TGraph();
+    TGraph *hDiffx_b = new TGraph(); TGraph *hDiffx_c = new TGraph();
+    TGraph *hDiffy_a = new TGraph(); TGraph *hDiffy_b = new TGraph();
+    TGraph *hDiffy_c = new TGraph(); TGraph *hPointx_a = new TGraph();
+    TGraph *hPointx_b = new TGraph(); TGraph *hPointx_c = new TGraph();
+    TGraph *hPointy_a = new TGraph(); TGraph *hPointy_b = new TGraph();
     TGraph *hPointy_c = new TGraph();
-
-    //read in hist file
-
-    TFile *raw_file;
-
-    try{
-        raw_file = TFile::Open(inputFile.c_str());
-    }
-    catch(...){
-        std::cout << "Could not open input file." << std::endl;
-        return 1;
-    }
-
-    //assign hists
-
-    raw_file->GetObject("hReemissionResTimeVsCosTheta",hReEmittedPaths);
-    raw_file->GetObject("hPmtResTimeVsCosTheta",hAllPaths);
-    raw_file->GetObject("hNoiseResTimeVsCosTheta",hNoisePaths);
-    raw_file->GetObject("hSingleScatterResTimeVsCosTheta",hSingleScatterPaths);
-    raw_file->GetObject("hOtherEffectResTimeVsCosTheta",hOtherPaths);
-    raw_file->GetObject("hNoEffectResTimeVsCosTheta",hNoEffectPaths);
-    raw_file->GetObject("hNearReflectResTimeVsCosTheta",hNearReflectPaths);
-    raw_file->GetObject("hRopesResTimeVsCosTheta",hRopesPaths);
-    raw_file->GetObject("hPMTReflectionResTimeVsCosTheta",hPMTReflectionPaths);
-    raw_file->GetObject("hExtWaterScatterResTimeVsCosTheta",hExtWaterScatterPaths);
-    raw_file->GetObject("hInnerAvReflectionResTimeVsCosTheta",hInnerAvReflectPaths);
-    raw_file->GetObject("hMultipleEffectResTimeVsCosTheta",hMultipleEffectPaths);
-    raw_file->GetObject("hAVPipesResTimeVsCosTheta",hAVPipesPaths);
-    raw_file->GetObject("hAcrylicScatterResTimeVsCosTheta",hAcrylicPaths);
-    raw_file->GetObject("OtherScatterResTimeVsCosTheta",hOtherScatterPaths);
+    std::vector<TGraph*> hFOMxy;
+    hFOMxy.push_back(hFOMx_a); hFOMxy.push_back(hFOMx_b);
+    hFOMxy.push_back(hFOMx_c); hFOMxy.push_back(hFOMy_a);
+    hFOMxy.push_back(hFOMy_b); hFOMxy.push_back(hFOMy_c);
+    std::vector<TGraph*> hDiffxy;
+    hDiffxy.push_back(hDiffx_a); hDiffxy.push_back(hDiffx_b);
+    hDiffxy.push_back(hDiffx_c); hDiffxy.push_back(hDiffy_a);
+    hDiffxy.push_back(hDiffy_b); hDiffxy.push_back(hDiffy_c);
+    std::vector<TGraph*> hPointxy;
+    hPointxy.push_back(hPointx_a); hPointxy.push_back(hPointx_b);
+    hPointxy.push_back(hPointx_c); hPointxy.push_back(hPointy_a);
+    hPointxy.push_back(hPointy_b); hPointxy.push_back(hPointy_c);
 
     //set up constants
-
-    double countCalculations = 0;
-    double countCycles = 0;
-    double x_a_min = -1;
-    double x_a_max = 1;
-    double x_a_tolerance = (x_a_max - x_a_min) / nbins;
-    double x_b_min = -1;
-    double x_b_max = 1;
-    double x_b_tolerance = (x_b_max - x_b_min) / nbins;
-    double x_c_min = -1;
-    double x_c_max = 1;
-    double x_c_tolerance = (x_c_max - x_c_min) / nbins;
-    double y_a_min = hReEmittedPaths->GetYaxis()->GetXmin();
-    double y_a_max = hReEmittedPaths->GetYaxis()->GetXmax();
-    double y_a_tolerance = (y_a_max - y_a_min) / nbins;
-    double y_b_min = hReEmittedPaths->GetYaxis()->GetXmin();
-    double y_b_max = hReEmittedPaths->GetYaxis()->GetXmax();
-    double y_b_tolerance = (y_b_max - y_b_min) / nbins;
-    double y_c_min = hReEmittedPaths->GetYaxis()->GetXmin();
-    double y_c_max = hReEmittedPaths->GetYaxis()->GetXmax();
-    double y_c_tolerance = (y_c_max - y_c_min) / nbins;
-
-    int nBinsX = hReEmittedPaths->GetXaxis()->GetNbins();
-    int nBinsY = hReEmittedPaths->GetYaxis()->GetNbins();
-
-    double xBinWidth = hReEmittedPaths->GetXaxis()->GetBinCenter(2) - hReEmittedPaths->GetXaxis()->GetBinCenter(1);
-    double yBinWidth = hReEmittedPaths->GetYaxis()->GetBinCenter(2) - hReEmittedPaths->GetYaxis()->GetBinCenter(1);
-
-    if(x_a_tolerance < xBinWidth){
-        x_a_tolerance = xBinWidth;
-        std::cout << "x_a_tolerance is set to bin width, nbins: " << (x_a_max - x_a_min) / xBinWidth << std::endl;
-    }
-    if(x_b_tolerance < xBinWidth){
-        x_b_tolerance = xBinWidth;
-        std::cout << "x_b_tolerance is set to bin width, nbins: " << (x_b_max - x_b_min) / xBinWidth << std::endl;
-    }
-    if(x_c_tolerance < xBinWidth){
-        x_c_tolerance = xBinWidth;
-        std::cout << "x_c_tolerance is set to bin width, nbins: " << (x_c_max - x_c_min) / xBinWidth << std::endl;
-    }
-    if(y_a_tolerance < yBinWidth){
-        y_a_tolerance = yBinWidth;
-        std::cout << "y_a_tolerance is set to bin width, nbins: " << (y_a_max - y_a_min) / yBinWidth << std::endl;
-    }
-    if(y_b_tolerance < yBinWidth){
-        y_b_tolerance = yBinWidth;
-        std::cout << "y_b_tolerance is set to bin width, nbins: " << (y_b_max - y_b_min) / yBinWidth << std::endl;
-    }
-    if(y_c_tolerance < yBinWidth){
-        y_c_tolerance = yBinWidth;
-        std::cout << "y_c_tolerance is set to bin width, nbins: " << (y_c_max - y_c_min) / yBinWidth << std::endl;
+    std::string point_names[6] = {"x_a", "x_b", "x_c", "y_a", "y_b", "y_c"};
+    double y_min = hists_lists.Tracking_Hists().at(0)->GetYaxis()->GetXmin();
+    double y_max = hists_lists.Tracking_Hists().at(0)->GetYaxis()->GetXmax();
+    double point_mins[6] = {-1, -1, -1, y_min, y_min, y_min};
+    double point_maxs[6] = {1, 1, 1, y_max, y_max, y_max};
+    std::vector<double> point_tolerances;
+    for (int i = 0; i < 6; ++i) {
+        point_tolerances.push_back((point_maxs[i] - point_mins[i]) / nbins);
     }
 
-    if(debug) std::cout << "x_a_tolerance: " << x_a_tolerance << ", x_b_tolerance: " << x_b_tolerance << std::endl;
+    double xBinWidth = hists_lists.Tracking_Hists().at(0)->GetXaxis()->GetBinCenter(2) - hists_lists.Tracking_Hists().at(0)->GetXaxis()->GetBinCenter(1);
+    double yBinWidth = hists_lists.Tracking_Hists().at(0)->GetYaxis()->GetBinCenter(2) - hists_lists.Tracking_Hists().at(0)->GetYaxis()->GetBinCenter(1);
 
-    double x_a_diff = 9999999999;
-    double x_b_diff = 9999999999;
-    double x_c_diff = 9999999999;
-    double y_a_diff = 9999999999;
-    double y_b_diff = 9999999999;
-    double y_c_diff = 9999999999;
+    int j;
+    for (int i = 0; i < 3; ++i) {
+        if (point_tolerances.at(i) < xBinWidth) {
+            point_tolerances.at(i) = xBinWidth;
+            std::cout << point_names[i] << "_tolerance is set to bin width, nbins: " << (point_maxs[i] - point_mins[i]) / xBinWidth << std::endl;
+        }
+        j = i + 3;
+        if (point_tolerances.at(j) < yBinWidth) {
+            point_tolerances.at(j) = yBinWidth;
+            std::cout << point_names[j] << "_tolerance is set to bin width, nbins: " << (point_maxs[j] - point_mins[j]) / yBinWidth << std::endl;
+        }
+    }
 
-    double x_a_temp_diff = 9999999999;
-    double x_b_temp_diff = 9999999999;
-    double x_c_temp_diff = 9999999999;
-    double y_a_temp_diff = 9999999999;
-    double y_b_temp_diff = 9999999999;
-    double y_c_temp_diff = 9999999999;
+    if(debug) std::cout << "x_a_tolerance: " << point_tolerances.at(0) << ", x_b_tolerance: " << point_tolerances.at(1) << std::endl;
+
+    std::vector<double> points_diffs = {9999999999, 9999999999, 9999999999, 9999999999, 9999999999, 9999999999};
+    std::vector<double> points_temp_diffs = {9999999999, 9999999999, 9999999999, 9999999999, 9999999999, 9999999999};
 
     auto timeSetup = std::chrono::high_resolution_clock::now();
 
     if(verbose) std::cout << "Time to read in file and set up hists: " << std::chrono::duration_cast<std::chrono::microseconds>(timeSetup - timeStart).count() / 1E6 << "s" << std::endl;
-    // do loop: x_a, x_bc, y_a, y_b, y_c
+    // do loop: x_a, x_b, x_c, y_a, y_b, y_c
     // points: a vector containing the points to change for three regions
     // fixedPoints: a vector containing all the static points
 
-    auto timeStartLoop = std::chrono::high_resolution_clock::now();
-
-    std::vector<double> fixedPoints = {x_a_min, x_b_max, x_c_max, y_a_min, y_b_max, y_c_min};
+    // Initialise variables:
+    // fixedPoints = {x_a_min, x_b_max, x_c_max, y_a_min, y_b_max, y_c_min};
+    std::vector<double> fixedPoints = {point_mins[0], point_maxs[1], point_maxs[2], point_mins[3], point_maxs[4], point_mins[5]};
     bool firstRun = true;
 
     int numMainLoopIterations = 0;
-    int numx_a_iterations = 0;
-    int numx_b_iterations = 0;
-    int numx_c_iterations = 0;
-    int numy_a_iterations = 0;
-    int numy_b_iterations = 0;
-    int numy_c_iterations = 0;
+    int num_iterations[6] = {0, 0, 0, 0, 0, 0};
+    double prev_best_points_main[6];
+    bool first_runs[6];
+    double prevBestFOMPoints[6];
+    double temp_diffs[6];
+    std::vector<double> FOMs[6] = {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}};
+    std::vector<double> bestworstFOMPoints[6] = {{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}};
 
-    double x_a_prev_best_point_main;
-    double x_b_prev_best_point_main;
-    double x_c_prev_best_point_main;
-    double y_a_prev_best_point_main;
-    double y_b_prev_best_point_main;
-    double y_c_prev_best_point_main;
+    std::vector<double> points[6];
+    for (int i = 0; i < 6; ++i) {
+        points[i] = {point_mins[i], (point_maxs[i] + point_mins[i])/2., point_maxs[i]};
+    }
 
-    while(((x_a_diff > x_a_tolerance or x_b_diff > x_b_tolerance or x_c_diff > x_c_tolerance or y_a_diff > y_a_tolerance or y_b_diff > y_b_tolerance or y_c_diff > y_c_tolerance) and !firstRun) or firstRun){
-        bool first_x_a_run = true;
-        bool first_x_b_run = true;
-        bool first_x_c_run = true;
-        bool first_y_a_run = true;
-        bool first_y_b_run = true;
-        bool first_y_c_run = true;
-
-        double prevBestFOMPoint_x_a = 9999999999;
-        double prevBestFOMPoint_x_b = 9999999999;
-        double prevBestFOMPoint_x_c = 9999999999;
-        double prevBestFOMPoint_y_a = 9999999999;
-        double prevBestFOMPoint_y_b = 9999999999;
-        double prevBestFOMPoint_y_c = 9999999999;
-
-        std::vector<double> points_x_a;
-        std::vector<double> points_x_b;
-        std::vector<double> points_x_c;
-        std::vector<double> points_y_a;
-        std::vector<double> points_y_b;
-        std::vector<double> points_y_c;
-        std::vector<double> bestworstFOMPoints_x_a;
-        std::vector<double> bestworstFOMPoints_x_b;
-        std::vector<double> bestworstFOMPoints_x_c;
-        std::vector<double> bestworstFOMPoints_y_a;
-        std::vector<double> bestworstFOMPoints_y_b;
-        std::vector<double> bestworstFOMPoints_y_c;
-
-        double x_a_temp_diff = 9999999999;
-        double x_b_temp_diff = 9999999999;
-        double x_c_temp_diff = 9999999999;
-        double y_a_temp_diff = 9999999999;
-        double y_b_temp_diff = 9999999999;
-        double y_c_temp_diff = 9999999999;
-
-        if(debug) std::cout << "In main while loop with x_a_temp_diff: " << std::abs(x_a_temp_diff) << std::endl;
-
-        while(std::abs(x_a_temp_diff) > x_a_tolerance){
-            if(first_x_a_run){
-                points_x_a = {x_a_min, (x_a_max + x_a_min)/2., x_a_max}; //l, c, r
-                points_x_a = CheckPoints(points_x_a, fixedPoints, 0);
-                first_x_a_run = false;
-                if(debug) std::cout << "Set up first x_a_run points: " << points_x_a.at(0) << ", " << points_x_a.at(1) << ", " << points_x_a.at(2) << std::endl;
-            }
-            std::vector<double> FOMs_x_a = GetFOMs(points_x_a, fixedPoints, 0, hAllPaths, hReEmittedPaths, hSingleScatterPaths, signal_param);
-            if(debug) std::cout << "Got FOMs " << FOMs_x_a.at(0) << ", " << FOMs_x_a.at(1) << ", " << FOMs_x_a.at(2) << std::endl;
-            
-            bestworstFOMPoints_x_a = GetBestFOM(FOMs_x_a, points_x_a);
-            if(debug) std::cout << "Got best FOMs" << std::endl;
-            
-            points_x_a = GetThreePoints(bestworstFOMPoints_x_a.at(0), bestworstFOMPoints_x_a.at(1), points_x_a);
-            points_x_a = CheckPoints(points_x_a, fixedPoints, 0);
-            if(debug) std::cout << "Got new points: " << points_x_a.at(0) << ", " << points_x_a.at(1) << ", " << points_x_a.at(2) << std::endl;
-            
-            x_a_temp_diff = std::abs(points_x_a.at(1) - prevBestFOMPoint_x_a);
-            if(debug) std::cout << "Got difference: " << x_a_temp_diff << std::endl;
-            
-            prevBestFOMPoint_x_a = points_x_a.at(1);
-            if(extraInfo) hFOMx_a->SetPoint(numx_a_iterations, numx_a_iterations, bestworstFOMPoints_x_a.at(2));
-            numx_a_iterations++;
+    bool loop_condition = true; // If any point difference is still larger than its associated tolerance, keep looping. See end of while loop.
+    while(loop_condition or firstRun){
+        // Set/Reset variables
+        for (int i = 0; i < 6; ++i) {
+            first_runs[i] = true;
+            prevBestFOMPoints[i] = 9999999999;
+            temp_diffs[i] = 9999999999;
         }
 
-        if(debug) std::cout << "Setting fixed point: " << bestworstFOMPoints_x_a.at(0) << std::endl;
-        fixedPoints.at(0) = bestworstFOMPoints_x_a.at(0);
-        if(debug) std::cout << "" << std::endl;
+        if(debug) std::cout << "In main while loop with x_a_temp_diff: " << std::abs(temp_diffs[0]) << std::endl;
 
-        while(std::abs(x_b_temp_diff) > x_b_tolerance){
-            if(first_x_b_run){
-                points_x_b = {x_b_min, (x_b_max + x_b_min)/2., x_b_max}; //l, c, r
-                points_x_b = CheckPoints(points_x_b, fixedPoints, 1);
-                first_x_b_run = false;
-                if(debug) std::cout << "First x_bc_run points: " << points_x_b.at(0) << ", " << points_x_b.at(1) << ", " << points_x_b.at(2) << std::endl;
+        for (int i = 0; i < 6; ++i) {
+            while(std::abs(temp_diffs[i]) > point_tolerances.at(i)){
+                if(first_runs[i]){
+                    points[i] = {point_mins[i], (point_maxs[i] + point_mins[i])/2., point_maxs[i]}; //l, c, r
+                    first_runs[i] = false;
+                    if(debug) std::cout << "Set up first " << point_names[i] << "_run points: " << points[i].at(0)
+                                        << ", " << points[i].at(1) << ", " << points[i].at(2) << std::endl;
+                }
+                FOMs[i] = GetFOMs(points[i], fixedPoints, i, hists_lists.Tracking_Hists().at(1), hists_lists.Tracking_Hists().at(0), hists_lists.Tracking_Hists().at(3), signal_param);  //hAllPaths, hReEmittedPaths, hSingleScatterPaths
+                if(debug) std::cout << "Got FOMs " << FOMs[i].at(0) << ", " << FOMs[i].at(1) << ", " << FOMs[i].at(2) << std::endl;
+                
+                bestworstFOMPoints[i] = GetBestFOM(FOMs[i], points[i]);
+                if(debug) std::cout << "Got best FOMs" << std::endl;
+                
+                points[i] = GetThreePoints(bestworstFOMPoints[i].at(0), bestworstFOMPoints[i].at(1), points[i]);
+                if(debug) std::cout << "Got new points: " << points[i].at(0) << ", " << points[i].at(1) << ", " << points[i].at(2) << std::endl;
+                
+                temp_diffs[i] = std::abs(points[i].at(1) - prevBestFOMPoints[i]);
+                if(debug) std::cout << "Got difference: " << temp_diffs[i] << std::endl;
+                
+                prevBestFOMPoints[i] = points[i].at(1);
+                if(extraInfo) hFOMxy.at(i)->SetPoint(num_iterations[i], num_iterations[i], bestworstFOMPoints[i].at(2));
+                num_iterations[i]++;
             }
-            std::vector<double> FOMs_x_b = GetFOMs(points_x_b, fixedPoints, 1, hAllPaths, hReEmittedPaths, hSingleScatterPaths, signal_param);
-            if(debug) std::cout << "Got FOMs: " << FOMs_x_b.at(0) << ", " << FOMs_x_b.at(1) << ", " << FOMs_x_b.at(2) << std::endl;
-            
-            bestworstFOMPoints_x_b = GetBestFOM(FOMs_x_b, points_x_b);
-            if(debug) std::cout << "Got best FOMs" << std::endl;
-            
-            points_x_b = GetThreePoints(bestworstFOMPoints_x_b.at(0), bestworstFOMPoints_x_b.at(1), points_x_b);
-            points_x_b = CheckPoints(points_x_b, fixedPoints, 1);
-            if(debug) std::cout << "Got new points: " << points_x_b.at(0) << ", " << points_x_b.at(1) << ", " << points_x_b.at(2) << std::endl;
-            
-            x_b_temp_diff = std::abs(points_x_b.at(1) - prevBestFOMPoint_x_b);
-            if(debug) std::cout << "Got difference: " << x_b_temp_diff << std::endl;
-            
-            prevBestFOMPoint_x_b = points_x_b.at(1);
-            if(extraInfo) hFOMx_b->SetPoint(numx_b_iterations, numx_b_iterations, bestworstFOMPoints_x_b.at(2));
-            numx_b_iterations++;
+            if(debug) std::cout << "Setting fixed point: " << bestworstFOMPoints[i].at(0) << std::endl;
+            fixedPoints.at(i) = bestworstFOMPoints[i].at(0);
+            if(debug) std::cout << "" << std::endl;
         }
-        if(debug) std::cout << "Setting fixed point: " << bestworstFOMPoints_x_b.at(0) << std::endl;
-        fixedPoints.at(1) = bestworstFOMPoints_x_b.at(0);
-        if(debug) std::cout << "" << std::endl;
-
-        while(std::abs(x_c_temp_diff) > x_c_tolerance){
-            if(first_x_c_run){
-                points_x_c = {x_c_min, (x_c_max + x_c_min)/2., x_c_max}; //l, c, r
-                points_x_c = CheckPoints(points_x_c, fixedPoints, 2);
-                first_x_c_run = false;
-                if(debug) std::cout << "First x_c_run points: " << points_x_c.at(0) << ", " << points_x_c.at(1) << ", " << points_x_c.at(2) << std::endl;
-            }
-            std::vector<double> FOMs_x_c = GetFOMs(points_x_c, fixedPoints, 2, hAllPaths, hReEmittedPaths, hSingleScatterPaths, signal_param);
-            if(debug) std::cout << "Got FOMs: " << FOMs_x_c.at(0) << ", " << FOMs_x_c.at(1) << ", " << FOMs_x_c.at(2) << std::endl;
-            
-            bestworstFOMPoints_x_c = GetBestFOM(FOMs_x_c, points_x_c);
-            if(debug) std::cout << "Got best FOMs" << std::endl;
-            
-            points_x_c = GetThreePoints(bestworstFOMPoints_x_c.at(0), bestworstFOMPoints_x_c.at(1), points_x_c);
-            points_x_c = CheckPoints(points_x_c, fixedPoints, 2);
-            if(debug) std::cout << "Got new points: " << points_x_c.at(0) << ", " << points_x_c.at(1) << ", " << points_x_c.at(2) << std::endl;
-            
-            x_c_temp_diff = std::abs(points_x_c.at(1) - prevBestFOMPoint_x_c);
-            if(debug) std::cout << "Got difference: " << x_c_temp_diff << std::endl;
-            
-            prevBestFOMPoint_x_c = points_x_c.at(1);
-            if(extraInfo) hFOMx_c->SetPoint(numx_c_iterations, numx_c_iterations, bestworstFOMPoints_x_c.at(2));
-            numx_c_iterations++;
-        }
-        if(debug) std::cout << "Setting fixed point: " << bestworstFOMPoints_x_c.at(0) << std::endl;
-        fixedPoints.at(2) = bestworstFOMPoints_x_c.at(0);
-        if(debug) std::cout << "" << std::endl;
-
-        while(std::abs(y_a_temp_diff) > y_a_tolerance){
-            if(first_y_a_run){
-                if(debug) std::cout << "Setting up first y_a_run" << std::endl;
-                points_y_a = {y_a_min, (y_a_max + y_a_min)/2., y_a_max}; //l, c, r
-                points_y_a = CheckPoints(points_y_a, fixedPoints, 3);
-                first_y_a_run = false;
-                if(debug) std::cout << "Set up first y_a_run points: " << points_y_a.at(0) << ", " << points_y_a.at(1) << ", " << points_y_a.at(2) << std::endl;
-            }
-            std::vector<double> FOMs_y_a = GetFOMs(points_y_a, fixedPoints, 3, hAllPaths, hReEmittedPaths, hSingleScatterPaths, signal_param);
-            if(debug) std::cout << "Got FOMs " << FOMs_y_a.at(0) << ", " << FOMs_y_a.at(1) << ", " << FOMs_y_a.at(2) << std::endl;
-            
-            bestworstFOMPoints_y_a = GetBestFOM(FOMs_y_a, points_y_a);
-            if(debug) std::cout << "Got best FOMs" << std::endl;
-            
-            points_y_a = GetThreePoints(bestworstFOMPoints_y_a.at(0), bestworstFOMPoints_y_a.at(1), points_y_a);
-            points_y_a = CheckPoints(points_y_a, fixedPoints, 3);
-            if(debug) std::cout << "Got new points: " << points_y_a.at(0) << ", " << points_y_a.at(1) << ", " << points_y_a.at(2) << std::endl;
-            
-            y_a_temp_diff = std::abs(points_y_a.at(1) - prevBestFOMPoint_y_a);
-            if(debug) std::cout << "Got difference: " << y_a_temp_diff << std::endl;
-            
-            prevBestFOMPoint_y_a = points_y_a.at(1);
-            if(extraInfo) hFOMy_a->SetPoint(numy_a_iterations, numy_a_iterations, bestworstFOMPoints_y_a.at(2));
-            numy_a_iterations++;
-        }
-        if(debug) std::cout << "Setting fixed point: " << bestworstFOMPoints_y_a.at(0) << std::endl;
-        fixedPoints.at(3) = bestworstFOMPoints_y_a.at(0);
-        if(debug) std::cout << "" << std::endl;
-
-        while(std::abs(y_b_temp_diff) > y_b_tolerance){
-            if(first_y_b_run){
-                if(debug) std::cout << "Setting up first y_b_run" << std::endl;
-                points_y_b = {y_b_min, (y_b_max + y_b_min)/2., y_b_max}; //l, c, r
-                points_y_b = CheckPoints(points_y_b, fixedPoints, 4);
-                first_y_b_run = false;
-                if(debug) std::cout << "Set up first y_b_run points: " << points_y_b.at(0) << ", " << points_y_b.at(1) << ", " << points_y_b.at(2) << std::endl;
-            }
-            std::vector<double> FOMs_y_b = GetFOMs(points_y_b, fixedPoints, 4, hAllPaths, hReEmittedPaths, hSingleScatterPaths, signal_param);
-            if(debug) std::cout << "Got FOMs " << FOMs_y_b.at(0) << ", " << FOMs_y_b.at(1) << ", " << FOMs_y_b.at(2) << std::endl;
-            
-            bestworstFOMPoints_y_b = GetBestFOM(FOMs_y_b, points_y_b);
-            if(debug) std::cout << "Got best FOMs" << std::endl;
-            
-            points_y_b = GetThreePoints(bestworstFOMPoints_y_b.at(0), bestworstFOMPoints_y_b.at(1), points_y_b);
-            points_y_b = CheckPoints(points_y_b, fixedPoints, 4);
-            if(debug) std::cout << "Got new points: " << points_y_b.at(0) << ", " << points_y_b.at(1) << ", " << points_y_b.at(2) << std::endl;
-            
-            y_b_temp_diff = std::abs(points_y_b.at(1) - prevBestFOMPoint_y_b);
-            if(debug) std::cout << "Got difference: " << y_b_temp_diff << std::endl;
-            
-            prevBestFOMPoint_y_b = points_y_b.at(1);
-            if(extraInfo) hFOMy_b->SetPoint(numy_b_iterations, numy_b_iterations, bestworstFOMPoints_y_b.at(2));
-            numy_b_iterations++;
-        }
-        if(debug) std::cout << "Setting fixed point: " << bestworstFOMPoints_y_b.at(0) << std::endl;
-        fixedPoints.at(4) = bestworstFOMPoints_y_b.at(0);
-        if(debug) std::cout << "" << std::endl;
-
-        while(std::abs(y_c_temp_diff) > y_c_tolerance){
-            if(first_y_c_run){
-                if(debug) std::cout << "Setting up first y_c_run" << std::endl;
-                points_y_c = {y_c_min, (y_c_max + y_c_min)/2., y_c_max}; //l, c, r
-                points_y_c = CheckPoints(points_y_c, fixedPoints, 5);
-                first_y_c_run = false;
-                if(debug) std::cout << "Set up first y_c_run points: " << points_y_c.at(0) << ", " << points_y_c.at(1) << ", " << points_y_c.at(2) << std::endl;
-            }
-            std::vector<double> FOMs_y_c = GetFOMs(points_y_c, fixedPoints, 5, hAllPaths, hReEmittedPaths, hSingleScatterPaths, signal_param);
-            if(debug) std::cout << "Got FOMs " << FOMs_y_c.at(0) << ", " << FOMs_y_c.at(1) << ", " << FOMs_y_c.at(2) << std::endl;
-            
-            bestworstFOMPoints_y_c = GetBestFOM(FOMs_y_c, points_y_c);
-            if(debug) std::cout << "Got best FOMs" << std::endl;
-            
-            points_y_c = GetThreePoints(bestworstFOMPoints_y_c.at(0), bestworstFOMPoints_y_c.at(1), points_y_c);
-            points_y_c = CheckPoints(points_y_c, fixedPoints, 5);
-            if(debug) std::cout << "Got new points: " << points_y_c.at(0) << ", " << points_y_c.at(1) << ", " << points_y_c.at(2) << std::endl;
-            
-            y_c_temp_diff = std::abs(points_y_c.at(1) - prevBestFOMPoint_y_c);
-            if(debug) std::cout << "Got difference: " << y_c_temp_diff << std::endl;
-            
-            prevBestFOMPoint_y_c = points_y_c.at(1);
-            if(extraInfo) hFOMy_c->SetPoint(numy_c_iterations, numy_c_iterations, bestworstFOMPoints_y_c.at(2));
-            numy_c_iterations++;
-        }
-        if(debug) std::cout << "Setting fixed point: " << bestworstFOMPoints_y_c.at(0) << std::endl;
-        fixedPoints.at(5) = bestworstFOMPoints_y_c.at(0);
-        if(debug) std::cout << "" << std::endl;
 
         if(debug) std::cout << "Getting main differences" << std::endl;
 
-        if(x_a_diff == 9999999999){
-            x_a_diff = std::abs(bestworstFOMPoints_x_a.at(0));
-            x_a_prev_best_point_main = bestworstFOMPoints_x_a.at(0);
+        for (int i = 0; i < 6; ++i) {
+            if(points_diffs.at(i) == 9999999999){
+                points_diffs.at(i) = std::abs(bestworstFOMPoints[i].at(0));
+                prev_best_points_main[i] = bestworstFOMPoints[i].at(0);
+            }
+            else{
+                points_diffs.at(i) = std::abs(prev_best_points_main[i] - bestworstFOMPoints[i].at(0));
+                prev_best_points_main[i] = bestworstFOMPoints[i].at(0);
+                firstRun = false;
+            }
         }
-        else{
-            x_a_diff = std::abs(x_a_prev_best_point_main - bestworstFOMPoints_x_a.at(0));
-            x_a_prev_best_point_main = bestworstFOMPoints_x_a.at(0);
-            firstRun = false;
-        }
-
-        if(x_b_diff == 9999999999){
-            x_b_diff = std::abs(bestworstFOMPoints_x_b.at(0));
-            x_b_prev_best_point_main = bestworstFOMPoints_x_b.at(0);
-        }
-        else{
-            x_b_diff = std::abs(x_b_prev_best_point_main - bestworstFOMPoints_x_b.at(0));
-            x_b_prev_best_point_main = bestworstFOMPoints_x_b.at(0);
-        }
-
-        if(x_c_diff == 9999999999){
-            x_c_diff = std::abs(bestworstFOMPoints_x_c.at(0));
-            x_c_prev_best_point_main = bestworstFOMPoints_x_c.at(0);
-        }
-        else{
-            x_c_diff = std::abs(x_c_prev_best_point_main - bestworstFOMPoints_x_c.at(0));
-            x_c_prev_best_point_main = bestworstFOMPoints_x_c.at(0);
-        }
-
-        if(y_a_diff == 9999999999){
-            y_a_diff = std::abs(bestworstFOMPoints_y_a.at(0));
-            y_a_prev_best_point_main = bestworstFOMPoints_y_a.at(0);
-        }
-        else{
-            y_a_diff = std::abs(y_a_prev_best_point_main - bestworstFOMPoints_y_a.at(0));
-            y_a_prev_best_point_main = bestworstFOMPoints_y_a.at(0);
-        }
-
-        if(y_b_diff == 9999999999){
-            y_b_diff = std::abs(bestworstFOMPoints_y_b.at(0));
-            y_b_prev_best_point_main = bestworstFOMPoints_y_b.at(0);
-        }
-        else{
-            y_b_diff = std::abs(y_b_prev_best_point_main - bestworstFOMPoints_y_b.at(0));
-            y_b_prev_best_point_main = bestworstFOMPoints_y_b.at(0);
-        }
-
-        if(y_c_diff == 9999999999){
-            y_c_diff = std::abs(bestworstFOMPoints_y_c.at(0));
-            y_c_prev_best_point_main = bestworstFOMPoints_y_c.at(0);
-        }
-        else{
-            y_c_diff = std::abs(y_c_prev_best_point_main - bestworstFOMPoints_y_c.at(0));
-            y_c_prev_best_point_main = bestworstFOMPoints_y_c.at(0);
-        }
+        
         if(debug) std::cout << "Got main differences" << std::endl;
         if(debug) std::cout << "" << std::endl;
-        if(extraInfo) hFOMmainloop->SetPoint(numMainLoopIterations, numMainLoopIterations, bestworstFOMPoints_y_c.at(2));
-        if(extraInfo) hDiffx_a->SetPoint(numMainLoopIterations, numMainLoopIterations, x_a_diff);
-        if(extraInfo) hDiffx_b->SetPoint(numMainLoopIterations, numMainLoopIterations, x_b_diff);
-        if(extraInfo) hDiffx_c->SetPoint(numMainLoopIterations, numMainLoopIterations, x_c_diff);
-        if(extraInfo) hDiffy_a->SetPoint(numMainLoopIterations, numMainLoopIterations, y_a_diff);
-        if(extraInfo) hDiffy_b->SetPoint(numMainLoopIterations, numMainLoopIterations, y_b_diff);
-        if(extraInfo) hDiffy_c->SetPoint(numMainLoopIterations, numMainLoopIterations, y_c_diff);
-        if(extraInfo) hPointx_a->SetPoint(numMainLoopIterations, numMainLoopIterations, fixedPoints.at(0));
-        if(extraInfo) hPointx_b->SetPoint(numMainLoopIterations, numMainLoopIterations, fixedPoints.at(1));
-        if(extraInfo) hPointx_c->SetPoint(numMainLoopIterations, numMainLoopIterations, fixedPoints.at(2));
-        if(extraInfo) hPointy_a->SetPoint(numMainLoopIterations, numMainLoopIterations, fixedPoints.at(3));
-        if(extraInfo) hPointy_b->SetPoint(numMainLoopIterations, numMainLoopIterations, fixedPoints.at(4));
-        if(extraInfo) hPointy_c->SetPoint(numMainLoopIterations, numMainLoopIterations, fixedPoints.at(5));
+        if(extraInfo) {
+            hFOMmainloop->SetPoint(numMainLoopIterations, numMainLoopIterations, bestworstFOMPoints[5].at(2));
+            for (int i = 0; i < 6; ++i) {
+                hDiffxy.at(i)->SetPoint(numMainLoopIterations, numMainLoopIterations, points_diffs.at(i));
+                hPointxy.at(i)->SetPoint(numMainLoopIterations, numMainLoopIterations, fixedPoints.at(i));
+            }
+        }
+        // If any point difference is still larger than its associated tolerance, keep looping.
+        loop_condition = false;
+        for (int i = 0; i < 6; ++i) {
+            if (points_diffs.at(i) > point_tolerances.at(i)) {
+                loop_condition = true;
+                break;
+            }
+        }
         numMainLoopIterations++;
     }
 
-    //now use final result to get region, write to file
+    // open txt file and print Region limits (can then use on real data!)
 
-    if(verbose) std::cout << "Region found" << std::endl;
-    if(verbose) std::cout << "    x_a: " << fixedPoints.at(0) << std::endl;
-    if(verbose) std::cout << "    x_b: " << fixedPoints.at(1) << std::endl;
-    if(verbose) std::cout << "    x_c: " << fixedPoints.at(2) << std::endl;
-    if(verbose) std::cout << "    y_a: " << fixedPoints.at(3) << std::endl;
-    if(verbose) std::cout << "    y_b: " << fixedPoints.at(4) << std::endl;
-    if(verbose) std::cout << "    y_c: " << fixedPoints.at(5) << std::endl;
-    if(verbose) std::cout << "There were " << numMainLoopIterations << " iterations of the main loop" << std::endl;
+    std::ofstream outputFile_txt;
+    // get file name from path+filename string
+    std::size_t botDirPos_txt = inputFile.find_last_of("/");
+    std::string filename_txt = inputFile.substr(botDirPos_txt+1, inputFile.length()) + ".txt";
+    std::string saveroot_txt = "region_selected_limits_" + signal_param + "_" + filename_txt;
+    outputFile_txt.open(saveroot_txt.c_str());
+    for (int i = 0; i < 6; ++i) {
+        outputFile_txt << std::to_string(fixedPoints.at(i)) + "\n"; //x_a, x_b, x_c, y_a, y_b, y_c
+    }
+    outputFile_txt.close();
 
-    std::vector<TH2F*> regionSelectedHists = GetRegionSelectedHists(fixedPoints, hReEmittedPaths, hAllPaths, hNoisePaths, hSingleScatterPaths, hOtherPaths, hNoEffectPaths, hNearReflectPaths, hRopesPaths, hPMTReflectionPaths, hExtWaterScatterPaths, hInnerAvReflectPaths, hMultipleEffectPaths, hAVPipesPaths, hAcrylicPaths, hOtherScatterPaths);
+    // now use final result to get region, write to file
+
+    if(verbose) {
+        std::cout << "Region found" << std::endl;
+        for (int i = 0; i < 6; ++i) {
+            std::cout << "    " << point_names[i] << ": " << fixedPoints.at(i) << std::endl;
+        }
+        std::cout << "There were " << numMainLoopIterations << " iterations of the main loop" << std::endl;
+    }
+
+    HistList regionSelectedHists = GetRegionSelectedHists(fixedPoints, hists_lists, fibre, saveroot_txt);
+
     // get file name from path+filename string
     std::size_t botDirPos = inputFile.find_last_of("/");
     std::string filename = inputFile.substr(botDirPos+1, inputFile.length());
     std::string saveroot = "region_selected_hists_" + signal_param + "_" + filename;
     TFile *rootfile = new TFile(saveroot.c_str(),"RECREATE");
     
+    // Write hists to file
     rootfile->cd();
-    for(int i=0; i<regionSelectedHists.size();i++){
-        TH2F *tempHist = regionSelectedHists.at(i);
-        tempHist->Write();
-    }
+    (TH2F*)regionSelectedHists.Tracking_Hists().at(1)->Write();
+    regionSelectedHists.Write();
+    
+    std::string temp_name;
     if(extraInfo){
-        hFOMx_a->SetName("hFOMx_a");
-        hFOMx_b->SetName("hFOMx_b");
-        hFOMx_c->SetName("hFOMx_c");
-        hFOMy_a->SetName("hFOMy_a");
-        hFOMy_b->SetName("hFOMy_b");
-        hFOMy_c->SetName("hFOMy_c");
+        for (int i = 0; i < 6; ++i) {
+            temp_name = "hFOM" + point_names[i];
+            hFOMxy.at(i)->SetName(temp_name.c_str());
+            hFOMxy.at(i)->Write();
+
+            temp_name = "hDiff" + point_names[i];
+            hDiffxy.at(i)->SetName(temp_name.c_str());
+            hDiffxy.at(i)->Write();
+
+            temp_name = "hPoint" + point_names[i];
+            hPointxy.at(i)->SetName(temp_name.c_str());
+            hPointxy.at(i)->Write();
+        }
         hFOMmainloop->SetName("hFOMmainloop");
-        hDiffx_a->SetName("hDiffx_a");
-        hDiffx_b->SetName("hDiffx_b");
-        hDiffx_c->SetName("hDiffx_c");
-        hDiffy_a->SetName("hDiffy_a");
-        hDiffy_b->SetName("hDiffy_b");
-        hDiffy_c->SetName("hDiffy_c");
-        hPointx_a->SetName("hPointx_a");
-        hPointx_b->SetName("hPointx_b");
-        hPointx_c->SetName("hPointx_c");
-        hPointy_a->SetName("hPointy_a");
-        hPointy_b->SetName("hPointy_b");
-        hPointy_c->SetName("hPointy_c");
-        hFOMx_a->Write();
-        hFOMx_b->Write();
-        hFOMx_c->Write();
-        hFOMy_a->Write();
-        hFOMy_b->Write();
-        hFOMy_c->Write();
         hFOMmainloop->Write();
-        hDiffx_a->Write();
-        hDiffx_b->Write();
-        hDiffx_c->Write();
-        hDiffy_a->Write();
-        hDiffy_b->Write();
-        hDiffy_c->Write();
-        hPointx_a->Write();
-        hPointx_b->Write();
-        hPointx_c->Write();
-        hPointy_a->Write();
-        hPointy_b->Write();
-        hPointy_c->Write();
     }
+
+    // Draw region limits on 2D hist and write to root file
+    DrawRegionLims(fixedPoints, hists_lists, fibre);
+
     rootfile->Write();
     rootfile->Close();
 
@@ -607,6 +316,73 @@ std::vector<double> GetThreePoints(double bestPoint, double worstPoint, std::vec
     return newPoints;
 }
 
+
+/**
+ * @brief Draw region limits as lines on RestHitvsCosTheta histogram.
+ * 
+ * @param fixedPoints 
+ * @param Hists 
+ * @param fibre 
+ * @return TCanvas* 
+ */
+void DrawRegionLims(std::vector<double> fixedPoints, HistList hists_lists, std::string fibre) {
+    // get points
+    double x_a = fixedPoints.at(0);
+    double x_b = fixedPoints.at(1);
+    double x_c = fixedPoints.at(2);
+    double y_a = fixedPoints.at(3);
+    double y_b = fixedPoints.at(4);
+    double y_c = fixedPoints.at(5);
+
+    double direct_max_time = hists_lists.Tracking_Hists().at(5)->ProjectionY()->GetXaxis()->GetBinCenter(hists_lists.Tracking_Hists().at(5)->ProjectionY()->GetMaximumBin()) + 10;  //hNoEffectPaths
+    double direct_min_time = hists_lists.Tracking_Hists().at(5)->ProjectionY()->GetXaxis()->GetBinCenter(hists_lists.Tracking_Hists().at(5)->ProjectionY()->GetMaximumBin()) - 10;  //hNoEffectPaths
+    //FIXME: don't hardcode this:
+    double direct_cos_alpha;
+    if (fibre == "FA089") {  // 10deg off-axis
+        direct_cos_alpha = -0.85; 
+    } else if (fibre == "FA173" or fibre == "FA150" or fibre == "FA093") {  // 20deg off-axis
+        direct_cos_alpha = -0.6;
+    } else {  // on-axis
+        direct_cos_alpha = -0.9;
+    }
+
+    double reflected_max_time = hists_lists.Tracking_Hists().at(5)->ProjectionY()->GetXaxis()->GetBinCenter(hists_lists.Tracking_Hists().at(5)->ProjectionY()->GetMaximumBin()) + 10;  //hNoEffectPaths
+    double reflected_min_time = hists_lists.Tracking_Hists().at(5)->ProjectionY()->GetXaxis()->GetBinCenter(hists_lists.Tracking_Hists().at(5)->ProjectionY()->GetMaximumBin()) - 10;  //hNoEffectPaths
+    double reflected_cos_alpha = 0.95; //FIXME: don't hardcode this
+
+    // Draw box cuts on resthit vs costheta hist
+    TCanvas *c1 = new TCanvas("cuts","cuts");  //Create output canvas to be saved in output file
+    TH2F *h = (TH2F*)hists_lists.Tracking_Hists().at(1)->Clone();  //hAllPaths
+    h->Draw("colz");  // Draw histogram
+
+    // create lines
+    std::vector<TLine> lines;
+    // region
+    lines.push_back(TLine(x_a, y_a, x_b, y_b));
+    lines.push_back(TLine(x_a, y_a, x_c, y_c));
+    lines.push_back(TLine(x_c, y_c, x_b, y_b));
+    // direct box
+    lines.push_back(TLine(direct_cos_alpha, direct_min_time, direct_cos_alpha, direct_max_time));
+    lines.push_back(TLine(-1, direct_min_time, -1, direct_max_time));
+    lines.push_back(TLine(-1, direct_max_time, direct_cos_alpha, direct_max_time));
+    lines.push_back(TLine(-1, direct_min_time, direct_cos_alpha, direct_min_time));
+    // reflected box
+    lines.push_back(TLine(reflected_cos_alpha, reflected_min_time, reflected_cos_alpha, reflected_max_time));
+    lines.push_back(TLine(1, reflected_min_time, 1, reflected_max_time));
+    lines.push_back(TLine(1, reflected_max_time, reflected_cos_alpha, reflected_max_time));
+    lines.push_back(TLine(1, reflected_min_time, reflected_cos_alpha, reflected_min_time));
+
+    // draw lines
+    for(int i=0; i<lines.size(); ++i){
+        lines[i].SetLineColor(kBlack);
+        lines[i].Draw("SAME");
+    }
+
+    c1->Write();  
+    delete c1;
+}
+
+
 /**
  * @brief Replace the associated point in the trianle (normally given by fixedPoints) with each point (of 3) in points,
  * draw a triangle with each such configuration, and count the number of different types on events that fall inside/outside
@@ -627,437 +403,47 @@ std::vector<double> GetFOMs(std::vector<double> points, std::vector<double> fixe
 
     //FIXME: Pass in vector of hists?
 
-    double countReEmitted1 = 0;
-    double countTotal1 = 0;
-    double countReEmitted2 = 0;
-    double countTotal2 = 0;
-    double countReEmitted3 = 0;
-    double countTotal3 = 0;
+    double countReEmitted[3] = {0, 0, 0};
+    double countTotal[3] = {0, 0, 0};
 
-    //check that values are allowed
-    double point1 = points.at(0);
-    double point2 = points.at(1);
-    double point3 = points.at(2);
+    // Create triangle with fixed points
+    triangle Tri = triangle(fixedPoints.at(0), fixedPoints.at(1), fixedPoints.at(2), fixedPoints.at(3),
+                            fixedPoints.at(4), fixedPoints.at(5));
 
-    /*
-    grad = y2-y1 / x2-x1
-    const = y1 - m*x1
-    */
-
-    for(int x=1; x<reEmittedHist->GetNbinsX()+1; x++){ //loop over histogram bins
-        double xBinCenter = reEmittedHist->GetXaxis()->GetBinCenter(x);
-        for(int y=1; y<reEmittedHist->GetNbinsY()+1; y++){
-            double yBinCenter = reEmittedHist->GetYaxis()->GetBinCenter(y);
-            if(numVar == 0){
-                double upperGrad1 = (fixedPoints.at(4) - fixedPoints.at(3)) / (fixedPoints.at(1) - point1);
-                double upperIntercept1 = fixedPoints.at(4) - (upperGrad1*fixedPoints.at(1));
-                double upperGrad2 = (fixedPoints.at(4) - fixedPoints.at(3)) / (fixedPoints.at(1) - point2);
-                double upperIntercept2 = fixedPoints.at(4) - (upperGrad2*fixedPoints.at(1));
-                double upperGrad3 = (fixedPoints.at(4) - fixedPoints.at(3)) / (fixedPoints.at(1) - point3);
-                double upperIntercept3 = fixedPoints.at(4) - (upperGrad3*fixedPoints.at(1));
-                double bottomGrad1 = (fixedPoints.at(5) - fixedPoints.at(3)) / (fixedPoints.at(2) - point1);
-                double bottomIntercept1 = fixedPoints.at(5) - (upperGrad1*fixedPoints.at(2));
-                double bottomGrad2 = (fixedPoints.at(5) - fixedPoints.at(3)) / (fixedPoints.at(2) - point2);
-                double bottomIntercept2 = fixedPoints.at(5) - (upperGrad2*fixedPoints.at(2));
-                double bottomGrad3 = (fixedPoints.at(5) - fixedPoints.at(3)) / (fixedPoints.at(2) - point3);
-                double bottomIntercept3 = fixedPoints.at(5) - (upperGrad3*fixedPoints.at(2));
-                double rightHandGrad;
-                if(fixedPoints.at(1) != fixedPoints.at(2)){
-                    rightHandGrad = (fixedPoints.at(4) - fixedPoints.at(5)) / (fixedPoints.at(1) - fixedPoints.at(2));
-                }
-                else{
-                    rightHandGrad = 0;  // 0 gradient case covered by >0 and <0 conditions further down (same with other rightHandGrads)
-                }
-                double rightHandIntercept = fixedPoints.at(4) - (rightHandGrad*fixedPoints.at(1));
-                if(yBinCenter > ((bottomGrad1*xBinCenter) + bottomIntercept1) and yBinCenter < ((upperGrad1*xBinCenter) + upperIntercept1) and xBinCenter >= point1 and ((yBinCenter <= ((rightHandGrad*xBinCenter) + rightHandIntercept) and rightHandGrad < 0) or (yBinCenter >= ((rightHandGrad*xBinCenter) + rightHandIntercept) and rightHandGrad > 0) or (rightHandGrad == 0))){
+    // Replace the appropriate point in the triangle with each point in points and see if the bin falls in the triangle.
+    for (int i = 0; i < 3; ++i){
+        Tri[numVar] = points.at(i);
+        for(int x=1; x<reEmittedHist->GetNbinsX()+1; x++){ //loop over histogram bins
+            double xBinCenter = reEmittedHist->GetXaxis()->GetBinCenter(x);
+            for(int y=1; y<reEmittedHist->GetNbinsY()+1; y++){
+                double yBinCenter = reEmittedHist->GetYaxis()->GetBinCenter(y);
+                if(Tri.check_point_inside_triangle(xBinCenter, yBinCenter)){
                     if(signal == "reemitted"){
-                        countReEmitted1 = countReEmitted1 + reEmittedHist->GetBinContent(x,y);
+                        countReEmitted[i] += reEmittedHist->GetBinContent(x,y);
                     }
                     else if(signal == "scattered"){
-                        countReEmitted1 = countReEmitted1 + scatteredHist->GetBinContent(x,y);
+                        countReEmitted[i] += scatteredHist->GetBinContent(x,y);
                     }
                     else if(signal == "attenuated"){
-                        countReEmitted1 = countReEmitted1 + scatteredHist->GetBinContent(x,y) + reEmittedHist->GetBinContent(x,y);
+                        countReEmitted[i] += scatteredHist->GetBinContent(x,y) + reEmittedHist->GetBinContent(x,y);
                     }
-                    countTotal1 = countTotal1 + allPathsHist->GetBinContent(x,y);
-                }
-                if(yBinCenter > ((bottomGrad2*xBinCenter) + bottomIntercept2) and yBinCenter < ((upperGrad2*xBinCenter) + upperIntercept2) and xBinCenter >= point2 and ((yBinCenter <= ((rightHandGrad*xBinCenter) + rightHandIntercept) and rightHandGrad < 0) or (yBinCenter >= ((rightHandGrad*xBinCenter) + rightHandIntercept) and rightHandGrad > 0) or (rightHandGrad == 0))){
-                    if(signal == "reemitted"){
-                        countReEmitted2 = countReEmitted2 + reEmittedHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "scattered"){
-                        countReEmitted2 = countReEmitted2 + scatteredHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "attenuated"){
-                        countReEmitted2 = countReEmitted2 + scatteredHist->GetBinContent(x,y) + reEmittedHist->GetBinContent(x,y);
-                    }
-                    countTotal2 = countTotal2 + allPathsHist->GetBinContent(x,y);
-                }
-                if(yBinCenter > ((bottomGrad3*xBinCenter) + bottomIntercept3) and yBinCenter < ((upperGrad2*xBinCenter) + upperIntercept2) and xBinCenter >= point3 and ((yBinCenter <= ((rightHandGrad*xBinCenter) + rightHandIntercept) and rightHandGrad < 0) or (yBinCenter >= ((rightHandGrad*xBinCenter) + rightHandIntercept) and rightHandGrad > 0) or (rightHandGrad == 0))){
-                    if(signal == "reemitted"){
-                        countReEmitted3 = countReEmitted3 + reEmittedHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "scattered"){
-                        countReEmitted3 = countReEmitted3 + scatteredHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "attenuated"){
-                        countReEmitted3 = countReEmitted3 + scatteredHist->GetBinContent(x,y) + reEmittedHist->GetBinContent(x,y);
-                    }
-                    countTotal3 = countTotal3 + allPathsHist->GetBinContent(x,y);                                
-                }
-            }
-            if(numVar == 1){
-                double upperGrad1 = (fixedPoints.at(4) - fixedPoints.at(3)) / (point1 - fixedPoints.at(0));
-                double upperIntercept1 = fixedPoints.at(4) - (upperGrad1*point1);
-                double upperGrad2 = (fixedPoints.at(4) - fixedPoints.at(3)) / (point2 - fixedPoints.at(0));
-                double upperIntercept2 = fixedPoints.at(4) - (upperGrad2*point2);
-                double upperGrad3 = (fixedPoints.at(4) - fixedPoints.at(3)) / (point3 - fixedPoints.at(0));
-                double upperIntercept3 = fixedPoints.at(4) - (upperGrad3*point3);
-                double bottomGrad = (fixedPoints.at(5) - fixedPoints.at(3)) / (fixedPoints.at(2) - fixedPoints.at(0));
-                double bottomIntercept = fixedPoints.at(5) - (upperGrad1*fixedPoints.at(2));
-                double rightHandGrad1;
-                double rightHandGrad2;
-                double rightHandGrad3;
-                if(point1 != fixedPoints.at(2)){
-                    rightHandGrad1 = (fixedPoints.at(4) - fixedPoints.at(5)) / (point1 - fixedPoints.at(2));
-                }
-                else{
-                    rightHandGrad1 = 0;
-                }
-                if(point2 != fixedPoints.at(2)){
-                    rightHandGrad2 = (fixedPoints.at(4) - fixedPoints.at(5)) / (point2 - fixedPoints.at(2));
-                }
-                else{
-                    rightHandGrad2 = 0;
-                }
-                if(point3 != fixedPoints.at(2)){
-                    rightHandGrad3 = (fixedPoints.at(4) - fixedPoints.at(5)) / (point3 - fixedPoints.at(2));
-                }
-                else{
-                    rightHandGrad3 = 0;
-                }
-                double rightHandIntercept1 = fixedPoints.at(5) - (rightHandGrad1*fixedPoints.at(2));
-                double rightHandIntercept2 = fixedPoints.at(5) - (rightHandGrad2*fixedPoints.at(2));
-                double rightHandIntercept3 = fixedPoints.at(5) - (rightHandGrad3*fixedPoints.at(2));
-                if(yBinCenter > ((bottomGrad*xBinCenter) + bottomIntercept) and yBinCenter < ((upperGrad1*xBinCenter) + upperIntercept1) and xBinCenter >= fixedPoints.at(0) and ((yBinCenter <= ((rightHandGrad1*xBinCenter) + rightHandIntercept1) and rightHandGrad1 < 0) or (yBinCenter >= ((rightHandGrad1*xBinCenter) + rightHandIntercept1) and rightHandGrad1 > 0) or (rightHandGrad1 == 0))){
-                    if(signal == "reemitted"){
-                        countReEmitted1 = countReEmitted1 + reEmittedHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "scattered"){
-                        countReEmitted1 = countReEmitted1 + scatteredHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "attenuated"){
-                        countReEmitted1 = countReEmitted1 + scatteredHist->GetBinContent(x,y) + reEmittedHist->GetBinContent(x,y);
-                    }
-                    countTotal1 = countTotal1 + allPathsHist->GetBinContent(x,y);
-                }
-                if(yBinCenter > ((bottomGrad*xBinCenter) + bottomIntercept) and yBinCenter < ((upperGrad2*xBinCenter) + upperIntercept2) and xBinCenter >= fixedPoints.at(0) and ((yBinCenter <= ((rightHandGrad2*xBinCenter) + rightHandIntercept2) and rightHandGrad2 < 0) or (yBinCenter >= ((rightHandGrad2*xBinCenter) + rightHandIntercept2) and rightHandGrad2 > 0) or (rightHandGrad2 == 0))){
-                    if(signal == "reemitted"){
-                        countReEmitted2 = countReEmitted2 + reEmittedHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "scattered"){
-                        countReEmitted2 = countReEmitted2 + scatteredHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "attenuated"){
-                        countReEmitted2 = countReEmitted2 + scatteredHist->GetBinContent(x,y) + reEmittedHist->GetBinContent(x,y);
-                    }
-                    countTotal2 = countTotal2 + allPathsHist->GetBinContent(x,y);
-                }
-                if(yBinCenter > ((bottomGrad*xBinCenter) + bottomIntercept) and yBinCenter < ((upperGrad3*xBinCenter) + upperIntercept3) and xBinCenter >= fixedPoints.at(0) and ((yBinCenter <= ((rightHandGrad3*xBinCenter) + rightHandIntercept3) and rightHandGrad3 < 0) or (yBinCenter >= ((rightHandGrad3*xBinCenter) + rightHandIntercept3) and rightHandGrad3 > 0) or (rightHandGrad3 == 0))){
-                    if(signal == "reemitted"){
-                        countReEmitted3 = countReEmitted3 + reEmittedHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "scattered"){
-                        countReEmitted3 = countReEmitted3 + scatteredHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "attenuated"){
-                        countReEmitted3 = countReEmitted3 + scatteredHist->GetBinContent(x,y) + reEmittedHist->GetBinContent(x,y);
-                    }
-                    countTotal3 = countTotal3 + allPathsHist->GetBinContent(x,y);                                
-                }
-            }
-            if(numVar == 2){
-                double upperGrad = (fixedPoints.at(4) - fixedPoints.at(3)) / (fixedPoints.at(1) - fixedPoints.at(0));
-                double upperIntercept = fixedPoints.at(4) - (upperGrad*fixedPoints.at(1));
-                double bottomGrad1 = (fixedPoints.at(5) - fixedPoints.at(3)) / (point1 - fixedPoints.at(0));
-                double bottomIntercept1 = fixedPoints.at(5) - (bottomGrad1*point1);
-                double bottomGrad2 = (fixedPoints.at(5) - fixedPoints.at(3)) / (point2 - fixedPoints.at(0));
-                double bottomIntercept2 = fixedPoints.at(5) - (bottomGrad2*point2);
-                double bottomGrad3 = (fixedPoints.at(5) - fixedPoints.at(3)) / (point3 - fixedPoints.at(0));
-                double bottomIntercept3 = fixedPoints.at(5) - (bottomGrad3*point3);
-                double rightHandGrad1;
-                double rightHandGrad2;
-                double rightHandGrad3;
-                if(point1 != fixedPoints.at(1)){
-                    rightHandGrad1 = (fixedPoints.at(4) - fixedPoints.at(5)) / (fixedPoints.at(1) - point1);
-                }
-                else{
-                    rightHandGrad1 = 0;
-                }
-                if(point2 != fixedPoints.at(1)){
-                    rightHandGrad2 = (fixedPoints.at(4) - fixedPoints.at(5)) / (fixedPoints.at(1) - point2);
-                }
-                else{
-                    rightHandGrad2 = 0;
-                }
-                if(point3 != fixedPoints.at(1)){
-                    rightHandGrad3 = (fixedPoints.at(4) - fixedPoints.at(5)) / (fixedPoints.at(1) - point3);
-                }
-                else{
-                    rightHandGrad3 = 0;
-                }
-                double rightHandIntercept1 = fixedPoints.at(4) - (rightHandGrad1*fixedPoints.at(1));
-                double rightHandIntercept2 = fixedPoints.at(4) - (rightHandGrad2*fixedPoints.at(1));
-                double rightHandIntercept3 = fixedPoints.at(4) - (rightHandGrad3*fixedPoints.at(1));
-                if(yBinCenter > ((bottomGrad1*xBinCenter) + bottomIntercept1) and yBinCenter < ((upperGrad*xBinCenter) + upperIntercept) and xBinCenter >= fixedPoints.at(0) and ((yBinCenter <= ((rightHandGrad1*xBinCenter) + rightHandIntercept1) and rightHandGrad1 < 0) or (yBinCenter >= ((rightHandGrad1*xBinCenter) + rightHandIntercept1) and rightHandGrad1 > 0) or (rightHandGrad1 == 0))){
-                    if(signal == "reemitted"){
-                        countReEmitted1 = countReEmitted1 + reEmittedHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "scattered"){
-                        countReEmitted1 = countReEmitted1 + scatteredHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "attenuated"){
-                        countReEmitted1 = countReEmitted1 + scatteredHist->GetBinContent(x,y) + reEmittedHist->GetBinContent(x,y);
-                    }
-                    countTotal1 = countTotal1 + allPathsHist->GetBinContent(x,y);
-                }
-                if(yBinCenter > ((bottomGrad2*xBinCenter) + bottomIntercept2) and yBinCenter < ((upperGrad*xBinCenter) + upperIntercept) and xBinCenter >= fixedPoints.at(0) and ((yBinCenter <= ((rightHandGrad2*xBinCenter) + rightHandIntercept2) and rightHandGrad2 < 0) or (yBinCenter >= ((rightHandGrad2*xBinCenter) + rightHandIntercept2) and rightHandGrad2 > 0) or (rightHandGrad2 == 0))){
-                    if(signal == "reemitted"){
-                        countReEmitted2 = countReEmitted2 + reEmittedHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "scattered"){
-                        countReEmitted2 = countReEmitted2 + scatteredHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "attenuated"){
-                        countReEmitted2 = countReEmitted2 + scatteredHist->GetBinContent(x,y) + reEmittedHist->GetBinContent(x,y);
-                    }
-                    countTotal2 = countTotal2 + allPathsHist->GetBinContent(x,y);
-                }
-                if(yBinCenter > ((bottomGrad3*xBinCenter) + bottomIntercept3) and yBinCenter < ((upperGrad*xBinCenter) + upperIntercept) and xBinCenter >= fixedPoints.at(0) and ((yBinCenter <= ((rightHandGrad3*xBinCenter) + rightHandIntercept3) and rightHandGrad3 < 0) or (yBinCenter >= ((rightHandGrad3*xBinCenter) + rightHandIntercept3) and rightHandGrad3 > 0) or (rightHandGrad3 == 0))){
-                    if(signal == "reemitted"){
-                        countReEmitted3 = countReEmitted3 + reEmittedHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "scattered"){
-                        countReEmitted3 = countReEmitted3 + scatteredHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "attenuated"){
-                        countReEmitted3 = countReEmitted3 + scatteredHist->GetBinContent(x,y) + reEmittedHist->GetBinContent(x,y);
-                    }
-                    countTotal3 = countTotal3 + allPathsHist->GetBinContent(x,y);                                
-                }
-            }
-            if(numVar == 3){
-                double bottomGrad1 = (fixedPoints.at(5) - point1) / (fixedPoints.at(2) - fixedPoints.at(0));
-                double bottomIntercept1 = fixedPoints.at(5) - (bottomGrad1*fixedPoints.at(2));
-                double bottomGrad2 = (fixedPoints.at(5) - point2) / (fixedPoints.at(2) - fixedPoints.at(0));
-                double bottomIntercept2 = fixedPoints.at(5) - (bottomGrad2*fixedPoints.at(2));
-                double bottomGrad3 = (fixedPoints.at(5) - point3) / (fixedPoints.at(2) - fixedPoints.at(0));
-                double bottomIntercept3 = fixedPoints.at(5) - (bottomGrad3*fixedPoints.at(2));
-                double upperGrad1 = (fixedPoints.at(4) - point1) / (fixedPoints.at(1) - fixedPoints.at(0));
-                double upperIntercept1 = fixedPoints.at(4) - (upperGrad1*fixedPoints.at(1));
-                double upperGrad2 = (fixedPoints.at(4) - point2) / (fixedPoints.at(1) - fixedPoints.at(0));
-                double upperIntercept2 = fixedPoints.at(4) - (upperGrad2*fixedPoints.at(1));
-                double upperGrad3 = (fixedPoints.at(4) - point3) / (fixedPoints.at(1) - fixedPoints.at(0));
-                double upperIntercept3 = fixedPoints.at(4) - (upperGrad3*fixedPoints.at(1));
-                double rightHandGrad;
-                if(fixedPoints.at(1) != fixedPoints.at(2)){
-                    rightHandGrad = (fixedPoints.at(4) - fixedPoints.at(5)) / (fixedPoints.at(1) - fixedPoints.at(2));
-                }
-                else{
-                    rightHandGrad = 0;
-                }
-                double rightHandIntercept = fixedPoints.at(4) - (rightHandGrad*fixedPoints.at(1));
-                if(yBinCenter > ((bottomGrad1*xBinCenter) + bottomIntercept1) and yBinCenter < ((upperGrad1*xBinCenter) + upperIntercept1) and xBinCenter >= fixedPoints.at(0) and ((yBinCenter <= ((rightHandGrad*xBinCenter) + rightHandIntercept) and rightHandGrad < 0) or (yBinCenter >= ((rightHandGrad*xBinCenter) + rightHandIntercept) and rightHandGrad > 0) or (rightHandGrad == 0))){
-                    if(signal == "reemitted"){
-                        countReEmitted1 = countReEmitted1 + reEmittedHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "scattered"){
-                        countReEmitted1 = countReEmitted1 + scatteredHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "attenuated"){
-                        countReEmitted1 = countReEmitted1 + scatteredHist->GetBinContent(x,y) + reEmittedHist->GetBinContent(x,y);
-                    }
-                    countTotal1 = countTotal1 + allPathsHist->GetBinContent(x,y);
-                }
-                if(yBinCenter > ((bottomGrad2*xBinCenter) + bottomIntercept2) and yBinCenter < ((upperGrad2*xBinCenter) + upperIntercept2) and xBinCenter >= fixedPoints.at(0) and ((yBinCenter <= ((rightHandGrad*xBinCenter) + rightHandIntercept) and rightHandGrad < 0) or (yBinCenter >= ((rightHandGrad*xBinCenter) + rightHandIntercept) and rightHandGrad > 0) or (rightHandGrad == 0))){
-                    if(signal == "reemitted"){
-                        countReEmitted2 = countReEmitted2 + reEmittedHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "scattered"){
-                        countReEmitted2 = countReEmitted2 + scatteredHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "attenuated"){
-                        countReEmitted2 = countReEmitted2 + scatteredHist->GetBinContent(x,y) + reEmittedHist->GetBinContent(x,y);
-                    }
-                    countTotal2 = countTotal2 + allPathsHist->GetBinContent(x,y);
-                }
-                if(yBinCenter > ((bottomGrad3*xBinCenter) + bottomIntercept3) and yBinCenter < ((upperGrad3*xBinCenter) + upperIntercept3) and xBinCenter >= fixedPoints.at(0) and ((yBinCenter <= ((rightHandGrad*xBinCenter) + rightHandIntercept) and rightHandGrad < 0) or (yBinCenter >= ((rightHandGrad*xBinCenter) + rightHandIntercept) and rightHandGrad > 0) or (rightHandGrad == 0))){
-                    if(signal == "reemitted"){
-                        countReEmitted3 = countReEmitted3 + reEmittedHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "scattered"){
-                        countReEmitted3 = countReEmitted3 + scatteredHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "attenuated"){
-                        countReEmitted3 = countReEmitted3 + scatteredHist->GetBinContent(x,y) + reEmittedHist->GetBinContent(x,y);
-                    }
-                    countTotal3 = countTotal3 + allPathsHist->GetBinContent(x,y);                                
-                }
-            }
-            if(numVar == 4){
-                double bottomGrad = (fixedPoints.at(5) - fixedPoints.at(3)) / (fixedPoints.at(2) - fixedPoints.at(0));
-                double bottomIntercept = fixedPoints.at(5) - (bottomGrad*fixedPoints.at(2));
-                double upperGrad1 = (point1 - fixedPoints.at(3)) / (fixedPoints.at(1) - fixedPoints.at(0));
-                double upperIntercept1 = point1 - (upperGrad1*fixedPoints.at(1));
-                double upperGrad2 = (point2 - fixedPoints.at(3)) / (fixedPoints.at(1) - fixedPoints.at(0));
-                double upperIntercept2 = point2 - (upperGrad2*fixedPoints.at(1));
-                double upperGrad3 = (point3 - fixedPoints.at(3)) / (fixedPoints.at(1) - fixedPoints.at(0));
-                double upperIntercept3 = point3 - (upperGrad3*fixedPoints.at(1));
-                double rightHandGrad1;
-                double rightHandGrad2;
-                double rightHandGrad3;
-                if(fixedPoints.at(2) != fixedPoints.at(1)){
-                    rightHandGrad1 = (point1 - fixedPoints.at(5)) / (fixedPoints.at(1) - fixedPoints.at(2));
-                }
-                else{
-                    rightHandGrad1 = 0;
-                }
-                if(fixedPoints.at(2) != fixedPoints.at(1)){
-                    rightHandGrad2 = (point2 - fixedPoints.at(5)) / (fixedPoints.at(1) - fixedPoints.at(2));
-                }
-                else{
-                    rightHandGrad2 = 0;
-                }
-                if(fixedPoints.at(2) != fixedPoints.at(1)){
-                    rightHandGrad3 = (point3 - fixedPoints.at(5)) / (fixedPoints.at(1) - fixedPoints.at(2));
-                }
-                else{
-                    rightHandGrad3 = 0;
-                }
-                double rightHandIntercept1 = fixedPoints.at(5) - (rightHandGrad1*fixedPoints.at(2));
-                double rightHandIntercept2 = fixedPoints.at(5) - (rightHandGrad2*fixedPoints.at(2));
-                double rightHandIntercept3 = fixedPoints.at(5) - (rightHandGrad3*fixedPoints.at(2));
-                if(yBinCenter >= ((bottomGrad*xBinCenter) + bottomIntercept) and yBinCenter <= ((upperGrad1*xBinCenter) + upperIntercept1) and xBinCenter >= fixedPoints.at(0) and ((yBinCenter <= ((rightHandGrad1*xBinCenter) + rightHandIntercept1) and rightHandGrad1 < 0) or (yBinCenter >= ((rightHandGrad1*xBinCenter) + rightHandIntercept1) and rightHandGrad1 > 0) or (rightHandGrad1 == 0))){
-                    if(signal == "reemitted"){
-                        countReEmitted1 = countReEmitted1 + reEmittedHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "scattered"){
-                        countReEmitted1 = countReEmitted1 + scatteredHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "attenuated"){
-                        countReEmitted1 = countReEmitted1 + scatteredHist->GetBinContent(x,y) + reEmittedHist->GetBinContent(x,y);
-                    }
-                    countTotal1 = countTotal1 + allPathsHist->GetBinContent(x,y);
-                }
-                if(yBinCenter >= ((bottomGrad*xBinCenter) + bottomIntercept) and yBinCenter <= ((upperGrad2*xBinCenter) + upperIntercept2) and xBinCenter >= fixedPoints.at(0) and ((yBinCenter <= ((rightHandGrad2*xBinCenter) + rightHandIntercept2) and rightHandGrad2 < 0) or (yBinCenter >= ((rightHandGrad2*xBinCenter) + rightHandIntercept2) and rightHandGrad2 > 0) or (rightHandGrad2 == 0))){
-                    if(signal == "reemitted"){
-                        countReEmitted2 = countReEmitted2 + reEmittedHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "scattered"){
-                        countReEmitted2 = countReEmitted2 + scatteredHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "attenuated"){
-                        countReEmitted2 = countReEmitted2 + scatteredHist->GetBinContent(x,y) + reEmittedHist->GetBinContent(x,y);
-                    }
-                    countTotal2 = countTotal2 + allPathsHist->GetBinContent(x,y);
-                }
-                if(yBinCenter >= ((bottomGrad*xBinCenter) + bottomIntercept) and yBinCenter <= ((upperGrad3*xBinCenter) + upperIntercept3) and xBinCenter >= fixedPoints.at(0) and ((yBinCenter <= ((rightHandGrad3*xBinCenter) + rightHandIntercept3) and rightHandGrad3 < 0) or (yBinCenter >= ((rightHandGrad3*xBinCenter) + rightHandIntercept3) and rightHandGrad3 > 0) or (rightHandGrad3 == 0))){
-                    if(signal == "reemitted"){
-                        countReEmitted3 = countReEmitted3 + reEmittedHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "scattered"){
-                        countReEmitted3 = countReEmitted3 + scatteredHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "attenuated"){
-                        countReEmitted3 = countReEmitted3 + scatteredHist->GetBinContent(x,y) + reEmittedHist->GetBinContent(x,y);
-                    }
-                    countTotal3 = countTotal3 + allPathsHist->GetBinContent(x,y);                                
-                }
-            }
-            if(numVar == 5){
-                double upperGrad = (fixedPoints.at(4) - fixedPoints.at(3)) / (fixedPoints.at(1) - fixedPoints.at(0));
-                double upperIntercept = fixedPoints.at(4) - (upperGrad*fixedPoints.at(1));
-                double bottomGrad1 = (point1 - fixedPoints.at(3)) / (fixedPoints.at(2) - fixedPoints.at(0));
-                double bottomIntercept1 = point1 - (bottomGrad1*fixedPoints.at(2));
-                double bottomGrad2 = (point2 - fixedPoints.at(3)) / (fixedPoints.at(2) - fixedPoints.at(0));
-                double bottomIntercept2 = point2 - (bottomGrad2*fixedPoints.at(2));
-                double bottomGrad3 = (point3 - fixedPoints.at(3)) / (fixedPoints.at(2) - fixedPoints.at(0));
-                double bottomIntercept3 = point3 - (bottomGrad3*fixedPoints.at(2));
-                double rightHandGrad1;
-                double rightHandGrad2;
-                double rightHandGrad3;
-                if(fixedPoints.at(2) != fixedPoints.at(1)){
-                    rightHandGrad1 = (fixedPoints.at(4) - point1) / (fixedPoints.at(1) - fixedPoints.at(2));
-                }
-                else{
-                    rightHandGrad1 = 0;
-                }
-                if(fixedPoints.at(2) != fixedPoints.at(1)){
-                    rightHandGrad2 = (fixedPoints.at(4) - point2) / (fixedPoints.at(1) - fixedPoints.at(2));
-                }
-                else{
-                    rightHandGrad2 = 0;
-                }
-                if(fixedPoints.at(2) != fixedPoints.at(1)){
-                    rightHandGrad3 = (fixedPoints.at(4) - point3) / (fixedPoints.at(1) - fixedPoints.at(2));
-                }
-                else{
-                    rightHandGrad3 = 0;
-                }
-                double rightHandIntercept1 = fixedPoints.at(4) - (rightHandGrad1*fixedPoints.at(1));
-                double rightHandIntercept2 = fixedPoints.at(4) - (rightHandGrad2*fixedPoints.at(1));
-                double rightHandIntercept3 = fixedPoints.at(4) - (rightHandGrad3*fixedPoints.at(1));
-                if(yBinCenter > ((bottomGrad1*xBinCenter) + bottomIntercept1) and yBinCenter < ((upperGrad*xBinCenter) + upperIntercept) and xBinCenter >= fixedPoints.at(0) and ((yBinCenter <= ((rightHandGrad1*xBinCenter) + rightHandIntercept1) and rightHandGrad1 < 0) or (yBinCenter >= ((rightHandGrad1*xBinCenter) + rightHandIntercept1) and rightHandGrad1 > 0) or (rightHandGrad1 == 0))){
-                    if(signal == "reemitted"){
-                        countReEmitted1 = countReEmitted1 + reEmittedHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "scattered"){
-                        countReEmitted1 = countReEmitted1 + scatteredHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "attenuated"){
-                        countReEmitted1 = countReEmitted1 + scatteredHist->GetBinContent(x,y) + reEmittedHist->GetBinContent(x,y);
-                    }
-                    countTotal1 = countTotal1 + allPathsHist->GetBinContent(x,y);
-                }
-                if(yBinCenter > ((bottomGrad2*xBinCenter) + bottomIntercept2) and yBinCenter < ((upperGrad*xBinCenter) + upperIntercept) and xBinCenter >= fixedPoints.at(0) and ((yBinCenter <= ((rightHandGrad2*xBinCenter) + rightHandIntercept2) and rightHandGrad2 < 0) or (yBinCenter >= ((rightHandGrad2*xBinCenter) + rightHandIntercept2) and rightHandGrad2 > 0) or (rightHandGrad2 == 0))){
-                    if(signal == "reemitted"){
-                        countReEmitted2 = countReEmitted2 + reEmittedHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "scattered"){
-                        countReEmitted2 = countReEmitted2 + scatteredHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "attenuated"){
-                        countReEmitted2 = countReEmitted2 + scatteredHist->GetBinContent(x,y) + reEmittedHist->GetBinContent(x,y);
-                    }
-                    countTotal2 = countTotal2 + allPathsHist->GetBinContent(x,y);
-                }
-                if(yBinCenter > ((bottomGrad3*xBinCenter) + bottomIntercept3) and yBinCenter < ((upperGrad*xBinCenter) + upperIntercept) and xBinCenter >= fixedPoints.at(0) and ((yBinCenter <= ((rightHandGrad3*xBinCenter) + rightHandIntercept3) and rightHandGrad3 < 0) or (yBinCenter >= ((rightHandGrad3*xBinCenter) + rightHandIntercept3) and rightHandGrad3 > 0) or (rightHandGrad3 == 0))){
-                    if(signal == "reemitted"){
-                        countReEmitted3 = countReEmitted3 + reEmittedHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "scattered"){
-                        countReEmitted3 = countReEmitted3 + scatteredHist->GetBinContent(x,y);
-                    }
-                    else if(signal == "attenuated"){
-                        countReEmitted3 = countReEmitted3 + scatteredHist->GetBinContent(x,y) + reEmittedHist->GetBinContent(x,y);
-                    }
-                    countTotal3 = countTotal3 + allPathsHist->GetBinContent(x,y);                                
+                    countTotal[i] += allPathsHist->GetBinContent(x,y);
                 }
             }
         }
     }
 
-    double signal_ratio1 = 0;
-    double signal_ratio2 = 0;
-    double signal_ratio3 = 0;
-    if(countReEmitted1 > 0 and countTotal1 > 0) signal_ratio1 = countReEmitted1 / std::sqrt(countTotal1);
-    if(countReEmitted2 > 0 and countTotal2 > 0) signal_ratio2 = countReEmitted2 / std::sqrt(countTotal2);
-    if(countReEmitted3 > 0 and countTotal3 > 0) signal_ratio3 = countReEmitted3 / std::sqrt(countTotal3);
+    double signal_ratios[3] = {0, 0, 0};
+    for (int i = 0; i < 3; ++i){
+        if(countReEmitted[i] > 0 and countTotal[i] > 0) {
+            signal_ratios[i] = countReEmitted[i] / std::sqrt(countTotal[i]);
+        }
+    }
 
-    std::vector<double> outputFOMs = {signal_ratio1, signal_ratio2, signal_ratio3};
-
+    std::vector<double> outputFOMs = {signal_ratios[0], signal_ratios[1], signal_ratios[2]};
     return outputFOMs;
 }
+
 
 /**
  * @brief Compares the FOM of each point (of 3) in points, and returns a vector with:
@@ -1069,9 +455,9 @@ std::vector<double> GetFOMs(std::vector<double> points, std::vector<double> fixe
  */
 std::vector<double> GetBestFOM(std::vector<double> FOMs, std::vector<double> points){
     std::vector<double> output;
-    if(FOMs.at(0) > FOMs.at(1) and FOMs.at(0) > FOMs.at(2)){ //left side best point
+    if(FOMs.at(0) >= FOMs.at(1) and FOMs.at(0) >= FOMs.at(2)){ //left side best point
         output.push_back(points.at(0));
-        if(FOMs.at(1) > FOMs.at(2)){ //right point worst
+        if(FOMs.at(1) >= FOMs.at(2)){ //right point worst
             output.push_back(points.at(2));
             output.push_back(FOMs.at(0));
             output.push_back(FOMs.at(2));
@@ -1082,9 +468,9 @@ std::vector<double> GetBestFOM(std::vector<double> FOMs, std::vector<double> poi
             output.push_back(FOMs.at(1));
         }
     }
-    else if(FOMs.at(1) > FOMs.at(0) and FOMs.at(1) > FOMs.at(2)){ //middle best point
+    else if(FOMs.at(1) >= FOMs.at(0) and FOMs.at(1) >= FOMs.at(2)){ //middle best point
         output.push_back(points.at(1));
-        if(FOMs.at(0) > FOMs.at(2)){ //right point worst
+        if(FOMs.at(0) >= FOMs.at(2)){ //right point worst
             output.push_back(points.at(2));
             output.push_back(FOMs.at(1));
             output.push_back(FOMs.at(2));
@@ -1095,9 +481,9 @@ std::vector<double> GetBestFOM(std::vector<double> FOMs, std::vector<double> poi
             output.push_back(FOMs.at(0));
         }
     }
-    else if(FOMs.at(2) > FOMs.at(1) and FOMs.at(2) > FOMs.at(0)){ //right side best point
+    else if(FOMs.at(2) >= FOMs.at(1) and FOMs.at(2) >= FOMs.at(0)){ //right side best point
         output.push_back(points.at(2));
-        if(FOMs.at(1) > FOMs.at(0)){ //left point worst
+        if(FOMs.at(1) >= FOMs.at(0)){ //left point worst
             output.push_back(points.at(0));
             output.push_back(FOMs.at(2));
             output.push_back(FOMs.at(0));
@@ -1122,293 +508,74 @@ std::vector<double> GetBestFOM(std::vector<double> FOMs, std::vector<double> poi
 }
 
 /**
- * @brief Clone all the original histograms (all but the first params below) 3 times: One for the triangle region,
+ * @brief Clone all the original histograms 3 times: One for the triangle region,
  * called Region, and one for the direct (called Direct) and reflected (Reflected) beam spots each.
  * The bins falling outside of these regions are then set to zero in each corresponding histogram.
  * Returns vector of resultings histograms.
  * 
  * @param finalPoints final fixed points (x_a_min, x_b_max, x_c_max, y_a_min, y_b_max, y_c_min).
- * @param hReEmittedPaths Original histogram.
- * @param hAllPaths Original histogram.
- * @param hNoisePaths Original histogram.
- * @param hSingleScatterPaths Original histogram.
- * @param hOtherPaths Original histogram.
- * @param hNoEffectPaths Original histogram.
- * @param hNearReflectPaths Original histogram.
- * @param hRopesPaths Original histogram.
- * @param hPMTReflectionPaths Original histogram.
- * @param hExtWaterScatterPaths Original histogram.
- * @param hInnerAvReflectPaths Original histogram.
- * @param hMultipleEffectPaths Original histogram.
- * @param hAVPipesPaths Original histogram.
- * @param hAcrylicPaths Original histogram.
- * @param hOtherScatterPaths Original histogram.
+ * @param Hists Original histograms.
+ * @param fibre Which fibre fired, to work out regions.
+ * @param saveroot_txt Name of txt file to save region lims to.
  * @return std::vector<TH2F*> 
  */
-std::vector<TH2F*> GetRegionSelectedHists(std::vector<double> finalPoints, TH2F *hReEmittedPaths, TH2F *hAllPaths, TH2F *hNoisePaths, TH2F *hSingleScatterPaths, TH2F *hOtherPaths, TH2F *hNoEffectPaths, TH2F *hNearReflectPaths, TH2F *hRopesPaths, TH2F *hPMTReflectionPaths, TH2F *hExtWaterScatterPaths, TH2F *hInnerAvReflectPaths, TH2F *hMultipleEffectPaths, TH2F *hAVPipesPaths, TH2F *hAcrylicPaths, TH2F *hOtherScatterPaths){
+HistList GetRegionSelectedHists(std::vector<double> finalPoints, HistList hists_lists, std::string fibre, std::string saveroot_txt){
 
-    //FIXME: pass in vector of hists?
+    double direct_max_time = hists_lists.Tracking_Hists().at(5)->ProjectionY()->GetXaxis()->GetBinCenter(hists_lists.Tracking_Hists().at(5)->ProjectionY()->GetMaximumBin()) + 10;  //hNoEffectPaths
+    double direct_min_time = hists_lists.Tracking_Hists().at(5)->ProjectionY()->GetXaxis()->GetBinCenter(hists_lists.Tracking_Hists().at(5)->ProjectionY()->GetMaximumBin()) - 10;  //hNoEffectPaths
+    //FIXME: don't hardcode this:
+    double direct_cos_alpha;
+    if (fibre == "FA089") {  // 10deg off-axis
+        direct_cos_alpha = -0.85; 
+    } else if (fibre == "FA173" or fibre == "FA150" or fibre == "FA093") {  // 20deg off-axis
+        direct_cos_alpha = -0.6;
+    } else {  // on-axis
+        direct_cos_alpha = -0.9;
+    }
 
-    TH2F *hRegionSelectedReEmittedPaths = (TH2F*)hReEmittedPaths->Clone();
-    TH2F *hRegionSelectedAllPaths = (TH2F*)hAllPaths->Clone();
-    TH2F *hRegionSelectedNoisePaths = (TH2F*)hNoisePaths->Clone();
-    TH2F *hRegionSelectedSingleScatterPaths = (TH2F*)hSingleScatterPaths->Clone();
-    TH2F *hRegionSelectedOtherPaths = (TH2F*)hOtherPaths->Clone();
-    TH2F *hRegionSelectedNoEffectPaths = (TH2F*)hNoEffectPaths->Clone();
-    TH2F *hRegionSelectedNearReflectPaths = (TH2F*)hNearReflectPaths->Clone();
-    TH2F *hRegionSelectedRopesPaths = (TH2F*)hRopesPaths->Clone();
-    TH2F *hRegionSelectedPMTReflectionPaths = (TH2F*)hPMTReflectionPaths->Clone();
-    TH2F *hRegionSelectedExtWaterScatterPaths = (TH2F*)hExtWaterScatterPaths->Clone();
-    TH2F *hRegionSelectedInnerAvReflectPaths = (TH2F*)hInnerAvReflectPaths->Clone();
-    TH2F *hRegionSelectedMultipleEffectPaths = (TH2F*)hMultipleEffectPaths->Clone();
-    TH2F *hRegionSelectedAVPipesPaths = (TH2F*)hAVPipesPaths->Clone();
-    TH2F *hRegionSelectedAcrylicPaths = (TH2F*)hAcrylicPaths->Clone();
-    TH2F *hRegionSelectedOtherScatterPaths = (TH2F*)hOtherScatterPaths->Clone();
-
-    hRegionSelectedReEmittedPaths->SetName("hRegionSelectedReEmittedPaths");
-    hRegionSelectedAllPaths->SetName("hRegionSelectedAllPaths");
-    hRegionSelectedNoisePaths->SetName("hRegionCutNoisePaths");
-    hRegionSelectedSingleScatterPaths->SetName("hRegionCutSingleScatterPaths");
-    hRegionSelectedOtherPaths->SetName("hRegionCutOtherPaths");
-    hRegionSelectedNoEffectPaths->SetName("hRegionCutNoEffectPaths");
-    hRegionSelectedNearReflectPaths->SetName("hRegionCutNearReflectPaths");
-    hRegionSelectedRopesPaths->SetName("hRegionCutRopesPaths");
-    hRegionSelectedPMTReflectionPaths->SetName("hRegionCutPMTReflectionPaths");
-    hRegionSelectedExtWaterScatterPaths->SetName("hRegionCutExtWaterScatterPaths");
-    hRegionSelectedInnerAvReflectPaths->SetName("hRegionCutInnerAvReflectPaths");
-    hRegionSelectedMultipleEffectPaths->SetName("hRegionCutMultipleEffectPaths");
-    hRegionSelectedAVPipesPaths->SetName("hRegionCutAVPipesPaths");
-    hRegionSelectedAcrylicPaths->SetName("hRegionCutAcrylicPaths");
-    hRegionSelectedOtherScatterPaths->SetName("hRegionCutOtherScatterPaths");
-
-    TH2F *hDirectCutReEmittedPaths = (TH2F*)hReEmittedPaths->Clone();
-    TH2F *hDirectCutAllPaths = (TH2F*)hAllPaths->Clone();
-    TH2F *hDirectCutNoisePaths = (TH2F*)hNoisePaths->Clone();
-    TH2F *hDirectCutSingleScatterPaths = (TH2F*)hSingleScatterPaths->Clone();
-    TH2F *hDirectCutOtherPaths = (TH2F*)hOtherPaths->Clone();
-    TH2F *hDirectCutNoEffectPaths = (TH2F*)hNoEffectPaths->Clone();
-    TH2F *hDirectCutNearReflectPaths = (TH2F*)hNearReflectPaths->Clone();
-    TH2F *hDirectCutRopesPaths = (TH2F*)hRopesPaths->Clone();
-    TH2F *hDirectCutPMTReflectionPaths = (TH2F*)hPMTReflectionPaths->Clone();
-    TH2F *hDirectCutExtWaterScatterPaths = (TH2F*)hExtWaterScatterPaths->Clone();
-    TH2F *hDirectCutInnerAvReflectPaths = (TH2F*)hInnerAvReflectPaths->Clone();
-    TH2F *hDirectCutMultipleEffectPaths = (TH2F*)hMultipleEffectPaths->Clone();
-    TH2F *hDirectCutAVPipesPaths = (TH2F*)hAVPipesPaths->Clone();
-    TH2F *hDirectCutAcrylicPaths = (TH2F*)hAcrylicPaths->Clone();
-    TH2F *hDirectCutOtherScatterPaths = (TH2F*)hOtherScatterPaths->Clone();
-
-    hDirectCutReEmittedPaths->SetName("hDirectCutReEmittedPaths");
-    hDirectCutAllPaths->SetName("hDirectCutAllPaths");
-    hDirectCutNoisePaths->SetName("hDirectCutNoisePaths");
-    hDirectCutSingleScatterPaths->SetName("hDirectCutSingleScatterPaths");
-    hDirectCutOtherPaths->SetName("hDirectCutOtherPaths");
-    hDirectCutNoEffectPaths->SetName("hDirectCutNoEffectPaths");
-    hDirectCutNearReflectPaths->SetName("hDirectCutNearReflectPaths");
-    hDirectCutRopesPaths->SetName("hDirectCutRopesPaths");
-    hDirectCutPMTReflectionPaths->SetName("hDirectCutPMTReflectionPaths");
-    hDirectCutExtWaterScatterPaths->SetName("hDirectCutExtWaterScatterPaths");
-    hDirectCutInnerAvReflectPaths->SetName("hDirectCutInnerAvReflectPaths");
-    hDirectCutMultipleEffectPaths->SetName("hDirectCutMultipleEffectPaths");
-    hDirectCutAVPipesPaths->SetName("hDirectCutAVPipesPaths");
-    hDirectCutAcrylicPaths->SetName("hDirectCutAcrylicPaths");
-    hDirectCutOtherScatterPaths->SetName("hDirectCutOtherScatterPaths");
-
-    TH2F *hReflectedCutReEmittedPaths = (TH2F*)hReEmittedPaths->Clone();
-    TH2F *hReflectedCutAllPaths = (TH2F*)hAllPaths->Clone();
-    TH2F *hReflectedCutNoisePaths = (TH2F*)hNoisePaths->Clone();
-    TH2F *hReflectedCutSingleScatterPaths = (TH2F*)hSingleScatterPaths->Clone();
-    TH2F *hReflectedCutOtherPaths = (TH2F*)hOtherPaths->Clone();
-    TH2F *hReflectedCutNoEffectPaths = (TH2F*)hNoEffectPaths->Clone();
-    TH2F *hReflectedCutNearReflectPaths = (TH2F*)hNearReflectPaths->Clone();
-    TH2F *hReflectedCutRopesPaths = (TH2F*)hRopesPaths->Clone();
-    TH2F *hReflectedCutPMTReflectionPaths = (TH2F*)hPMTReflectionPaths->Clone();
-    TH2F *hReflectedCutExtWaterScatterPaths = (TH2F*)hExtWaterScatterPaths->Clone();
-    TH2F *hReflectedCutInnerAvReflectPaths = (TH2F*)hInnerAvReflectPaths->Clone();
-    TH2F *hReflectedCutMultipleEffectPaths = (TH2F*)hMultipleEffectPaths->Clone();
-    TH2F *hReflectedCutAVPipesPaths = (TH2F*)hAVPipesPaths->Clone();
-    TH2F *hReflectedCutAcrylicPaths = (TH2F*)hAcrylicPaths->Clone();
-    TH2F *hReflectedCutOtherScatterPaths = (TH2F*)hOtherScatterPaths->Clone();
-
-    hReflectedCutReEmittedPaths->SetName("hReflectedCutReEmittedPaths");
-    hReflectedCutAllPaths->SetName("hReflectedCutAllPaths");
-    hReflectedCutNoisePaths->SetName("hReflectedCutNoisePaths");
-    hReflectedCutSingleScatterPaths->SetName("hReflectedCutSingleScatterPaths");
-    hReflectedCutOtherPaths->SetName("hReflectedCutOtherPaths");
-    hReflectedCutNoEffectPaths->SetName("hReflectedCutNoEffectPaths");
-    hReflectedCutNearReflectPaths->SetName("hReflectedCutNearReflectPaths");
-    hReflectedCutRopesPaths->SetName("hReflectedCutRopesPaths");
-    hReflectedCutPMTReflectionPaths->SetName("hReflectedCutPMTReflectionPaths");
-    hReflectedCutExtWaterScatterPaths->SetName("hReflectedCutExtWaterScatterPaths");
-    hReflectedCutInnerAvReflectPaths->SetName("hReflectedCutInnerAvReflectPaths");
-    hReflectedCutMultipleEffectPaths->SetName("hReflectedCutMultipleEffectPaths");
-    hReflectedCutAVPipesPaths->SetName("hReflectedCutAVPipesPaths");
-    hReflectedCutAcrylicPaths->SetName("hReflectedCutAcrylicPaths");
-    hReflectedCutOtherScatterPaths->SetName("hReflectedCutOtherScatterPaths");
-
-    double direct_max_time = hNoEffectPaths->ProjectionY()->GetXaxis()->GetBinCenter(hNoEffectPaths->ProjectionY()->GetMaximumBin()) + 10;
-    double direct_min_time = hNoEffectPaths->ProjectionY()->GetXaxis()->GetBinCenter(hNoEffectPaths->ProjectionY()->GetMaximumBin()) - 10;
-    double direct_cos_alpha = -0.9; //FIXME: don't hardcode this
-
-    double reflected_max_time = hNearReflectPaths->ProjectionY()->GetXaxis()->GetBinCenter(hNearReflectPaths->ProjectionY()->GetMaximumBin()) + 10;
-    double reflected_min_time = hNearReflectPaths->ProjectionY()->GetXaxis()->GetBinCenter(hNearReflectPaths->ProjectionY()->GetMaximumBin()) - 10;
+    double reflected_max_time = hists_lists.Tracking_Hists().at(5)->ProjectionY()->GetXaxis()->GetBinCenter(hists_lists.Tracking_Hists().at(5)->ProjectionY()->GetMaximumBin()) + 10;  //hNoEffectPaths
+    double reflected_min_time = hists_lists.Tracking_Hists().at(5)->ProjectionY()->GetXaxis()->GetBinCenter(hists_lists.Tracking_Hists().at(5)->ProjectionY()->GetMaximumBin()) - 10;  //hNoEffectPaths
     double reflected_cos_alpha = 0.95; //FIXME: don't hardcode this
+
+    // Print to Regions lims file (append)
+    std::ofstream outputFile_txt;
+    outputFile_txt.open(saveroot_txt.c_str(), std::ios::app);
+    outputFile_txt << std::to_string(direct_max_time) + "\n";
+    outputFile_txt << std::to_string(direct_min_time) + "\n";
+    outputFile_txt << std::to_string(direct_cos_alpha) + "\n";
+    outputFile_txt << std::to_string(reflected_max_time) + "\n";
+    outputFile_txt << std::to_string(reflected_min_time) + "\n";
+    outputFile_txt << std::to_string(reflected_cos_alpha) + "\n";
 
     std::cout << "Min direct time: " << direct_min_time << std::endl;
     std::cout << "Max direct time: " << direct_max_time << std::endl;
     std::cout << "Min reflected time: " << reflected_min_time << std::endl;
     std::cout << "Max reflected time: " << reflected_max_time << std::endl;
 
-    for(int x=1; x<hReEmittedPaths->GetNbinsX()+1; x++){ //loop over histogram bins
-        double xBinCenter = hReEmittedPaths->GetXaxis()->GetBinCenter(x);
-        for(int y=1; y<hReEmittedPaths->GetNbinsY()+1; y++){ //loop over histogram bins
-            double yBinCenter = hReEmittedPaths->GetYaxis()->GetBinCenter(y);
-            double upperGrad = (finalPoints.at(4) - finalPoints.at(3)) / (finalPoints.at(1) - finalPoints.at(0));
-            double upperIntercept = finalPoints.at(4) - (upperGrad*finalPoints.at(1));
-            double bottomGrad = (finalPoints.at(5) - finalPoints.at(3)) / (finalPoints.at(2) - finalPoints.at(0));
-            double bottomIntercept = finalPoints.at(5) - (bottomGrad*finalPoints.at(2));
-            double rightHandGrad = (finalPoints.at(4) - finalPoints.at(5)) / (finalPoints.at(1) - finalPoints.at(2));
-            double rightHandIntercept = finalPoints.at(4) - (rightHandGrad*finalPoints.at(1));
-            if(yBinCenter < ((bottomGrad*xBinCenter) + bottomIntercept) or yBinCenter > ((upperGrad*xBinCenter) + upperIntercept) or xBinCenter < finalPoints.at(0) or (rightHandGrad < 0 and yBinCenter > (rightHandGrad*xBinCenter) + rightHandIntercept) or (rightHandGrad > 0 and yBinCenter < (rightHandGrad*xBinCenter) + rightHandIntercept) or (rightHandGrad == 0 and xBinCenter > finalPoints.at(2))){
-                hRegionSelectedReEmittedPaths->SetBinContent(x,y,0);
-                hRegionSelectedAllPaths->SetBinContent(x,y,0);
-                hRegionSelectedNoisePaths->SetBinContent(x,y,0);
-                hRegionSelectedSingleScatterPaths->SetBinContent(x,y,0);
-                hRegionSelectedOtherPaths->SetBinContent(x,y,0);
-                hRegionSelectedNoEffectPaths->SetBinContent(x,y,0);
-                hRegionSelectedNearReflectPaths->SetBinContent(x,y,0);
-                hRegionSelectedRopesPaths->SetBinContent(x,y,0);
-                hRegionSelectedPMTReflectionPaths->SetBinContent(x,y,0);
-                hRegionSelectedExtWaterScatterPaths->SetBinContent(x,y,0);
-                hRegionSelectedInnerAvReflectPaths->SetBinContent(x,y,0);
-                hRegionSelectedMultipleEffectPaths->SetBinContent(x,y,0);
-                hRegionSelectedAVPipesPaths->SetBinContent(x,y,0);
-                hRegionSelectedAcrylicPaths->SetBinContent(x,y,0);
-                hRegionSelectedOtherScatterPaths->SetBinContent(x,y,0);
+    // Create triangle with final points, to check if bin centers are within it in the following loop
+    triangle Tri = triangle(finalPoints.at(0), finalPoints.at(1), finalPoints.at(2), finalPoints.at(3),
+                            finalPoints.at(4), finalPoints.at(5));
+
+    for(int x=1; x<hists_lists.Tracking_Hists().at(0)->GetNbinsX()+1; x++){ //loop over histogram bins
+        double xBinCenter = hists_lists.Tracking_Hists().at(0)->GetXaxis()->GetBinCenter(x);
+        for(int y=1; y<hists_lists.Tracking_Hists().at(0)->GetNbinsY()+1; y++){ //loop over histogram bins
+            double yBinCenter = hists_lists.Tracking_Hists().at(0)->GetYaxis()->GetBinCenter(y);
+            if(!(Tri.check_point_inside_triangle(xBinCenter, yBinCenter))){
+                for (int i = 0; i < 15; ++i) {
+                    hists_lists.Region_Hists().at(i)->SetBinContent(x,y,0);
+                }
             }
             if(xBinCenter > direct_cos_alpha or yBinCenter >= direct_max_time or yBinCenter <= direct_min_time){
-                hDirectCutReEmittedPaths->SetBinContent(x,y,0);
-                hDirectCutAllPaths->SetBinContent(x,y,0);
-                hDirectCutNoisePaths->SetBinContent(x,y,0);
-                hDirectCutSingleScatterPaths->SetBinContent(x,y,0);
-                hDirectCutOtherPaths->SetBinContent(x,y,0);
-                hDirectCutNoEffectPaths->SetBinContent(x,y,0);
-                hDirectCutNearReflectPaths->SetBinContent(x,y,0);
-                hDirectCutRopesPaths->SetBinContent(x,y,0);
-                hDirectCutPMTReflectionPaths->SetBinContent(x,y,0);
-                hDirectCutExtWaterScatterPaths->SetBinContent(x,y,0);
-                hDirectCutInnerAvReflectPaths->SetBinContent(x,y,0);
-                hDirectCutMultipleEffectPaths->SetBinContent(x,y,0);
-                hDirectCutAVPipesPaths->SetBinContent(x,y,0);
-                hDirectCutAcrylicPaths->SetBinContent(x,y,0);
-                hDirectCutOtherScatterPaths->SetBinContent(x,y,0);
+                for (int i = 0; i < 15; ++i) {
+                    hists_lists.Direct_Hists().at(i)->SetBinContent(x,y,0);
+                }
             }
             if(xBinCenter < reflected_cos_alpha or yBinCenter >= reflected_max_time or yBinCenter <= reflected_min_time){
-                hReflectedCutReEmittedPaths->SetBinContent(x,y,0);
-                hReflectedCutAllPaths->SetBinContent(x,y,0);
-                hReflectedCutNoisePaths->SetBinContent(x,y,0);
-                hReflectedCutSingleScatterPaths->SetBinContent(x,y,0);
-                hReflectedCutOtherPaths->SetBinContent(x,y,0);
-                hReflectedCutNoEffectPaths->SetBinContent(x,y,0);
-                hReflectedCutNearReflectPaths->SetBinContent(x,y,0);
-                hReflectedCutRopesPaths->SetBinContent(x,y,0);
-                hReflectedCutPMTReflectionPaths->SetBinContent(x,y,0);
-                hReflectedCutExtWaterScatterPaths->SetBinContent(x,y,0);
-                hReflectedCutInnerAvReflectPaths->SetBinContent(x,y,0);
-                hReflectedCutMultipleEffectPaths->SetBinContent(x,y,0);
-                hReflectedCutAVPipesPaths->SetBinContent(x,y,0);
-                hReflectedCutAcrylicPaths->SetBinContent(x,y,0);
-                hReflectedCutOtherScatterPaths->SetBinContent(x,y,0);
+                for (int i = 0; i < 15; ++i) {
+                    hists_lists.Reflected_Hists().at(i)->SetBinContent(x,y,0);
+                }
             }
         }
     }
-    std::vector<TH2F*> outputHists;
-    outputHists.push_back(hRegionSelectedReEmittedPaths);
-    outputHists.push_back(hRegionSelectedAllPaths);
-    outputHists.push_back(hRegionSelectedNoisePaths);
-    outputHists.push_back(hRegionSelectedSingleScatterPaths);
-    outputHists.push_back(hRegionSelectedOtherPaths);
-    outputHists.push_back(hRegionSelectedNoEffectPaths);
-    outputHists.push_back(hRegionSelectedNearReflectPaths);
-    outputHists.push_back(hRegionSelectedRopesPaths);
-    outputHists.push_back(hRegionSelectedPMTReflectionPaths);
-    outputHists.push_back(hRegionSelectedExtWaterScatterPaths);
-    outputHists.push_back(hRegionSelectedInnerAvReflectPaths);
-    outputHists.push_back(hRegionSelectedMultipleEffectPaths);
-    outputHists.push_back(hRegionSelectedAVPipesPaths);
-    outputHists.push_back(hRegionSelectedAcrylicPaths);
-    outputHists.push_back(hRegionSelectedOtherScatterPaths);
-
-    outputHists.push_back(hDirectCutReEmittedPaths);
-    outputHists.push_back(hDirectCutAllPaths);
-    outputHists.push_back(hDirectCutNoisePaths);
-    outputHists.push_back(hDirectCutSingleScatterPaths);
-    outputHists.push_back(hDirectCutOtherPaths);
-    outputHists.push_back(hDirectCutNoEffectPaths);
-    outputHists.push_back(hDirectCutNearReflectPaths);
-    outputHists.push_back(hDirectCutRopesPaths);
-    outputHists.push_back(hDirectCutPMTReflectionPaths);
-    outputHists.push_back(hDirectCutExtWaterScatterPaths);
-    outputHists.push_back(hDirectCutInnerAvReflectPaths);
-    outputHists.push_back(hDirectCutMultipleEffectPaths);
-    outputHists.push_back(hDirectCutAVPipesPaths);
-    outputHists.push_back(hDirectCutAcrylicPaths);
-    outputHists.push_back(hDirectCutOtherScatterPaths);
-
-    outputHists.push_back(hReflectedCutReEmittedPaths);
-    outputHists.push_back(hReflectedCutAllPaths);
-    outputHists.push_back(hReflectedCutNoisePaths);
-    outputHists.push_back(hReflectedCutSingleScatterPaths);
-    outputHists.push_back(hReflectedCutOtherPaths);
-    outputHists.push_back(hReflectedCutNoEffectPaths);
-    outputHists.push_back(hReflectedCutNearReflectPaths);
-    outputHists.push_back(hReflectedCutRopesPaths);
-    outputHists.push_back(hReflectedCutPMTReflectionPaths);
-    outputHists.push_back(hReflectedCutExtWaterScatterPaths);
-    outputHists.push_back(hReflectedCutInnerAvReflectPaths);
-    outputHists.push_back(hReflectedCutMultipleEffectPaths);
-    outputHists.push_back(hReflectedCutAVPipesPaths);
-    outputHists.push_back(hReflectedCutAcrylicPaths);
-    outputHists.push_back(hReflectedCutOtherScatterPaths);
-
-    return outputHists;
-}
-
-
-/**
- * @brief Checks if points have broken the triangle (for ex if x_a>x_b, which would flip the order around).
- * If so replace with associated limit from fixedPoints.
- * 
- * @param points (z_i_min, z_i_mid, z_i_max), for z=x,y, and i in {a, b, c}.
- * @param fixedPoints (x_a_min, x_b_max, x_c_max, y_a_min, y_b_max, y_c_min).
- * @param numVar Denotes which point is being checked (0=x_a, 1=x_b, 2=x_c, 3=y_a, 4=y_b, 5=y_c).
- * @return std::vector<double> 
- */
-std::vector<double> CheckPoints(std::vector<double> points, std::vector<double> fixedPoints, int numVar){
-    if(numVar == 0){
-        if(points.at(0) > fixedPoints.at(1)) points.at(0) = fixedPoints.at(1);
-        if(points.at(1) > fixedPoints.at(1)) points.at(1) = fixedPoints.at(1);
-        if(points.at(2) > fixedPoints.at(1)) points.at(2) = fixedPoints.at(1);
-    }
-    if(numVar == 1){
-        if(points.at(0) < fixedPoints.at(0)) points.at(0) = fixedPoints.at(0);
-        if(points.at(1) < fixedPoints.at(0)) points.at(1) = fixedPoints.at(0);
-        if(points.at(2) < fixedPoints.at(0)) points.at(2) = fixedPoints.at(0);
-    }
-    if(numVar == 2){
-        if(points.at(0) < fixedPoints.at(0)) points.at(0) = fixedPoints.at(0);
-        if(points.at(1) < fixedPoints.at(0)) points.at(1) = fixedPoints.at(0);
-        if(points.at(2) < fixedPoints.at(0)) points.at(2) = fixedPoints.at(0);
-    }
-    if(numVar == 4){
-        if(points.at(0) < fixedPoints.at(5)) points.at(0) = fixedPoints.at(5);
-        if(points.at(1) < fixedPoints.at(5)) points.at(1) = fixedPoints.at(5);
-        if(points.at(2) < fixedPoints.at(5)) points.at(2) = fixedPoints.at(5);
-    }
-    if(numVar == 5){
-        if(points.at(0) > fixedPoints.at(4)) points.at(0) = fixedPoints.at(4);
-        if(points.at(1) > fixedPoints.at(4)) points.at(1) = fixedPoints.at(4);
-        if(points.at(2) > fixedPoints.at(4)) points.at(2) = fixedPoints.at(4);
-    }
-
-    return points;
+    return hists_lists;
 }
