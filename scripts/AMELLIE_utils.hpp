@@ -49,6 +49,31 @@ class triangle {
 };
 
 /**
+ * @brief Class to encode the direct and reflected regions
+ * 
+ */
+class rectangle {
+    private:
+        double x_max;
+        double x_min;
+        double y_max;
+        double y_min;
+
+    public:
+        //constructor
+        rectangle(const std::string region_type, const std::string fibre, double max_y_bin);
+        rectangle(double X_maxi, double X_mini, double Y_maxi, double Y_mini);
+
+        // Memeber function
+        double& X_max();
+        double& X_min();
+        double& Y_max();
+        double& Y_min();
+
+        bool check_point_inside_rectangle(const double point_x, const double point_y);
+}
+
+/**
  * @brief Class to read in desired 2D hists of tracking root file and clone 3 more
  * copies of these for the region, direct and reflected histograms. All fours lists
  * are in the HistList object and can be easily accessed and modified.

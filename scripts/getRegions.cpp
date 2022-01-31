@@ -521,61 +521,56 @@ std::vector<double> GetBestFOM(std::vector<double> FOMs, std::vector<double> poi
  */
 HistList GetRegionSelectedHists(std::vector<double> finalPoints, HistList hists_lists, std::string fibre, std::string saveroot_txt){
 
-    double direct_max_time = hists_lists.Tracking_Hists().at(5)->ProjectionY()->GetXaxis()->GetBinCenter(hists_lists.Tracking_Hists().at(5)->ProjectionY()->GetMaximumBin()) + 10;  //hNoEffectPaths
-    double direct_min_time = hists_lists.Tracking_Hists().at(5)->ProjectionY()->GetXaxis()->GetBinCenter(hists_lists.Tracking_Hists().at(5)->ProjectionY()->GetMaximumBin()) - 10;  //hNoEffectPaths
-    //FIXME: don't hardcode this:
-    double direct_cos_alpha;
-    if (fibre == "FA089") {  // 10deg off-axis
-        direct_cos_alpha = -0.85; 
-    } else if (fibre == "FA173" or fibre == "FA150" or fibre == "FA093") {  // 20deg off-axis
-        direct_cos_alpha = -0.6;
-    } else {  // on-axis
-        direct_cos_alpha = -0.9;
-    }
-
-    double reflected_max_time = hists_lists.Tracking_Hists().at(5)->ProjectionY()->GetXaxis()->GetBinCenter(hists_lists.Tracking_Hists().at(5)->ProjectionY()->GetMaximumBin()) + 10;  //hNoEffectPaths
-    double reflected_min_time = hists_lists.Tracking_Hists().at(5)->ProjectionY()->GetXaxis()->GetBinCenter(hists_lists.Tracking_Hists().at(5)->ProjectionY()->GetMaximumBin()) - 10;  //hNoEffectPaths
-    double reflected_cos_alpha = 0.95; //FIXME: don't hardcode this
-
-    // Print to Regions lims file (append)
-    std::ofstream outputFile_txt;
-    outputFile_txt.open(saveroot_txt.c_str(), std::ios::app);
-    outputFile_txt << std::to_string(direct_max_time) + "\n";
-    outputFile_txt << std::to_string(direct_min_time) + "\n";
-    outputFile_txt << std::to_string(direct_cos_alpha) + "\n";
-    outputFile_txt << std::to_string(reflected_max_time) + "\n";
-    outputFile_txt << std::to_string(reflected_min_time) + "\n";
-    outputFile_txt << std::to_string(reflected_cos_alpha) + "\n";
-
-    std::cout << "Min direct time: " << direct_min_time << std::endl;
-    std::cout << "Max direct time: " << direct_max_time << std::endl;
-    std::cout << "Min reflected time: " << reflected_min_time << std::endl;
-    std::cout << "Max reflected time: " << reflected_max_time << std::endl;
-
     // Create triangle with final points, to check if bin centers are within it in the following loop
     triangle Tri = triangle(finalPoints.at(0), finalPoints.at(1), finalPoints.at(2), finalPoints.at(3),
                             finalPoints.at(4), finalPoints.at(5));
 
-    for(int x=1; x<hists_lists.Tracking_Hists().at(0)->GetNbinsX()+1; x++){ //loop over histogram bins
-        double xBinCenter = hists_lists.Tracking_Hists().at(0)->GetXaxis()->GetBinCenter(x);
-        for(int y=1; y<hists_lists.Tracking_Hists().at(0)->GetNbinsY()+1; y++){ //loop over histogram bins
-            double yBinCenter = hists_lists.Tracking_Hists().at(0)->GetYaxis()->GetBinCenter(y);
+    // Create rectangular regions for the same reason
+    double max_y_bin = hists_lists.Tracking_Hists().at(5)->ProjectionY()->GetXaxis()->GetBinCenter(hists_lists.Tracking_Hists().at(5)->ProjectionY()->GetMaximumBin());
+    rectangle Direct = rectangle("direct", fibre, max_y_bin);
+    rectangle Reflected = rectangle("reflected", fibre, max_y_bin);
+
+    int nBinsX = hists_lists.Tracking_Hists().at(0)->GetXaxis()->GetNbins();
+    int nBinsY = hists_lists.Tracking_Hists().at(0)->GetYaxis()->GetNbins();
+    double xBinCenter;
+    double yBinCenter;
+    for(int x = 1; x < nBinsX + 1; x++){ //loop over histogram bins
+        xBinCenter = hists_lists.Tracking_Hists().at(0)->GetXaxis()->GetBinCenter(x);
+        for(int y = 1; y < nBinsY + 1; y++){ //loop over histogram bins
+            yBinCenter = hists_lists.Tracking_Hists().at(0)->GetYaxis()->GetBinCenter(y);
             if(!(Tri.check_point_inside_triangle(xBinCenter, yBinCenter))){
                 for (int i = 0; i < 15; ++i) {
                     hists_lists.Region_Hists().at(i)->SetBinContent(x,y,0);
                 }
             }
-            if(xBinCenter > direct_cos_alpha or yBinCenter >= direct_max_time or yBinCenter <= direct_min_time){
+            if(!(Direct.check_point_inside_rectangle(xBinCenter, yBinCenter))){
                 for (int i = 0; i < 15; ++i) {
                     hists_lists.Direct_Hists().at(i)->SetBinContent(x,y,0);
                 }
             }
-            if(xBinCenter < reflected_cos_alpha or yBinCenter >= reflected_max_time or yBinCenter <= reflected_min_time){
+            if(!(Reflected.check_point_inside_rectangle(xBinCenter, yBinCenter))){
                 for (int i = 0; i < 15; ++i) {
                     hists_lists.Reflected_Hists().at(i)->SetBinContent(x,y,0);
                 }
             }
         }
     }
+
+    // Print to Regions lims file (append) [EDIT]
+    std::ofstream outputFile_txt;
+    outputFile_txt.open(saveroot_txt.c_str(), std::ios::app);
+    outputFile_txt << std::to_string(Direct.Y_max()) + "\n";
+    outputFile_txt << std::to_string(Direct.Y_min()) + "\n";
+    outputFile_txt << std::to_string(Direct.X_max()) + "\n";
+    outputFile_txt << std::to_string(Reflected.Y_max()) + "\n";
+    outputFile_txt << std::to_string(Reflected.Y_min()) + "\n";
+    outputFile_txt << std::to_string(Reflected.X_min()) + "\n";
+
+    std::cout << "Min direct time: " << Direct.Y_min() << std::endl;
+    std::cout << "Max direct time: " << Direct.Y_max() << std::endl;
+    std::cout << "Min reflected time: " << Reflected.Y_min() << std::endl;
+    std::cout << "Max reflected time: " << Reflected.Y_max() << std::endl;
+
+
     return hists_lists;
 }

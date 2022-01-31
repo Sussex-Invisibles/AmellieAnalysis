@@ -13,8 +13,7 @@ Either:
 */
 
 int generate_stats(std::string region_selected_file, std::string full_file, std::string signal, std::string data_type);
-int make_region_cut(std::string tracked_file, triangle Tri, double min_time_direct_beam_spot, double max_time_direct_beam_spot,
-                    double min_time_reflected_beam_spot, double max_time_reflected_beam_spot, std::string data_type);
+int make_region_cut(std::string tracked_file, triangle Tri, rectangle Direct, rectangle Reflected, std::string data_type);
 
 int main(int argv, char** argc){
     std::string choice = argc[1];
@@ -32,12 +31,10 @@ int main(int argv, char** argc){
         std::string tracked_file = argc[2];
         triangle Tri = triangle(std::stod(argc[3]), std::stod(argc[4]), std::stod(argc[5]), std::stod(argc[6]),
                                 std::stod(argc[7]), std::stod(argc[8]));
-        double min_direct = std::stod(argc[9]);
-        double max_direct = std::stod(argc[10]);
-        double min_reflected = std::stod(argc[11]);
-        double max_reflected = std::stod(argc[12]);
-        std::string data_type = argc[13];  // MC or raw
-        int status = make_region_cut(tracked_file, Tri, min_direct, max_direct, min_reflected, max_reflected, data_type);
+        rectangle Direct = rectangle(std::stod(argc[13]), -1.0, std::stod(argc[10]), std::stod(argc[9]));
+        rectangle Reflected = rectangle(1.0, std::stod(argc[14]), std::stod(argc[12]), std::stod(argc[11]));
+        std::string data_type = argc[15];  // MC or raw
+        int status = make_region_cut(tracked_file, Tri, Direct, Reflected, data_type);
         return status;
     }
     else{
@@ -220,15 +217,12 @@ int generate_stats(std::string region_selected_file, std::string full_file, std:
  * 
  * @param tracked_file Original root file with total histograms.
  * @param Tri triangle object with coordinates of each vertex saved.
- * @param min_time_direct_beam_spot Direct beam spot limit.
- * @param max_time_direct_beam_spot Direct beam spot limit.
- * @param min_time_reflected_beam_spot Reflected beam spot limit.
- * @param max_time_reflected_beam_spot Reflected beam spot limit.
+ * @param Direct Direct beam spot rectangle region.
+ * @param Reflected Reflected beam spot rectangle region.
+ * @param data_type = "MC" or "raw".
  * @return int 
  */
-int make_region_cut(std::string tracked_file, triangle Tri,
-                    double min_time_direct_beam_spot, double max_time_direct_beam_spot, double min_time_reflected_beam_spot,
-                    double max_time_reflected_beam_spot, std::string data_type){
+int make_region_cut(std::string tracked_file, triangle Tri, rectangle Direct, rectangle Reflected, std::string data_type){
 
     //~~~ create histograms ~~~//
     HistList hists_lists;
@@ -243,39 +237,27 @@ int make_region_cut(std::string tracked_file, triangle Tri,
         
     //~~~ Apply region cuts by looping through bins ~~~//
 
-    //direct beam spot, max +/- 10 ns, -0.9 cos theta (straight through)
-    double min_angle_direct_beam_spot = -0.9;
-    //reflected beam spot, max +/- 10 ns, 0.95 cos theta (straight through)
-    double min_angle_reflected_beam_spot = 0.95;
-
     int nBinsX = hists_lists.Tracking_Hists().at(0)->GetXaxis()->GetNbins();
     int nBinsY = hists_lists.Tracking_Hists().at(0)->GetYaxis()->GetNbins();
     double xBinCenter;
     double yBinCenter;
-    bool direct_Xcut;
-    bool reflected_Xcut;
-    for (int x=0; x<nBinsX+1; x++) {
+    for(int x = 1; x < nBinsX + 1; x++){ //loop over histogram bins
         xBinCenter = hists_lists.Tracking_Hists().at(0)->GetXaxis()->GetBinCenter(x);
-        if (xBinCenter >= min_angle_direct_beam_spot) {direct_Xcut = true;} else {direct_Xcut = false;}
-        if (xBinCenter <= min_angle_reflected_beam_spot) {reflected_Xcut = true;} else {reflected_Xcut = false;}
-        for (int y=0; y<nBinsY+1; y++) {
+        for(int y = 1; y < nBinsY + 1; y++){ //loop over histogram bins
             yBinCenter = hists_lists.Tracking_Hists().at(0)->GetYaxis()->GetBinCenter(y);
-            // Check if bin is within triangle region
-            if (!(Tri.check_point_inside_triangle(xBinCenter, yBinCenter))) {
+            if(!(Tri.check_point_inside_triangle(xBinCenter, yBinCenter))){
                 for (int i = 0; i < 15; ++i) {
-                    hists_lists.Region_Hists().at(i)->SetBinContent(x, y, 0);
+                    hists_lists.Region_Hists().at(i)->SetBinContent(x,y,0);
                 }
             }
-            // Check if bin is in direct beam spot
-            if (direct_Xcut or yBinCenter <= min_time_direct_beam_spot or yBinCenter >= max_time_direct_beam_spot) {
+            if(!(Direct.check_point_inside_rectangle(xBinCenter, yBinCenter))){
                 for (int i = 0; i < 15; ++i) {
-                    hists_lists.Direct_Hists().at(i)->SetBinContent(x, y, 0);
+                    hists_lists.Direct_Hists().at(i)->SetBinContent(x,y,0);
                 }
             }
-            // Check if bin is in direct beam spot
-            if (reflected_Xcut or yBinCenter <= min_time_reflected_beam_spot or yBinCenter >= max_time_reflected_beam_spot) {
+            if(!(Reflected.check_point_inside_rectangle(xBinCenter, yBinCenter))){
                 for (int i = 0; i < 15; ++i) {
-                    hists_lists.Reflected_Hists().at(i)->SetBinContent(x, y, 0);
+                    hists_lists.Reflected_Hists().at(i)->SetBinContent(x,y,0);
                 }
             }
         }
