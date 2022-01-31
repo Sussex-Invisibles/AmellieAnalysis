@@ -71,7 +71,7 @@ class rectangle {
         double& Y_min();
 
         bool check_point_inside_rectangle(const double point_x, const double point_y);
-}
+};
 
 /**
  * @brief Class to read in desired 2D hists of tracking root file and clone 3 more

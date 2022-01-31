@@ -151,7 +151,7 @@ double& rectangle::Y_min() {return y_min;}
  * @return true 
  * @return false 
  */
-bool rectangle::check_point_inside_rectangle(const double point_x, const double point_x) {
+bool rectangle::check_point_inside_rectangle(const double point_x, const double point_y) {
     if (point_x > x_max or point_x < x_min or point_y > y_max or point_y < y_min) {
         return false;
     } else {
